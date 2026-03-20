@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B.A. Consultorios Médicos | Especialidades y Estudios</title>
-    <meta name="description" content="Salud de calidad, trato humano y atención rápida. Reservá tu turno online o por WhatsApp en San Justo.">
+    <title>B.A. Consultorios Médicos | Especialidades, Estudios y Prevención en San Justo</title>
+    <meta name="description" content="Salud de calidad, trato humano y atención rápida. Especialidades médicas y estudios en San Justo. Reservá tu turno online.">
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -23,6 +23,7 @@
             --degradado-azul: linear-gradient(135deg, #2B4C7E 0%, #1B3A6B 100%);
             --degradado-magenta: linear-gradient(135deg, #F04B9E 0%, #E8007D 100%);
             --sombra-suave: 0 10px 25px rgba(27, 58, 107, 0.08);
+            --border-radius: 16px;
         }
 
         /* --- ESTILOS GENERALES --- */
@@ -55,7 +56,9 @@
             padding: 8px 20px;
             border-radius: 8px;
             font-size: 0.9em;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
             border: 1px solid rgba(27, 58, 107, 0.2);
             transition: all 0.3s;
         }
@@ -122,25 +125,69 @@
         .ventaja-item h3 { color: var(--blanco); font-size: 1.1em; font-weight: 500; }
         .ventaja-item .numero-grande { font-size: 2.5em; font-weight: 700; display: block; margin-bottom: 5px; }
 
-        /* --- SECCIONES SERVICIOS (Listados) --- */
+        /* --- SECCIÓN PREVENCIÓN --- */
+        .prevencion { background-color: var(--blanco); text-align: center; }
+        .prevencion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1100px; margin: 0 auto; }
+        .prevencion-card {
+            background: var(--gris-fondo);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--sombra-suave);
+            text-align: left;
+            position: relative;
+            transition: transform 0.3s;
+        }
+        .prevencion-card:hover { transform: translateY(-5px); }
+        .prevencion-card h3 { font-size: 1.3em; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .prevencion-card h3 i { color: var(--magenta-suave); font-size: 1.2em; }
+        .prevencion-card p { font-size: 0.95em; color: var(--gris-texto); margin-bottom: 20px; }
+        .check-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(27, 58, 107, 0.05);
+            color: var(--azul-fuerte);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .check-label i { color: var(--magenta-suave); }
+
+        /* --- GUÍA TURNOS --- */
+        .guia-turnos { text-align: center; background-color: var(--gris-fondo); }
+        .guia-turnos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; max-width: 1000px; margin: 0 auto 40px; }
+        .paso-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-align: left;
+            background: var(--blanco);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--sombra-suave);
+        }
+        .paso-numero {
+            width: 60px;
+            height: 60px;
+            background: var(--degradado-magenta);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--blanco);
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        .paso-texto h4 { margin-bottom: 5px; }
+
+        /* --- ESPECIALIDADES (Acordeón) --- */
         .seccion-titulo { text-align: center; margin-bottom: 40px; }
         .seccion-titulo h2 { font-size: 2.2em; position: relative; display: inline-block; padding-bottom: 10px; }
         .seccion-titulo h2::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background: var(--degradado-magenta); border-radius: 3px; }
 
-        /* Buscador Moderno */
-        .buscador-wrapper {
-            max-width: 500px;
-            margin: 0 auto 40px;
-            position: relative;
-        }
-        .buscador-wrapper i {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--azul-suave);
-            font-size: 1.2em;
-        }
+        .buscador-wrapper { max-width: 500px; margin: 0 auto 40px; position: relative; }
+        .buscador-wrapper i { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--azul-suave); font-size: 1.2em; }
         .buscador-input {
             width: 100%;
             padding: 16px 20px 16px 50px;
@@ -153,52 +200,82 @@
         }
         .buscador-input:focus { outline: none; border-color: var(--magenta-suave); box-shadow: 0 10px 30px rgba(240, 75, 158, 0.15); }
 
-        .grid-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        
+        /* Estilo de Acordeón Moderno */
+        details.card-acordeon {
+            background: var(--blanco);
+            border-radius: var(--border-radius);
+            box-shadow: var(--sombra-suave);
+            border: 1px solid rgba(0,0,0,0.02);
+            transition: transform 0.3s;
+            cursor: pointer;
+            overflow: hidden;
         }
-        .card {
+        details.card-acordeon:hover { transform: translateY(-2px); }
+        details.card-acordeon[open] { transform: none; box-shadow: 0 15px 40px rgba(27, 58, 107, 0.12); border-color: rgba(240, 75, 158, 0.2); }
+
+        summary.card-summary {
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            outline: none;
+            list-style: none; /* Oculta la flecha nativa */
+            font-weight: 500;
+            color: var(--azul-fuerte);
+        }
+        summary.card-summary::-webkit-details-marker { display: none; } /* Para safari */
+        
+        .summary-content { display: flex; align-items: center; gap: 15px; }
+        .card-icono { font-size: 1.6em; color: var(--azul-suave); }
+        .summary-chevron {
+            font-size: 1.2em;
+            color: var(--azul-suave);
+            transition: transform 0.3s;
+        }
+        details.card-acordeon[open] .summary-chevron { transform: rotate(180deg); color: var(--magenta-suave); }
+
+        .card-content {
+            padding: 0 25px 25px;
+            border-top: 1px solid rgba(0,0,0,0.02);
+            font-size: 0.95em;
+            color: var(--gris-texto);
+        }
+        .card-content p { margin-bottom: 20px; }
+
+        /* --- ESTUDIOS (Grilla simple con iconos) --- */
+        .grid-cards-estudios { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .card-estudio {
             background: var(--blanco);
             padding: 25px;
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             box-shadow: var(--sombra-suave);
             text-align: center;
-            transition: transform 0.3s;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             border: 1px solid rgba(0,0,0,0.02);
         }
-        .card:hover { transform: translateY(-5px); }
-        .card-icono { font-size: 2em; color: var(--azul-suave); margin-bottom: 15px; }
-        .card h4 { margin-bottom: 15px; font-size: 1.1em; color: var(--azul-fuerte); }
-
-        .btn-ver-mas {
-            display: block;
-            margin: 40px auto 0;
-            background: none;
-            border: 2px solid var(--azul-suave);
-            color: var(--azul-fuerte);
-            padding: 10px 30px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        .btn-ver-mas:hover { background: var(--azul-suave); color: var(--blanco); }
+        .card-estudio .card-icono { font-size: 2em; margin-bottom: 15px; }
+        .card-estudio h4 { margin-bottom: 15px; font-size: 1.1em; color: var(--azul-fuerte); }
 
         /* --- FOOTER / CONTACTO --- */
         footer { background-color: var(--blanco); border-top: 1px solid rgba(0,0,0,0.05); padding: 60px 5% 20px; }
-        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; margin-bottom: 40px; max-width: 1200px; margin: 0 auto 40px; }
+        
+        /* Ayuda WhatsApp Callout */
+        .ayuda-ws { max-width: 1200px; margin: 0 auto 50px; background: rgba(244, 247, 246, 0.5); padding: 40px; border-radius: var(--border-radius); text-align: center; border: 1px solid rgba(27, 58, 107, 0.05); }
+        .ayuda-ws h3 { margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .ayuda-ws h3 i { color: var(--magenta-suave); }
+        .ayuda-ws p { max-width: 800px; margin: 0 auto 25px; font-size: 1.1em; }
+
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto 40px; }
         .footer-info h3 { color: var(--azul-fuerte); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .footer-info h3 i { color: var(--magenta-suave); }
         .footer-info p { margin-bottom: 12px; font-size: 0.95em; display: flex; align-items: flex-start; gap: 10px; }
         .footer-info p i { margin-top: 4px; color: var(--azul-suave); }
         
-        .mapa-container { border-radius: 16px; overflow: hidden; box-shadow: var(--sombra-suave); }
+        .mapa-container { border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--sombra-suave); }
         .mapa-container iframe { width: 100%; height: 100%; min-height: 250px; border: none; display: block; }
         
         .copyright { text-align: center; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 0.85em; color: var(--azul-suave); }
@@ -229,6 +306,7 @@
     <header>
         <div class="logo"><i class="fa-solid fa-heart-pulse"></i> B.A. <span>Consultorios</span></div>
         <nav>
+            <a href="#prevencion">Prevención</a>
             <a href="#especialidades">Especialidades</a>
             <a href="#estudios">Estudios</a>
             <a href="#contacto">Contacto</a>
@@ -244,7 +322,7 @@
 
     <section class="hero">
         <h1>Salud de calidad, trato humano y atención rápida</h1>
-        <p>Encontrá a tu especialista o reservá tu estudio médico en San Justo hoy mismo.</p>
+        <p>Tu bienestar integral es nuestra prioridad. Reservá tu turno médico en San Justo hoy mismo.</p>
         <br>
         <a href="https://baconsultorios.agendapro.com/ar" target="_blank" class="btn-primario" style="font-size: 1.1em; padding: 15px 35px;">
             Reservar Turno Ahora
@@ -270,9 +348,66 @@
         </div>
     </section>
 
+    <section id="prevencion" class="prevencion">
+        <div class="seccion-titulo">
+            <h2>La mejor medicina es la prevención</h2>
+            <p style="margin-top: 15px; color: var(--azul-suave);">Creemos en acompañarte antes de que aparezca el problema.</p>
+        </div>
+        <div class="prevencion-grid">
+            <div class="prevencion-card">
+                <h3><i class="fa-solid fa-baby"></i> Chequeo pediátrico</h3>
+                <p>Los controles periódicos en la infancia son fundamentales para detectar a tiempo cualquier desvío en el desarrollo. Desde el primer mes de vida hasta la adolescencia.</p>
+                <div class="check-label"><i class="fa-solid fa-check"></i> Niños y adolescentes</div>
+            </div>
+            <div class="prevencion-card">
+                <h3><i class="fa-solid fa-heart-circle-bolt"></i> Control cardiovascular</h3>
+                <p>Un electrocardiograma y una consulta con cardiología una vez al año pueden marcar la diferencia. No esperés síntomas para cuidar tu corazón.</p>
+                <div class="check-label"><i class="fa-solid fa-check"></i> Adultos de todas las edades</div>
+            </div>
+            <div class="prevencion-card">
+                <h3><i class="fa-solid fa-venus"></i> Salud femenina integral</h3>
+                <p>Ginecología, obstetricia y endocrinología trabajando juntas para acompañarte en cada etapa: pubertad, embarazo, menopausia y todo lo demás.</p>
+                <div class="check-label"><i class="fa-solid fa-check"></i> Mujeres de todas las edades</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="guia-turnos">
+        <div class="seccion-titulo">
+            <h2>¿Cómo reservar tu turno?</h2>
+            <p style="margin-top: 15px; color: var(--azul-suave);">Es fácil y rápido. ¡Te enseñamos cómo!</p>
+        </div>
+        <div class="guia-turnos-grid">
+            <div class="paso-item">
+                <div class="paso-numero">1</div>
+                <div class="paso-texto">
+                    <h4>Elegí tu servicio</h4>
+                    <p>Buscá la especialidad o el estudio que necesitás en la web.</p>
+                </div>
+            </div>
+            <div class="paso-item">
+                <div class="paso-numero">2</div>
+                <div class="paso-texto">
+                    <h4>Reservá tu turno</h4>
+                    <p>Accedé a la Agenda Pro o consultanos por WhatsApp.</p>
+                </div>
+            </div>
+            <div class="paso-item">
+                <div class="paso-numero">3</div>
+                <div class="paso-texto">
+                    <h4>¡Listo, confirmado!</h4>
+                    <p>Recibirás un recordatorio por WhatsApp de tu turno.</p>
+                </div>
+            </div>
+        </div>
+        <a href="https://baconsultorios.agendapro.com/ar" target="_blank" class="btn-primario">
+            Reservar Turno Online
+        </a>
+    </section>
+
     <section id="especialidades">
         <div class="seccion-titulo">
-            <h2>Especialidades Médicas</h2>
+            <h2>Nuestras Especialidades</h2>
         </div>
         
         <div class="buscador-wrapper">
@@ -283,7 +418,6 @@
         <div class="grid-cards" id="grid-especialidades">
             </div>
         
-        <button id="btn-ver-todas-esp" class="btn-ver-mas">Ver todas las especialidades</button>
     </section>
 
     <section id="estudios" style="background-color: var(--blanco);">
@@ -291,28 +425,35 @@
             <h2>Estudios y Prácticas</h2>
         </div>
         
-        <div class="grid-cards" id="grid-estudios">
+        <div class="grid-cards-estudios" id="grid-estudios">
             </div>
     </section>
 
     <footer id="contacto">
+        
+        <div class="ayuda-ws">
+            <h3><i class="fa-solid fa-headset"></i> ¿Tenés dudas?</h3>
+            <p>¡Tus dudas tienen respuesta! Escribinos por WhatsApp para cualquier consulta rápida sobre especialidades, estudios o turnos. Estamos para asesorarte.</p>
+            <a href="https://wa.me/5491164344822?text=Hola,%20tengo%20una%20duda..." target="_blank" class="btn-primario">
+                <i class="fa-brands fa-whatsapp"></i> Consultar WhatsApp
+            </a>
+        </div>
+
         <div class="footer-grid">
             <div class="footer-info">
-                <h3><i class="fa-solid fa-location-dot"></i> Contacto y Ubicación</h3>
+                <h3><i class="fa-solid fa-location-dot"></i> Ubicación</h3>
                 <p><i class="fa-solid fa-map-pin"></i> <span>Almafuerte 3558, San Justo<br>Buenos Aires</span></p>
-                <p><i class="fa-brands fa-whatsapp"></i> <span>+54 911 6434 4822</span></p>
-                <p><i class="fa-solid fa-phone"></i> <span>3970-1945</span></p>
                 <p><i class="fa-solid fa-bus"></i> <span><strong>Transporte cercano:</strong> Colectivos 55, 88, 96, 113, 174, 205, 242, 298, 382, 620. A pocas cuadras del centro de San Justo.</span></p>
             </div>
             
             <div class="footer-info">
+                <h3><i class="fa-solid fa-phone"></i> Contacto</h3>
+                <p><i class="fa-brands fa-whatsapp"></i> <span>+54 911 6434 4822</span></p>
+                <p><i class="fa-solid fa-phone"></i> <span>3970-1945</span></p>
+                <br>
                 <h3><i class="fa-regular fa-clock"></i> Horarios de Atención</h3>
                 <p><i class="fa-solid fa-calendar-day"></i> <span><strong>Lunes a Viernes:</strong><br>08:00 a 20:00 hs.</span></p>
                 <p><i class="fa-solid fa-calendar-week"></i> <span><strong>Sábados:</strong><br>08:00 a 14:00 hs.</span></p>
-                <br>
-                <a href="https://baconsultorios.agendapro.com/ar" target="_blank" class="btn-primario" style="padding: 8px 20px; font-size: 0.9em;">
-                    Ver Agenda Online
-                </a>
             </div>
 
             <div class="mapa-container">
@@ -320,50 +461,104 @@
             </div>
         </div>
         <div class="copyright">
-            &copy; 2024 B.A. Consultorios Médicos. Todos los derechos reservados.
+            © 2024 B.A. Consultorios Médicos. Todos los derechos reservados.
         </div>
     </footer>
 
     <script>
-        // DATOS SEPARADOS
-        const especialidades = [
-            "Cardiología infantil y adultos", "Clínica médica", "Cirugía general", 
-            "Cirugía plástica", "Dermatología infantil y adultos", "Diabetología", 
-            "Endocrinología", "Flebología", "Gastroenterología", "Ginecología", 
-            "Hematología", "Hepatología", "Infectología", "Neumonología", 
-            "Neurología infantil y adultos", "Nutricionista infantil y adultos", 
-            "Obstetricia", "Oftalmología infantil y adultos", "Otorrino infantil y adultos", 
-            "Pediatría", "Psiquiatría", "Traumatología infantil y adultos", 
-            "Urología infantil y adultos", "Fertilidad", "Proctología", "Alergia", 
-            "Psicología", "Psicopedagogía", "Reumatología", "Neumonología infantil"
+        // DATOS CON ÍCONOS Y DESCRIPCIONES EJEMPLO (Se pueden ajustar)
+        // Ejemplo de estructura: { name: "...", icon: "fa-...", description: "..." }
+        const especialidadesArr = [
+            { name: "Cardiología infantil y adultos", icon: "heart-pulse", description: "Para la salud del corazón de toda la familia." },
+            { name: "Clínica médica", icon: "stethoscope", description: "Atención integral y diagnósticos precisos." },
+            { name: "Cirugía general", icon: "scalpel-path", description: "Procedimientos quirúrgicos con tecnología de punta." },
+            { name: "Cirugía plástica", icon: "scissors-ruler", description: "Consultas y procedimientos estéticos y reconstructivos." },
+            { name: "Dermatología infantil y adultos", icon: "hand-sparkles", description: "Cuidado de la piel para todas las edades." },
+            { name: "Diabetología", icon: "pills", description: "Control y tratamiento integral de la diabetes." },
+            { name: "Endocrinología", icon: "hormone", description: "Equilibrio hormonal y trastornos glandulares." },
+            { name: "Flebología", icon: "venous-health", description: "Salud de las venas y tratamiento de várices." },
+            { name: "Gastroenterología", icon: "stomach-intestine", description: "Para el diagnóstico y tratamiento de trastornos digestivos." },
+            { name: "Ginecología", icon: "venus", description: "Cuidado integral de la salud femenina." },
+            { name: "Hematología", icon: "droplet", description: "Atención de enfermedades de la sangre." },
+            { name: "Hepatología", icon: "liver", description: "Especialistas en enfermedades del hígado." },
+            { name: "Infectología", icon: "bacteria", description: "Tratamiento y prevención de enfermedades infecciosas." },
+            { name: "Neumonología", icon: "lungs", description: "Cuidado de los pulmones y enfermedades respiratorias." },
+            { name: "Neurología infantil y adultos", icon: "brain", description: "Atención de trastornos neurológicos para todas las edades." },
+            { name: "Nutricionista infantil y adultos", icon: "apple-alt", description: "Planes nutricionales y alimentación saludable." },
+            { name: "Obstetricia", icon: "baby-carriage", description: "Cuidado integral durante el embarazo y el parto." },
+            { name: "Oftalmología infantil y adultos", icon: "eye", description: "Exámenes de la vista y salud ocular." },
+            { name: "Otorrino infantil y adultos", icon: "ear", description: "Atención de oído, nariz y garganta." },
+            { name: "Pediatría", icon: "baby", description: "Cuidado integral de la salud de los más pequeños." },
+            { name: "Psiquiatría", icon: "brain", description: "Tratamiento de trastornos mentales." },
+            { name: "Traumatología infantil y adultos", icon: "crutch", description: "Atención de lesiones y trastornos musculoesqueléticos." },
+            { name: "Urología infantil y adultos", icon: "kidney", description: "Salud del tracto urinario y el sistema reproductor masculino." },
+            { name: "Fertilidad", icon: "dove", description: "Atención integral de la salud reproductiva." },
+            { name: "Proctología", icon: "stomach-intestine", description: "Tratamiento de trastornos del colon, recto y ano." },
+            { name: "Alergia", icon: "shield-pill", description: "Detección y tratamiento de alergias." },
+            { name: "Psicología", icon: "headset", description: "Atención psicológica y psicoterapia." },
+            { name: "Psicopedagogía", icon: "head-side-brain", description: "Atención y tratamiento de trastornos del aprendizaje." },
+            { name: "Reumatología", icon: "joints", description: "Atención de enfermedades de las articulaciones y los huesos." },
+            { name: "Neumonología infantil", icon: "lungs-infantil", description: "Cuidado respiratorio para los más pequeños." }
         ];
 
-        const estudios = [
-            "Laboratorio", "Ecografías", "Ecodoppler", "Electrocardiograma", 
-            "Electroencefalograma", "Holter", "Presurometrías", "OBI", "Test neurológicos"
+        const estudiosArr = [
+            { name: "Laboratorio", icon: "flask" },
+            { name: "Ecografías", icon: "sound-waves" },
+            { name: "Ecodoppler", icon: "doppler" },
+            { name: "Electrocardiograma", icon: "heart-beat" },
+            { name: "Electroencefalograma", icon: "brain" },
+            { name: "Holter", icon: "watch" },
+            { name: "Presurometrías", icon: "pills" },
+            { name: "OBI", icon: "obi" },
+            { name: "Test neurológicos", icon: "test" }
         ];
 
         // ELEMENTOS DEL DOM
         const gridEsp = document.getElementById('grid-especialidades');
         const gridEst = document.getElementById('grid-estudios');
         const inputBuscador = document.getElementById('buscador-esp');
-        const btnVerTodas = document.getElementById('btn-ver-todas-esp');
         
-        let mostrandoTodas = false;
-
-        // FUNCIÓN PARA CREAR CARDS
-        function generarHTMLCards(lista, tipoIcono) {
+        // FUNCIÓN PARA CREAR CARDS ACORDEÓN (Especialidades)
+        function generarHTMLCardsEspecialidades(lista) {
             return lista.map(item => {
-                let mensajeWa = `Hola, quiero consultar por ${item}.`;
+                let mensajeWa = `Hola, quiero consultar por ${item.name}.`;
                 let urlWa = `https://wa.me/5491164344822?text=${encodeURIComponent(mensajeWa)}`;
                 
                 return `
-                    <div class="card">
-                        <div>
-                            <div class="card-icono"><i class="fa-solid fa-${tipoIcono}"></i></div>
-                            <h4>${item}</h4>
+                    <details class="card-acordeon">
+                        <summary class="card-summary">
+                            <div class="summary-content">
+                                <div class="card-icono"><i class="fa-solid fa-${item.icon}"></i></div>
+                                <h4>${item.name}</h4>
+                            </div>
+                            <i class="fa-solid fa-chevron-down summary-chevron"></i>
+                        </summary>
+                        <div class="card-content">
+                            <p>${item.description}</p>
+                            <a href="${urlWa}" target="_blank" class="btn-secundario">
+                                <i class="fa-brands fa-whatsapp"></i> Consultar WhatsApp
+                            </a>
                         </div>
-                        <a href="${urlWa}" target="_blank" class="btn-secundario">Consultar</a>
+                    </details>
+                `;
+            }).join('');
+        }
+
+        // FUNCIÓN PARA CREAR CARDS SIMPLES (Estudios)
+        function generarHTMLCardsEstudios(lista) {
+            return lista.map(item => {
+                let mensajeWa = `Hola, quiero consultar por el estudio ${item.name}.`;
+                let urlWa = `https://wa.me/5491164344822?text=${encodeURIComponent(mensajeWa)}`;
+                
+                return `
+                    <div class="card-estudio">
+                        <div>
+                            <div class="card-icono"><i class="fa-solid fa-${item.icon}"></i></div>
+                            <h4>${item.name}</h4>
+                        </div>
+                        <a href="${urlWa}" target="_blank" class="btn-secundario">
+                            <i class="fa-brands fa-whatsapp"></i> Consultar
+                        </a>
                     </div>
                 `;
             }).join('');
@@ -371,30 +566,16 @@
 
         // RENDER INICIAL
         function renderizarEspecialidades(filtro = '') {
-            let filtradas = especialidades.filter(e => e.toLowerCase().includes(filtro.toLowerCase()));
-            
-            if (!mostrandoTodas && filtro === '') {
-                // Mostrar solo las 6 primeras si no hay búsqueda y no se hizo clic en ver todas
-                gridEsp.innerHTML = generarHTMLCards(filtradas.slice(0, 6), 'stethoscope');
-                btnVerTodas.style.display = 'block';
-            } else {
-                // Mostrar todas o las filtradas
-                gridEsp.innerHTML = generarHTMLCards(filtradas, 'stethoscope');
-                btnVerTodas.style.display = filtro === '' ? 'none' : 'none'; // Ocultar botón si se busca o se muestran todas
-            }
+            let filtradas = especialidadesArr.filter(e => e.name.toLowerCase().includes(filtro.toLowerCase()));
+            gridEsp.innerHTML = generarHTMLCardsEspecialidades(filtradas);
         }
 
         // RENDER ESTUDIOS (Siempre se muestran todos, son pocos)
-        gridEst.innerHTML = generarHTMLCards(estudios, 'microscope');
+        gridEst.innerHTML = generarHTMLCardsEstudios(estudiosArr);
 
         // EVENTOS
         inputBuscador.addEventListener('input', (e) => {
             renderizarEspecialidades(e.target.value);
-        });
-
-        btnVerTodas.addEventListener('click', () => {
-            mostrandoTodas = true;
-            renderizarEspecialidades();
         });
 
         // Inicializar
