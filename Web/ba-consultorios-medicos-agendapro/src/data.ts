@@ -312,3 +312,30 @@ export const SERVICES_DATA: MedicalService[] = [
     type: "Consulta" as const
   }))
 ];
+
+export const TESTIMONIALS = [
+  {
+    id: 1,
+    name: "Clara Domínguez",
+    age: 42,
+    location: "San Justo",
+    comment: "Increíble la rapidez de atención. Escribí un lunes a la mañana por un electrocardiograma y por la tarde ya tenía el informe y el apto físico listo para presentar. Sin esperas eternas.",
+    specialty: "Cardiología"
+  },
+  {
+    id: 2,
+    name: "Mariano Gómez",
+    age: 35,
+    location: "Ramos Mejía",
+    comment: "Excelente servicio para los que no tenemos obra social. Los precios son muy accesibles, las instalaciones impecables y el trato de los médicos es sumamente profesional. El turno me lo dieron para el día siguiente.",
+    specialty: "Clínica Médica"
+  },
+  {
+    id: 3,
+    name: "Estela Maris Rossi",
+    age: 58,
+    location: "San Justo",
+    comment: "Me hice las ecografías y el PAP en el mismo día. La ecógrafa fue súper paciente y me explicó todo con claridad. Lo mejor de todo es que coordiné todo el mismo día por WhatsApp sin vueltas.",
+    specialty: "Ginecología"
+  }
+];

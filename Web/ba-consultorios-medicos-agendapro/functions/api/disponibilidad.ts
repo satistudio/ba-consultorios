@@ -1,26 +1,27 @@
 // Cloudflare Pages Function — corre en el servidor, nunca en el navegador.
 // Expone GET /api/disponibilidad y devuelve turnos disponibles reales (hoy/mañana)
-// por especialidad, sin exponer nunca el usuario/contraseña de AgendaPro al cliente.
+// por especialidad, sin exponer nunca el API key de AgendaPro al cliente.
 //
 // Requiere en Cloudflare Pages > Settings > Environment variables (como Secret):
-//   AGENDAPRO_USER = <usuario del panel Configuraciones > Integraciones > API Pública>
-//   AGENDAPRO_PASSWORD = <contraseña del mismo panel>
+//   AGENDAPRO_API_KEY = <api key v3 con scope bookings:read>
 //
 // Requiere completar functions/api/_services-map.json con location_id y
-// service_id reales (no son secretos, son IDs numéricos que te da soporte de AgendaPro).
+// service_id reales (no son secretos, son IDs numéricos).
 //
-// API: AgendaPro Public API v1 (Basic Auth)
-// GET https://agendapro.com/api/public/v1/services/{service_id}/available_hours?date=YYYY-MM-DD&location_id=X
+// Docs oficiales: https://developers.agendapro.com/reference/listavailableslots
 
 import servicesMap from "./_services-map.json";
 
 interface Env {
-  AGENDAPRO_USER: string;
-  AGENDAPRO_PASSWORD: string;
+  AGENDAPRO_API_KEY: string;
 }
 
-const AGENDAPRO_BASE = "https://agendapro.com/api/public/v1/services";
-const CACHE_TTL_SECONDS = 300; // 5 min — cuida la cuota diaria (1.000 consultas/día)
+interface SlotsMetadata {
+  slots_count: number;
+}
+
+const AGENDAPRO_BASE = "https://connect.agendapro.com/v3/available_slots";
+const CACHE_TTL_SECONDS = 300; // 5 min — cuida la cuota diaria de la API
 
 function todayISO(offsetDays = 0): string {
   const d = new Date();
@@ -29,19 +30,19 @@ function todayISO(offsetDays = 0): string {
 }
 
 async function fetchSlotsCount(
-  authHeader: string,
+  apiKey: string,
   locationId: number,
   serviceId: number,
   date: string
 ): Promise<number | null> {
   try {
-    const url = `${AGENDAPRO_BASE}/${serviceId}/available_hours?date=${date}&location_id=${locationId}`;
+    const url = `${AGENDAPRO_BASE}?location_id=${locationId}&service_id=${serviceId}&start_date=${date}`;
     const res = await fetch(url, {
-      headers: { Authorization: authHeader, Accept: "application/json" }
+      headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json" }
     });
     if (!res.ok) return null;
-    const json = (await res.json()) as { available_hours?: unknown[] };
-    return Array.isArray(json?.available_hours) ? json.available_hours.length : null;
+    const json = (await res.json()) as { data?: { metadata?: SlotsMetadata } };
+    return json?.data?.metadata?.slots_count ?? null;
   } catch {
     return null;
   }
@@ -53,18 +54,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
-  const user = context.env.AGENDAPRO_USER;
-  const password = context.env.AGENDAPRO_PASSWORD;
+  const apiKey = context.env.AGENDAPRO_API_KEY;
   const locationId = servicesMap.location_id;
 
-  if (!user || !password || !locationId) {
+  if (!apiKey || !locationId) {
     return new Response(
       JSON.stringify({ ok: false, reason: "not_configured" }),
       { status: 200, headers: { "content-type": "application/json" } }
     );
   }
 
-  const authHeader = "Basic " + btoa(`${user}:${password}`);
   const today = todayISO(0);
   const tomorrow = todayISO(1);
 
@@ -72,8 +71,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     servicesMap.specialties.map(async (s) => {
       if (!s.service_id) return { ...s, todayCount: null, tomorrowCount: null };
       const [todayCount, tomorrowCount] = await Promise.all([
-        fetchSlotsCount(authHeader, locationId, s.service_id, today),
-        fetchSlotsCount(authHeader, locationId, s.service_id, tomorrow)
+        fetchSlotsCount(apiKey, locationId, s.service_id, today),
+        fetchSlotsCount(apiKey, locationId, s.service_id, tomorrow)
       ]);
       return { ...s, todayCount, tomorrowCount };
     })

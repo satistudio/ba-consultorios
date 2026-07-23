@@ -1,0 +1,5 @@
+{
+  "_instrucciones": "place_id se completa solo la primera vez que la función corre (queda registrado acá abajo en los logs de Cloudflare, no hace falta que hagas nada). search_query ya está completo con los datos reales de BA.",
+  "place_id": "",
+  "search_query": "BA Consultorios Médicos, Almafuerte 3558, San Justo, La Matanza, Buenos Aires, Argentina"
+}

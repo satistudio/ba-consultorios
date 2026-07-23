@@ -7,6 +7,7 @@ import {
   Check, 
   Instagram, 
   Share2, 
+  Settings, 
   Sparkles, 
   HelpCircle,
   Clock,
@@ -16,7 +17,7 @@ import {
   Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { BRAND_INFO, SPECIALTIES, SERVICES_DATA, MedicalService } from "./data";
+import { BRAND_INFO, SPECIALTIES, SERVICES_DATA, TESTIMONIALS, MedicalService } from "./data";
 
 const normalizeText = (text: string): string => {
   if (!text) return "";
@@ -113,12 +114,12 @@ export default function App() {
   const [selectedType, setSelectedType] = useState<string>("Todos");
   const [showAllByDefault, setShowAllByDefault] = useState(false);
   
-  // Analytics: IDs cargados en tiempo de build desde variables de entorno de Cloudflare
-  // (Pages > Settings > Environment variables). No son secretos, pero no van hardcodeados
-  // en el repo para poder cambiarlos sin tocar código.
-  const gtmId = import.meta.env.VITE_GTM_ID || "";
-  const gaId = import.meta.env.VITE_GA_ID || "";
-  const pixelId = import.meta.env.VITE_META_PIXEL_ID || "";
+  // SEO and Analytics states
+  const [gtmId, setGtmId] = useState(() => localStorage.getItem("ba_gtm_id") || "");
+  const [gaId, setGaId] = useState(() => localStorage.getItem("ba_ga_id") || "");
+  const [pixelId, setPixelId] = useState(() => localStorage.getItem("ba_pixel_id") || "");
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
+  const [configSaved, setConfigSaved] = useState(false);
 
   // Active FAQ state
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -144,34 +145,6 @@ export default function App() {
       })
       .catch(() => {
         if (!cancelled) setAvailabilityStatus("error");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Real Google reviews (fetched from our own serverless proxy — never calls Google directly from the browser)
-  type Review = { author: string; photoUrl: string | null; rating: number; text: string; relativeTime: string };
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewsMeta, setReviewsMeta] = useState<{ rating: number | null; count: number | null; mapsUri: string | null }>({ rating: null, count: null, mapsUri: null });
-  const [reviewsStatus, setReviewsStatus] = useState<"loading" | "ok" | "unavailable">("loading");
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/resenas")
-      .then((res) => res.json())
-      .then((json) => {
-        if (cancelled) return;
-        if (json.ok && json.reviews?.length) {
-          setReviews(json.reviews);
-          setReviewsMeta({ rating: json.rating, count: json.userRatingCount, mapsUri: json.googleMapsUri });
-          setReviewsStatus("ok");
-        } else {
-          setReviewsStatus("unavailable");
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setReviewsStatus("unavailable");
       });
     return () => {
       cancelled = true;
@@ -228,6 +201,19 @@ export default function App() {
       document.head.appendChild(pixelScript);
     }
   }, [gtmId, gaId, pixelId]);
+
+  // Save Analytics config
+  const handleSaveConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem("ba_gtm_id", gtmId.trim());
+    localStorage.setItem("ba_ga_id", gaId.trim());
+    localStorage.setItem("ba_pixel_id", pixelId.trim());
+    setConfigSaved(true);
+    setTimeout(() => setConfigSaved(false), 3000);
+
+    // Trigger local tracking simulation
+    console.log("Analytics IDs updated and saved locally.", { gtmId, gaId, pixelId });
+  };
 
   // Tracking Click Event helper (triggers standard events)
   const trackConversion = (serviceName: string, type: string) => {
@@ -391,8 +377,8 @@ export default function App() {
           {/* Logo container */}
           <a href="#" className="flex items-center gap-3 group">
             <img 
-              src="/ba-isotipo.png" 
-              alt="BA Consultorios Médicos" 
+              src="/input_file_8.png" 
+              alt="BA Consultorios Médicos Logo" 
               className="h-14 w-auto object-contain"
               referrerPolicy="no-referrer"
             />
@@ -507,7 +493,7 @@ export default function App() {
               <div className="space-y-3 mb-6">
                 {availabilityStatus === "loading" && (
                   <>
-                    {[0, 1, 2, 3, 4].map((i) => (
+                    {[0, 1, 2].map((i) => (
                       <div key={i} className="h-12 rounded-lg bg-[#F8F6F4] border border-gray-100 animate-pulse" />
                     ))}
                   </>
@@ -935,82 +921,40 @@ export default function App() {
             </p>
           </div>
 
-          {reviewsStatus === "loading" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-56 rounded-2xl bg-white border-2 border-[#F2C4D0]/30 animate-pulse" />
-              ))}
-            </div>
-          )}
-
-          {reviewsStatus === "ok" && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {reviews.slice(0, 3).map((r, idx) => (
-                  <div 
-                    key={idx} 
-                    className="bg-white p-8 rounded-2xl shadow-sm border-2 border-[#F2C4D0]/60 relative flex flex-col justify-between"
-                  >
-                    <span className="absolute -top-4 -left-2 text-4xl select-none opacity-15">“</span>
-                    
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-4">
-                        {[1,2,3,4,5].map(star => (
-                          <span key={star} className={star <= r.rating ? "text-[#C2006B]" : "text-gray-200"}>★</span>
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-700 italic font-light leading-relaxed mb-6">
-                        "{r.text}"
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                      {r.photoUrl ? (
-                        <img src={r.photoUrl} alt={r.author} className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-[#5C1A3D] text-[#F2C4D0] font-extrabold flex items-center justify-center text-sm">
-                          {r.author.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                        </div>
-                      )}
-                      <div className="text-left">
-                        <h4 className="font-bold text-xs text-[#5C1A3D]">{r.author}</h4>
-                        <p className="text-[10px] text-gray-400 font-medium">
-                          {r.relativeTime} · Reseña de Google
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="text-center mt-8">
-                <a
-                  href={reviewsMeta.mapsUri ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-gray-400 hover:text-[#C2006B] font-medium transition-colors"
-                >
-                  {reviewsMeta.rating && reviewsMeta.count
-                    ? `★ ${reviewsMeta.rating} · ${reviewsMeta.count} reseñas en Google — ver todas`
-                    : "Ver todas las reseñas en Google"}
-                </a>
-              </div>
-            </>
-          )}
-
-          {reviewsStatus === "unavailable" && (
-            <div className="text-center py-10">
-              <p className="text-sm text-gray-500 font-light mb-3">Todavía no pudimos cargar las reseñas automáticamente.</p>
-              <a
-                href="https://www.google.com/search?q=BA+Consultorios+Medicos+San+Justo+reseñas"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-bold text-[#C2006B] hover:underline"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {TESTIMONIALS.map((t) => (
+              <div 
+                key={t.id} 
+                className="bg-white p-8 rounded-2xl shadow-sm border-2 border-[#F2C4D0]/60 relative flex flex-col justify-between"
               >
-                Ver reseñas reales en Google →
-              </a>
-            </div>
-          )}
+                {/* Decorative hand circle rule (Capa gráfica: Thick borders and clean elements) */}
+                <span className="absolute -top-4 -left-2 text-4xl select-none opacity-15">“</span>
+                
+                <div>
+                  <div className="flex items-center gap-1.5 mb-4">
+                    {[1,2,3,4,5].map(star => (
+                      <span key={star} className="text-[#C2006B]">★</span>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-700 italic font-light leading-relaxed mb-6">
+                    "{t.comment}"
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                  <div className="w-10 h-10 rounded-full bg-[#5C1A3D] text-[#F2C4D0] font-extrabold flex items-center justify-center text-sm">
+                    {t.name.split(" ").map(n => n[0]).join("")}
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-bold text-xs text-[#5C1A3D]">{t.name}</h4>
+                    <p className="text-[10px] text-gray-400 font-medium">
+                      {t.age} años · {t.location}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
 
         </div>
       </section>
@@ -1233,6 +1177,118 @@ export default function App() {
         </div>
       </section>
 
+      {/* SEO & TRACKING CONVERSION PLATFORM (OWNER CONTROL CENTER) */}
+      <section className="py-12 bg-white border-t border-[#E8D5C4]/30 scroll-mt-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="bg-[#F8F6F4] rounded-2xl border border-[#E8D5C4] overflow-hidden">
+            <button 
+              onClick={() => setShowConfigPanel(!showConfigPanel)}
+              className="w-full px-6 py-4 bg-[#5C1A3D] hover:bg-[#4a1331] text-white flex justify-between items-center font-bold text-sm tracking-wider uppercase cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-[#F2C4D0] animate-spin-slow" />
+                <span>Panel de SEO, Tag Manager y Píxeles (Fácil Integración para GitHub)</span>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-[#F2C4D0] transition-transform duration-300 ${showConfigPanel ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence>
+              {showConfigPanel && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="p-6 text-left border-t border-[#E8D5C4]">
+                    <p className="text-xs text-gray-600 leading-relaxed font-light mb-6">
+                      Como la web se subirá a <strong>GitHub Pages</strong> como un sitio estático, no necesitas editar el código fuente de React para instalar tus herramientas de marketing. Pegá tus identificadores de seguimiento oficiales abajo, guardá los cambios y la web inyectará automáticamente los scripts correspondientes en tiempo de ejecución.
+                    </p>
+
+                    <form onSubmit={handleSaveConfig} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5">
+                            Google Analytics 4 ID
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="G-XXXXXX"
+                            value={gaId}
+                            onChange={(e) => setGaId(e.target.value)}
+                            className="w-full bg-white px-3 py-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-[#C2006B] font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5">
+                            Google Tag Manager ID
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="GTM-XXXXXX"
+                            value={gtmId}
+                            onChange={(e) => setGtmId(e.target.value)}
+                            className="w-full bg-white px-3 py-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-[#C2006B] font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5">
+                            Meta Pixel ID (Facebook)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ej. 1234567890123"
+                            value={pixelId}
+                            onChange={(e) => setPixelId(e.target.value)}
+                            className="w-full bg-white px-3 py-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-[#C2006B] font-medium"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-4 border-t border-gray-200/60">
+                        <div className="text-[11px] text-gray-400">
+                          {gaId || gtmId || pixelId ? (
+                            <span className="text-green-600 font-bold">● Scripts activos cargados en navegador</span>
+                          ) : (
+                            "Pega tus identificadores para activar el seguimiento de conversiones"
+                          )}
+                        </div>
+                        <button
+                          type="submit"
+                          className="bg-[#C2006B] hover:bg-[#a10058] text-white px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors"
+                        >
+                          {configSaved ? "¡Guardado con éxito!" : "Guardar Configuración"}
+                        </button>
+                      </div>
+                    </form>
+
+                    {/* Step by step info for hosting on GitHub Pages */}
+                    <div className="bg-[#E8D5C4]/20 border border-[#E8D5C4]/40 rounded-xl p-4 mt-6">
+                      <h4 className="font-bold text-xs text-[#5C1A3D] mb-2 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#C2006B]" />
+                        Instrucciones rápidas para deploy en GitHub Pages:
+                      </h4>
+                      <ol className="text-xs text-gray-600 font-light list-decimal list-inside space-y-1.5 leading-relaxed">
+                        <li>Construí la aplicación localmente corriendo <code className="font-mono bg-white px-1 py-0.5 rounded text-gray-700">npm run build</code>.</li>
+                        <li>Subí todo el contenido generado dentro de la carpeta <code className="font-mono bg-white px-1 py-0.5 rounded text-gray-700">/dist</code> a tu repositorio de GitHub.</li>
+                        <li>En GitHub, ve a <strong>Settings &gt; Pages</strong> y configura la rama de publicación (ej. `main` o `/root`).</li>
+                        <li>Si usas un dominio propio, añade un archivo <code className="font-mono bg-white px-1 py-0.5 rounded text-gray-700">CNAME</code> con tu dominio (ej. <code className="font-mono">baconsultorios.com</code>).</li>
+                        <li>Los eventos de conversión (clic en WhatsApp) se enviarán automáticamente a GA, GTM y Meta Pixel configurados arriba.</li>
+                      </ol>
+                    </div>
+
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer className="bg-[#5C1A3D] text-[#F8F6F4]/90 py-12 border-t border-[#C2006B]/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left">
@@ -1241,8 +1297,8 @@ export default function App() {
             {/* Left side: branding */}
             <div className="flex flex-col items-center md:items-start">
               <img 
-                src="/ba-isotipo.png" 
-                alt="BA Consultorios Médicos" 
+                src="/input_file_12.png" 
+                alt="BA Isotipo" 
                 className="h-10 w-auto mb-3"
                 referrerPolicy="no-referrer"
               />

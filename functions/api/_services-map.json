@@ -1,11 +1,14 @@
 {
-  "_instrucciones": "Completar con los IDs reales de AgendaPro. Se obtienen desde AgendaPro > Configuraciones > Integraciones (v3 / Connect), o pidiéndolos al chat de soporte: 'Necesito company_id, locations_id, services_id de cada especialidad'. NO subir credenciales a este archivo, solo IDs numéricos (no son secretos).",
-  "location_id": 0,
+  "_instrucciones": "location_id y service_id confirmados con soporte AgendaPro + Dani. BA CONSULTORIOS MEDICOS, local único.",
+  "location_id": 9099,
   "specialties": [
-    { "name": "Cardiología & ECG", "icon": "❤️", "service_id": 0 },
-    { "name": "Ecografías (Gral & 5D)", "icon": "🧬", "service_id": 0 },
-    { "name": "Ginecología & PAP", "icon": "🌸", "service_id": 0 },
-    { "name": "Podología", "icon": "🦶", "service_id": 0 },
-    { "name": "Pediatría", "icon": "👶", "service_id": 0 }
+    { "name": "Cardiología & ECG", "icon": "❤️", "service_id": 682555 },
+    { "name": "Pap + Colpo", "icon": "🌸", "service_id": 234961 },
+    { "name": "Ecografía TV", "icon": "🧬", "service_id": 244881 },
+    { "name": "Ecografía Mamaria", "icon": "🧬", "service_id": 244882 },
+    { "name": "Ecografía Abdominal", "icon": "🧬", "service_id": 932051 },
+    { "name": "Ecografía Obstétrica", "icon": "🧬", "service_id": 244884 },
+    { "name": "Podología", "icon": "🦶", "service_id": 272526 },
+    { "name": "Pediatría", "icon": "👶", "service_id": 223075 }
   ]
 }
