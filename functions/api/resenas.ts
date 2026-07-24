@@ -67,12 +67,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     });
   }
 
-  const detailsRes = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
-    headers: {
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "rating,userRatingCount,googleMapsUri,reviews"
+  const detailsRes = await fetch(
+    `https://places.googleapis.com/v1/places/${placeId}?reviewsSort=NEWEST`,
+    {
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "rating,userRatingCount,googleMapsUri,reviews"
+      }
     }
-  });
+  );
 
   if (!detailsRes.ok) {
     return new Response(JSON.stringify({ ok: false, reason: "api_error" }), {
@@ -88,13 +91,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     reviews?: GoogleReview[];
   };
 
-  const reviews = (details.reviews ?? []).map((r) => ({
-    author: r.authorAttribution?.displayName ?? "Paciente de Google",
-    photoUrl: r.authorAttribution?.photoUri ?? null,
-    rating: r.rating ?? 5,
-    text: r.text?.text ?? "",
-    relativeTime: r.relativePublishTimeDescription ?? ""
-  }));
+  // Google Place Details siempre devuelve un máximo de 5 reseñas (limitación de la API,
+  // no nuestra); de esas, nos quedamos solo con las de 4-5 estrellas.
+  const reviews = (details.reviews ?? [])
+    .filter((r) => (r.rating ?? 0) >= 4)
+    .map((r) => ({
+      author: r.authorAttribution?.displayName ?? "Paciente de Google",
+      photoUrl: r.authorAttribution?.photoUri ?? null,
+      rating: r.rating ?? 5,
+      text: r.text?.text ?? "",
+      relativeTime: r.relativePublishTimeDescription ?? ""
+    }));
 
   const body = JSON.stringify({
     ok: true,

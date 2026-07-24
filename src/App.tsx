@@ -13,10 +13,16 @@ import {
   ArrowRight,
   ExternalLink,
   ChevronDown,
-  Info
+  Info,
+  Heart,
+  Flower2,
+  Waves,
+  Footprints,
+  Baby,
+  UserRound
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { BRAND_INFO, SPECIALTIES, SERVICES_DATA, MedicalService } from "./data";
+import { BRAND_INFO, SPECIALTIES, SERVICES_DATA, TEAM, INSTALLATION_PHOTOS, MedicalService } from "./data";
 
 const normalizeText = (text: string): string => {
   if (!text) return "";
@@ -124,8 +130,70 @@ export default function App() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
+  // Orden médica: form state
+  const [orderForm, setOrderForm] = useState({ name: "", email: "", phone: "", consent: false });
+  const [orderFile, setOrderFile] = useState<File | null>(null);
+  const [orderStatus, setOrderStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [orderErrorMsg, setOrderErrorMsg] = useState<string>("");
+
+  const ORDER_MAX_BYTES = 10 * 1024 * 1024;
+  const ORDER_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
+
+  const handleOrderFileChange = (file: File | null) => {
+    setOrderErrorMsg("");
+    if (!file) {
+      setOrderFile(null);
+      return;
+    }
+    if (!ORDER_ALLOWED_TYPES.includes(file.type)) {
+      setOrderErrorMsg("Formato no admitido. Subí una foto (JPG, PNG) o un PDF.");
+      setOrderFile(null);
+      return;
+    }
+    if (file.size > ORDER_MAX_BYTES) {
+      setOrderErrorMsg("El archivo pesa demasiado (máximo 10MB).");
+      setOrderFile(null);
+      return;
+    }
+    setOrderFile(file);
+  };
+
+  const handleOrderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderFile || !orderForm.name.trim() || !orderForm.email.trim() || !orderForm.phone.trim() || !orderForm.consent) {
+      setOrderErrorMsg("Completá todos los campos, adjuntá la orden y aceptá el consentimiento.");
+      return;
+    }
+    setOrderStatus("sending");
+    setOrderErrorMsg("");
+    try {
+      const fd = new FormData();
+      fd.append("name", orderForm.name.trim());
+      fd.append("email", orderForm.email.trim());
+      fd.append("phone", orderForm.phone.trim());
+      fd.append("consent", "true");
+      fd.append("file", orderFile);
+
+      const res = await fetch("/api/enviar-orden", { method: "POST", body: fd });
+      const json = await res.json();
+
+      if (json.ok) {
+        setOrderStatus("sent");
+        trackConversion("Orden médica enviada", "Lead");
+        setOrderForm({ name: "", email: "", phone: "", consent: false });
+        setOrderFile(null);
+      } else {
+        setOrderStatus("error");
+        setOrderErrorMsg("No pudimos enviar la orden. Probá de nuevo o escribinos por WhatsApp.");
+      }
+    } catch {
+      setOrderStatus("error");
+      setOrderErrorMsg("No pudimos enviar la orden. Probá de nuevo o escribinos por WhatsApp.");
+    }
+  };
+
   // Real availability data (fetched from our own serverless proxy — never calls AgendaPro directly from the browser)
-  type AvailabilityItem = { name: string; icon: string; todayCount: number | null; tomorrowCount: number | null };
+  type AvailabilityItem = { name: string; icon: string; status: "today" | "tomorrow" | "soon" | "none" | "error"; count: number; dayLabel: string | null };
   const [availability, setAvailability] = useState<AvailabilityItem[] | null>(null);
   const [availabilityStatus, setAvailabilityStatus] = useState<"loading" | "ok" | "not_configured" | "error">("loading");
 
@@ -163,7 +231,8 @@ export default function App() {
       .then((json) => {
         if (cancelled) return;
         if (json.ok && json.reviews?.length) {
-          setReviews(json.reviews);
+          const shuffled = [...json.reviews].sort(() => Math.random() - 0.5);
+          setReviews(shuffled);
           setReviewsMeta({ rating: json.rating, count: json.userRatingCount, mapsUri: json.googleMapsUri });
           setReviewsStatus("ok");
         } else {
@@ -402,7 +471,9 @@ export default function App() {
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
             <a href="#propuesta" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Propuesta</a>
             <a href="#directorio" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Especialidades y Estudios</a>
+            <a href="#equipo" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Nuestro Equipo</a>
             <a href="#reserva-online" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Reservar online</a>
+            <a href="#subir-orden" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Subir orden médica</a>
             <a href="#testimonios" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Opiniones</a>
             <a href="#contacto" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Contacto</a>
           </nav>
@@ -499,37 +570,57 @@ export default function App() {
                   <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Disponibilidad de Turnos</span>
                 </div>
-                <span className="text-xs font-medium text-[#5C1A3D] bg-[#F2C4D0] px-2 py-1 rounded">Hoy & Mañana</span>
+                <span className="text-xs font-medium text-[#5C1A3D] bg-[#F2C4D0] px-2 py-1 rounded">Esta semana</span>
               </div>
 
               <h3 className="font-bold text-lg text-[#5C1A3D] mb-4">Especialidades con turnos inmediatos:</h3>
               
-              <div className="space-y-3 mb-6">
+              <div className="space-y-2.5 mb-6">
                 {availabilityStatus === "loading" && (
                   <>
                     {[0, 1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-12 rounded-lg bg-[#F8F6F4] border border-gray-100 animate-pulse" />
+                      <div key={i} className="h-14 rounded-xl bg-[#F8F6F4] border border-gray-100 animate-pulse" />
                     ))}
                   </>
                 )}
 
                 {availabilityStatus === "ok" && availability?.map((item, idx) => {
-                  const label =
-                    item.todayCount === null && item.tomorrowCount === null
-                      ? "Consultar disponibilidad"
-                      : item.todayCount && item.todayCount > 0
-                      ? `${item.todayCount} turno${item.todayCount === 1 ? "" : "s"} hoy`
-                      : item.tomorrowCount && item.tomorrowCount > 0
-                      ? `Turnos para mañana`
-                      : "Consultar próxima fecha";
+                  const nameLower = item.name.toLowerCase();
+                  const Icon = nameLower.includes("cardio")
+                    ? Heart
+                    : nameLower.includes("pap") || nameLower.includes("colpo")
+                    ? Flower2
+                    : nameLower.includes("ecograf")
+                    ? Waves
+                    : nameLower.includes("podo")
+                    ? Footprints
+                    : nameLower.includes("pediatr")
+                    ? Baby
+                    : Sparkles;
+
+                  const statusConfig: Record<AvailabilityItem["status"], { label: string; dot: string; text: string; bg: string }> = {
+                    today: { label: `${item.count} turno${item.count === 1 ? "" : "s"} hoy`, dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
+                    tomorrow: { label: "Turnos mañana", dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
+                    soon: { label: item.dayLabel ? `Turnos el ${item.dayLabel}` : "Turnos esta semana", dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50" },
+                    none: { label: "Consultar próxima fecha", dot: "bg-gray-300", text: "text-gray-500", bg: "bg-gray-50" },
+                    error: { label: "Consultar disponibilidad", dot: "bg-gray-300", text: "text-gray-500", bg: "bg-gray-50" }
+                  };
+                  const cfg = statusConfig[item.status];
+
                   return (
-                    <div key={idx} className="flex justify-between items-center bg-[#F8F6F4] p-3 rounded-lg border border-gray-100 hover:border-[#F2C4D0] transition-colors">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">{item.icon}</span>
-                        <span className="text-sm font-semibold text-gray-800">{item.name}</span>
+                    <div 
+                      key={idx} 
+                      className="group flex items-center justify-between gap-3 bg-white p-2.5 pr-3 rounded-xl border border-gray-100 hover:border-[#C2006B]/25 hover:shadow-[0_2px_12px_-4px_rgba(194,0,107,0.15)] transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-[#F2C4D0]/40 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F2C4D0]/70 transition-colors">
+                          <Icon className="w-4 h-4 text-[#5C1A3D]" strokeWidth={2.25} />
+                        </div>
+                        <span className="text-sm font-semibold text-gray-800 truncate">{item.name}</span>
                       </div>
-                      <span className="text-xs font-bold text-[#C2006B] bg-[#C2006B]/5 px-2.5 py-1 rounded-full border border-[#C2006B]/10">
-                        {label}
+                      <span className={`flex items-center gap-1.5 text-[11px] font-bold ${cfg.text} ${cfg.bg} pl-2 pr-2.5 py-1.5 rounded-full flex-shrink-0`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                        {cfg.label}
                       </span>
                     </div>
                   );
@@ -923,6 +1014,74 @@ export default function App() {
         </div>
       </section>
 
+      {/* OUR TEAM */}
+      <section id="equipo" className="py-20 bg-white scroll-mt-20 border-t border-[#E8D5C4]/30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">NUESTRO EQUIPO</span>
+            <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2 mb-3">Las personas detrás de BA</h2>
+            <p className="text-sm text-gray-500 font-light max-w-xl mx-auto">
+              Vamos sumando a los profesionales de nuestro equipo, uno por uno.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {TEAM.map((member) => (
+              <div 
+                key={member.id} 
+                className="bg-[#F8F6F4] rounded-2xl overflow-hidden border border-[#E8D5C4]/40 hover:shadow-lg transition-shadow duration-300"
+              >
+                <div className="aspect-[4/5] overflow-hidden bg-[#F2C4D0]/30">
+                  <img 
+                    src={member.photoUrl} 
+                    alt={member.name} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-5">
+                  <h3 className="font-bold text-sm text-[#5C1A3D]">{member.name}</h3>
+                  <span className="inline-block text-[10px] font-bold text-[#C2006B] bg-[#C2006B]/5 border border-[#C2006B]/10 rounded-full px-2 py-0.5 mt-1.5 mb-3">
+                    {member.specialty}
+                  </span>
+                  <p className="text-xs text-gray-500 font-light leading-relaxed">{member.bioLine}</p>
+                </div>
+              </div>
+            ))}
+
+            {Array.from({ length: Math.max(0, 4 - TEAM.length) }).map((_, i) => (
+              <div 
+                key={`soon-${i}`} 
+                className="rounded-2xl border-2 border-dashed border-[#E8D5C4] flex flex-col items-center justify-center text-center p-6 min-h-[280px]"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#F2C4D0]/30 flex items-center justify-center mb-3">
+                  <UserRound className="w-5 h-5 text-[#C2006B]/60" strokeWidth={1.75} />
+                </div>
+                <p className="text-xs text-gray-400 font-medium">Sumando más profesionales del equipo</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* INSTALLATIONS GALLERY — real photos, only renders once populated */}
+      {INSTALLATION_PHOTOS.length > 0 && (
+        <section className="py-20 bg-[#F8F6F4] border-t border-[#E8D5C4]/30">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">NUESTRAS INSTALACIONES</span>
+              <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2">Conocé BA por dentro</h2>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {INSTALLATION_PHOTOS.map((photo, idx) => (
+                <div key={idx} className="aspect-square rounded-2xl overflow-hidden border border-[#E8D5C4]/40">
+                  <img src={photo.src} alt={photo.alt} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* REVIEWS & TESTIMONIALS */}
       <section id="testimonios" className="py-20 bg-[#F8F6F4] border-t border-b border-[#E8D5C4]/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1115,6 +1274,106 @@ export default function App() {
         </div>
       </section>
 
+      {/* UPLOAD MEDICAL ORDER */}
+      <section id="subir-orden" className="py-20 bg-[#F8F6F4] scroll-mt-20 border-t border-[#E8D5C4]/30">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">¿NO ENTENDÉS TU ORDEN MÉDICA?</span>
+            <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2 mb-3">Subila y nosotros te ayudamos</h2>
+            <p className="text-sm text-gray-500 font-light max-w-lg mx-auto">
+              Si tenés una orden y no sabés qué estudio o especialidad buscar, mandanosla junto con tus datos. El equipo de BA se contacta con vos para orientarte.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E8D5C4]/40 shadow-sm">
+            {orderStatus === "sent" ? (
+              <div className="text-center py-8">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-7 h-7 text-emerald-600" />
+                </div>
+                <h3 className="font-bold text-lg text-[#5C1A3D] mb-1">¡Listo, la recibimos!</h3>
+                <p className="text-sm text-gray-500 font-light">El equipo de BA se va a contactar con vos a la brevedad.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleOrderSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Nombre y apellido</label>
+                    <input
+                      type="text"
+                      required
+                      value={orderForm.name}
+                      onChange={(e) => setOrderForm({ ...orderForm, name: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Celular</label>
+                    <input
+                      type="tel"
+                      required
+                      value={orderForm.phone}
+                      onChange={(e) => setOrderForm({ ...orderForm, phone: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={orderForm.email}
+                    onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Foto o PDF de la orden</label>
+                  <label className="flex items-center justify-center gap-2 border-2 border-dashed border-[#E8D5C4] hover:border-[#C2006B]/40 rounded-lg py-6 cursor-pointer transition-colors text-center">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
+                      className="hidden"
+                      onChange={(e) => handleOrderFileChange(e.target.files?.[0] ?? null)}
+                    />
+                    {orderFile ? (
+                      <span className="text-sm font-semibold text-[#5C1A3D]">📎 {orderFile.name}</span>
+                    ) : (
+                      <span className="text-xs text-gray-400 font-medium">Tocá para elegir una foto o PDF (máx. 10MB)</span>
+                    )}
+                  </label>
+                </div>
+
+                <label className="flex items-start gap-2.5 pt-1">
+                  <input
+                    type="checkbox"
+                    checked={orderForm.consent}
+                    onChange={(e) => setOrderForm({ ...orderForm, consent: e.target.checked })}
+                    className="mt-0.5 w-4 h-4 accent-[#C2006B] flex-shrink-0"
+                  />
+                  <span className="text-[11px] text-gray-500 font-light leading-relaxed">
+                    Acepto que BA Consultorios Médicos utilice los datos y el documento que envío exclusivamente para contactarme respecto a este estudio, conforme a la Ley de Protección de Datos Personales N.º 25.326.
+                  </span>
+                </label>
+
+                {orderErrorMsg && <p className="text-xs text-red-500 font-medium">{orderErrorMsg}</p>}
+
+                <button
+                  type="submit"
+                  disabled={orderStatus === "sending"}
+                  className="w-full bg-[#C2006B] hover:bg-[#a10058] disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
+                >
+                  {orderStatus === "sending" ? "Enviando..." : "Enviar orden médica"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* CONTACT, TIMETABLE & MAP */}
       <section id="contacto" className="py-20 bg-[#F8F6F4] scroll-mt-20 border-t border-[#E8D5C4]/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1195,36 +1454,15 @@ export default function App() {
                   </a>
                 </div>
 
-                {/* Map graphics wrapper */}
-                <div className="flex-1 bg-gray-100 rounded-xl relative overflow-hidden border border-gray-200">
-                  {/* Fake map styled elements to look ultra professional */}
-                  <div className="absolute inset-0 bg-[#e5e3df] flex flex-col justify-center items-center p-8 text-center">
-                    <div className="relative z-10">
-                      {/* Big Map pin illustration */}
-                      <div className="w-14 h-14 bg-[#5C1A3D] rounded-full flex items-center justify-center text-white text-xl shadow-lg border-2 border-white mx-auto animate-bounce mb-3">
-                        🏥
-                      </div>
-                      <h4 className="font-extrabold text-[#5C1A3D] text-base">BA Consultorios Médicos</h4>
-                      <p className="text-xs text-gray-600 font-medium max-w-xs mt-1">
-                        Almafuerte 3558, San Justo.<br />
-                        Entre Paraguay y Eizaguirre. Excelente accesibilidad desde toda La Matanza.
-                      </p>
-                      
-                      <a 
-                        href="https://maps.google.com/?q=Almafuerte+3558,+San+Justo,+La+Matanza" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-block bg-[#C2006B] hover:bg-[#a10058] text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider mt-4 transition-colors"
-                      >
-                        📍 Cómo llegar con GPS
-                      </a>
-                    </div>
-                    {/* Simulated grid lines for map */}
-                    <div className="absolute top-1/4 left-0 right-0 h-[1px] bg-white opacity-40"></div>
-                    <div className="absolute top-2/3 left-0 right-0 h-[1px] bg-white opacity-40"></div>
-                    <div className="absolute left-1/3 top-0 bottom-0 w-[1px] bg-white opacity-40"></div>
-                    <div className="absolute left-2/3 top-0 bottom-0 w-[1px] bg-white opacity-40"></div>
-                  </div>
+                <div className="flex-1 rounded-xl overflow-hidden border border-gray-200">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.9430887002068!2d-58.5548508!3d-34.6813858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcc7e7a188c227%3A0x2b693e1d88229b3!2sBA%20Consultorios%20M%C3%A9dicos%20-%20Cl%C3%ADnica%20de%20Especialidades%20en%20San%20Justo!5e0!3m2!1ses-419!2sar!4v1784852093873!5m2!1ses-419!2sar"
+                    title="Ubicación de BA Consultorios Médicos en San Justo"
+                    className="w-full h-full"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
                 </div>
               </div>
             </div>

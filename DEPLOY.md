@@ -55,3 +55,22 @@ GitHub Pages puede quedar como respaldo, pero no correrá `/api/disponibilidad`.
 6. Costo: Google da una cuota gratis mensual (créditos). Con el caché de 24hs
    esto hace como máximo ~30 llamadas al mes — muy por debajo del free tier.
 
+## Envío de órdenes médicas por mail (functions/api/enviar-orden.ts)
+
+1. Crear cuenta gratis en [resend.com](https://resend.com/) (hasta 3.000
+   mails/mes, 100/día — de sobra para esto).
+2. Dashboard de Resend → **API Keys → Create API Key** (permiso "Sending access"
+   alcanza).
+3. Cloudflare Pages → tu proyecto → Settings → Environment variables → Add secret:
+   `RESEND_API_KEY` = `<la key>`
+4. **Importante sobre el remitente:** por ahora el mail sale desde
+   `onboarding@resend.dev` (dominio de prueba de Resend) — funciona, pero tiene
+   más chance de caer en spam. Cuando BA tenga su propio dominio (`.com.ar` o
+   similar), conviene verificarlo en Resend (Dashboard → Domains → Add Domain,
+   agregar 2-3 registros DNS) y cambiar el `from` en
+   `functions/api/enviar-orden.ts` a algo como
+   `BA Consultorios Médicos <ordenes@baconsultoriosmedicos.com.ar>`.
+5. El mail siempre llega a `baconsultoriosmedicos@gmail.com` con el mismo
+   asunto y cuerpo, y la orden adjunta. Revisar la carpeta de spam las primeras
+   veces por el punto anterior.
+

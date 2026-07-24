@@ -312,3 +312,33 @@ export const SERVICES_DATA: MedicalService[] = [
     type: "Consulta" as const
   }))
 ];
+
+// Equipo médico — mismo formato (foto, nombre+especialidad, una frase corta) para todos,
+// sin biografías extensas ni superlativos, evitando favoritismo entre profesionales.
+export interface TeamMember {
+  id: string;
+  name: string;
+  specialty: string;
+  photoUrl: string;
+  bioLine: string;
+}
+
+export const TEAM: TeamMember[] = [
+  {
+    id: "francos",
+    name: "Dr. Héctor Francos",
+    specialty: "Cardiología Infantil y Adultos",
+    photoUrl: "/dr-francos-cardiologia.png",
+    bioLine: "Atiende en BA desde hace años, con foco en el control y seguimiento cardiológico de la comunidad de Zona Oeste."
+  }
+];
+
+// Galería de instalaciones reales — se completa con archivos que Dani confirme
+// (fotos reales del consultorio, sala de espera, recepción, etc.). La sección
+// no se renderiza si este array está vacío, para no mostrar espacios rotos.
+export const INSTALLATION_PHOTOS: { src: string; alt: string }[] = [
+  { src: "/instalacion-recepcion.jpg", alt: "Recepción de BA Consultorios Médicos" },
+  { src: "/instalacion-recepcionista.jpg", alt: "Equipo administrativo de BA atendiendo en recepción" },
+  { src: "/instalacion-pediatria.jpg", alt: "Pasillo de consultorios, sector pediatría" },
+  { src: "/instalacion-sala-espera.jpg", alt: "Sala de espera de BA Consultorios Médicos" }
+];

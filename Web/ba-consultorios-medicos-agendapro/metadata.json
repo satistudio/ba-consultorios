@@ -1,6 +1,0 @@
-{
-  "name": "BA Consultorios Médicos",
-  "description": "Página web oficial de BA Consultorios Médicos en San Justo. Especialidades médicas, estudios y prácticas con turnos rápidos por WhatsApp.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

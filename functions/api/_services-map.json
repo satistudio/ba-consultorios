@@ -1,13 +1,13 @@
 {
-  "_instrucciones": "location_id y service_id confirmados con soporte AgendaPro + Dani. BA CONSULTORIOS MEDICOS, local único.",
+  "_instrucciones": "location_id y service_id confirmados con soporte AgendaPro + Dani. Las ecografías no responden por location_id (error 'No Available Providers'), necesitan provider_id específico del prestador 'ECOGRAFIAS'.",
   "location_id": 9099,
   "specialties": [
     { "name": "Cardiología & ECG", "icon": "❤️", "service_id": 682555 },
     { "name": "Pap + Colpo", "icon": "🌸", "service_id": 234961 },
-    { "name": "Ecografía TV", "icon": "🧬", "service_id": 244881 },
-    { "name": "Ecografía Mamaria", "icon": "🧬", "service_id": 244882 },
-    { "name": "Ecografía Abdominal", "icon": "🧬", "service_id": 932051 },
-    { "name": "Ecografía Obstétrica", "icon": "🧬", "service_id": 244884 },
+    { "name": "Ecografía TV", "icon": "🧬", "service_id": 244881, "provider_id": 82112 },
+    { "name": "Ecografía Mamaria", "icon": "🧬", "service_id": 244882, "provider_id": 82112 },
+    { "name": "Ecografía Abdominal", "icon": "🧬", "service_id": 932051, "provider_id": 82112 },
+    { "name": "Ecografía Obstétrica", "icon": "🧬", "service_id": 244884, "provider_id": 82112 },
     { "name": "Podología", "icon": "🦶", "service_id": 272526 },
     { "name": "Pediatría", "icon": "👶", "service_id": 223075 }
   ]
