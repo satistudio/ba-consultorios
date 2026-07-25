@@ -130,6 +130,60 @@ export default function App() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
+  // Newsletter popup: aparece a los 5s, una sola vez por visitante.
+  // En móvil se muestra como banner inferior (no intersticial) para no caer
+  // en la penalización de Google por interstitials intrusivos en mobile.
+  const [showSubscribe, setShowSubscribe] = useState(false);
+  const [subForm, setSubForm] = useState({ name: "", email: "", consent: false });
+  const [subStatus, setSubStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("ba_newsletter_dismissed") === "1") return;
+    } catch {
+      // si localStorage no está disponible, seguimos igual
+    }
+    const timer = setTimeout(() => setShowSubscribe(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const dismissSubscribe = () => {
+    setShowSubscribe(false);
+    try {
+      localStorage.setItem("ba_newsletter_dismissed", "1");
+    } catch {
+      // ignorar
+    }
+  };
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subForm.name.trim() || !subForm.email.trim() || !subForm.consent) return;
+    setSubStatus("sending");
+    try {
+      const res = await fetch("/api/suscribir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: subForm.name.trim(), email: subForm.email.trim(), consent: true })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setSubStatus("sent");
+        trackConversion("Suscripción newsletter", "Lead");
+        try {
+          localStorage.setItem("ba_newsletter_dismissed", "1");
+        } catch {
+          // ignorar
+        }
+        setTimeout(() => setShowSubscribe(false), 2500);
+      } else {
+        setSubStatus("error");
+      }
+    } catch {
+      setSubStatus("error");
+    }
+  };
+
   // Derived studies quick search (broad matching: every word must appear, ignoring accents/case)
   const [derivedQuery, setDerivedQuery] = useState("");
   const derivedResults = useMemo(() => {
@@ -1670,9 +1724,9 @@ export default function App() {
             {/* Left side: branding */}
             <div className="flex flex-col items-center md:items-start">
               <img 
-                src="/ba-isotipo.png" 
+                src="/ba-isotipo-vino.png" 
                 alt="BA Consultorios Médicos" 
-                className="h-10 w-auto mb-3"
+                className="h-12 w-auto mb-3"
                 referrerPolicy="no-referrer"
               />
               <span className="font-black text-lg tracking-tight uppercase text-white">
@@ -1785,6 +1839,111 @@ export default function App() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* NEWSLETTER SUBSCRIBE — modal en desktop, banner inferior en móvil */}
+      <AnimatePresence>
+        {showSubscribe && !isBookingModalOpen && (
+          <>
+            {/* Overlay solo desktop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={dismissSubscribe}
+              className="hidden sm:block fixed inset-0 z-[55] bg-[#2C2C2C]/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ duration: 0.25 }}
+              className="fixed z-[56] bg-white shadow-2xl
+                         bottom-0 left-0 right-0 rounded-t-2xl
+                         sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2
+                         sm:rounded-2xl sm:max-w-md sm:w-full"
+            >
+              <div className="relative p-6 sm:p-8">
+                <button
+                  onClick={dismissSubscribe}
+                  aria-label="Cerrar"
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+
+                {subStatus === "sent" ? (
+                  <div className="text-center py-4">
+                    <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                      <Check className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <h3 className="font-extrabold text-lg text-[#5C1A3D]">¡Listo!</h3>
+                    <p className="text-sm text-gray-500 font-light mt-1">Te vamos a escribir con información útil sobre controles y prevención.</p>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-[11px] font-bold tracking-widest uppercase text-[#C2006B]">GRATIS</span>
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-[#5C1A3D] mt-1 mb-2 leading-tight">
+                      Recordatorios de control y prevención
+                    </h3>
+                    <p className="text-sm text-gray-500 font-light mb-5 leading-relaxed">
+                      Dejanos tu mail y te enviamos guías simples sobre chequeos por edad, señales a las que prestar atención y novedades de BA. Sin costo.
+                    </p>
+
+                    <form onSubmit={handleSubscribe} className="space-y-3">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Tu nombre"
+                        value={subForm.name}
+                        onChange={(e) => setSubForm({ ...subForm, name: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
+                      />
+                      <input
+                        type="email"
+                        required
+                        placeholder="Tu email"
+                        value={subForm.email}
+                        onChange={(e) => setSubForm({ ...subForm, email: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
+                      />
+                      <label className="flex items-start gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={subForm.consent}
+                          onChange={(e) => setSubForm({ ...subForm, consent: e.target.checked })}
+                          className="mt-0.5 w-4 h-4 accent-[#C2006B] flex-shrink-0"
+                        />
+                        <span className="text-[11px] text-gray-500 font-light leading-relaxed">
+                          Acepto recibir comunicaciones de BA Consultorios Médicos y el tratamiento de mis datos conforme a la Ley N.º 25.326. Puedo darme de baja cuando quiera.
+                        </span>
+                      </label>
+
+                      {subStatus === "error" && (
+                        <p className="text-xs text-red-500 font-medium">No pudimos registrarte. Probá de nuevo en unos minutos.</p>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={subStatus === "sending"}
+                        className="w-full bg-[#C2006B] hover:bg-[#a10058] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      >
+                        {subStatus === "sending" ? "Enviando..." : "Quiero recibirlas"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={dismissSubscribe}
+                        className="w-full text-[11px] text-gray-400 hover:text-gray-600 font-medium py-1 transition-colors cursor-pointer"
+                      >
+                        Ahora no
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
