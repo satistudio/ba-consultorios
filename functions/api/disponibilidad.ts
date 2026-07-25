@@ -33,12 +33,12 @@ function toISODate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-async function fetchSlotsCount(
+async function fetchSlots(
   authHeader: string,
   serviceId: number,
   date: string,
   scope: { locationId?: number; providerId?: number }
-): Promise<number | null> {
+): Promise<{ count: number; firstTimes: string[] } | null> {
   try {
     const scopeParam = scope.providerId
       ? `provider_id=${scope.providerId}`
@@ -48,8 +48,13 @@ async function fetchSlotsCount(
       headers: { Authorization: authHeader, Accept: "application/json" }
     });
     if (!res.ok) return null;
-    const json = (await res.json()) as { available_hours?: unknown[] };
-    return Array.isArray(json?.available_hours) ? json.available_hours.length : null;
+    const json = (await res.json()) as { available_hours?: { start_block?: string }[] };
+    if (!Array.isArray(json?.available_hours)) return null;
+    const firstTimes = json.available_hours
+      .map((h) => h.start_block)
+      .filter((t): t is string => typeof t === "string")
+      .slice(0, 3);
+    return { count: json.available_hours.length, firstTimes };
   } catch {
     return null;
   }
@@ -65,19 +70,20 @@ async function findNextAvailable(
   let sawAnyResponse = false;
   for (let offset = 0; offset < MAX_DAYS_AHEAD; offset++) {
     const d = dateAt(offset);
-    const count = await fetchSlotsCount(authHeader, serviceId, toISODate(d), scope);
-    if (count === null) continue; // fallo puntual de esa fecha, seguimos probando
+    const result = await fetchSlots(authHeader, serviceId, toISODate(d), scope);
+    if (result === null) continue; // fallo puntual de esa fecha, seguimos probando
     sawAnyResponse = true;
-    if (count > 0) {
+    if (result.count > 0) {
       return {
         status: offset === 0 ? "today" : offset === 1 ? "tomorrow" : "soon",
-        count,
+        count: result.count,
+        firstTimes: result.firstTimes,
         dayLabel: offset === 0 ? "hoy" : offset === 1 ? "mañana" : WEEKDAYS_ES[d.getDay()],
         date: toISODate(d)
       };
     }
   }
-  return { status: sawAnyResponse ? "none" : "error", count: 0, dayLabel: null, date: null };
+  return { status: sawAnyResponse ? "none" : "error", count: 0, firstTimes: [], dayLabel: null, date: null };
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -101,7 +107,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const items = await Promise.all(
     servicesMap.specialties.map(async (s) => {
-      if (!s.service_id) return { ...s, status: "error", count: 0, dayLabel: null, date: null };
+      if (!s.service_id) return { ...s, status: "error", count: 0, firstTimes: [], dayLabel: null, date: null };
       const scope = s.provider_id ? { providerId: s.provider_id } : { locationId };
       const next = await findNextAvailable(authHeader, s.service_id, scope);
       return { ...s, ...next };

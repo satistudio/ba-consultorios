@@ -22,7 +22,7 @@ import {
   UserRound
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { BRAND_INFO, SPECIALTIES, SERVICES_DATA, TEAM, INSTALLATION_PHOTOS, MedicalService } from "./data";
+import { BRAND_INFO, SPECIALTIES, SERVICES_DATA, TEAM, INSTALLATION_PHOTOS, DERIVED_STUDIES, MedicalService } from "./data";
 
 const normalizeText = (text: string): string => {
   if (!text) return "";
@@ -130,6 +130,18 @@ export default function App() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
+  // Derived studies quick search (broad matching: every word must appear, ignoring accents/case)
+  const [derivedQuery, setDerivedQuery] = useState("");
+  const derivedResults = useMemo(() => {
+    const q = normalizeText(derivedQuery.trim());
+    if (q.length < 3) return [];
+    const words = q.split(/\s+/);
+    return DERIVED_STUDIES.filter((s) => {
+      const haystack = normalizeText(`${s.category} ${s.name}`);
+      return words.every((w) => haystack.includes(w));
+    }).slice(0, 12);
+  }, [derivedQuery]);
+
   // Orden médica: form state
   const [orderForm, setOrderForm] = useState({ name: "", email: "", phone: "", consent: false });
   const [orderFile, setOrderFile] = useState<File | null>(null);
@@ -193,7 +205,7 @@ export default function App() {
   };
 
   // Real availability data (fetched from our own serverless proxy — never calls AgendaPro directly from the browser)
-  type AvailabilityItem = { name: string; icon: string; status: "today" | "tomorrow" | "soon" | "none" | "error"; count: number; dayLabel: string | null };
+  type AvailabilityItem = { name: string; icon: string; service_id?: number; status: "today" | "tomorrow" | "soon" | "none" | "error"; count: number; firstTimes: string[]; dayLabel: string | null };
   const [availability, setAvailability] = useState<AvailabilityItem[] | null>(null);
   const [availabilityStatus, setAvailabilityStatus] = useState<"loading" | "ok" | "not_configured" | "error">("loading");
 
@@ -474,6 +486,7 @@ export default function App() {
             <a href="#equipo" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Nuestro Equipo</a>
             <a href="#reserva-online" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Reservar online</a>
             <a href="#subir-orden" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Subir orden médica</a>
+            <a href="#sumate" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Sumate a BA</a>
             <a href="#testimonios" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Opiniones</a>
             <a href="#contacto" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Contacto</a>
           </nav>
@@ -599,7 +612,9 @@ export default function App() {
                     : Sparkles;
 
                   const statusConfig: Record<AvailabilityItem["status"], { label: string; dot: string; text: string; bg: string }> = {
-                    today: { label: `${item.count} turno${item.count === 1 ? "" : "s"} hoy`, dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
+                    today: item.count <= 2
+                      ? { label: `¡Último${item.count === 1 ? "" : "s"} ${item.count} turno${item.count === 1 ? "" : "s"} hoy!`, dot: "bg-[#C2006B]", text: "text-[#C2006B]", bg: "bg-[#C2006B]/10" }
+                      : { label: `${item.count} turnos hoy`, dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
                     tomorrow: { label: "Turnos mañana", dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
                     soon: { label: item.dayLabel ? `Turnos el ${item.dayLabel}` : "Turnos esta semana", dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50" },
                     none: { label: "Consultar próxima fecha", dot: "bg-gray-300", text: "text-gray-500", bg: "bg-gray-50" },
@@ -608,21 +623,38 @@ export default function App() {
                   const cfg = statusConfig[item.status];
 
                   return (
-                    <div 
-                      key={idx} 
-                      className="group flex items-center justify-between gap-3 bg-white p-2.5 pr-3 rounded-xl border border-gray-100 hover:border-[#C2006B]/25 hover:shadow-[0_2px_12px_-4px_rgba(194,0,107,0.15)] transition-all duration-200"
+                    <a
+                      key={idx}
+                      href={item.service_id
+                        ? `https://baconsultorios.site.agendapro.com/ar/sucursal/9099?services_id=${item.service_id}`
+                        : BRAND_INFO.agendaProUrl}
+                      onClick={() => trackConversion(`Card especialidad - ${item.name}`, "Reserva directa")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center justify-between gap-3 bg-white p-2.5 pr-3 rounded-xl border border-gray-100 hover:border-[#C2006B]/25 hover:shadow-[0_2px_12px_-4px_rgba(194,0,107,0.15)] transition-all duration-200 cursor-pointer"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-9 h-9 rounded-lg bg-[#F2C4D0]/40 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F2C4D0]/70 transition-colors">
                           <Icon className="w-4 h-4 text-[#5C1A3D]" strokeWidth={2.25} />
                         </div>
-                        <span className="text-sm font-semibold text-gray-800 truncate">{item.name}</span>
+                        <div className="min-w-0">
+                          <span className="block text-sm font-semibold text-gray-800 truncate">{item.name}</span>
+                          {item.firstTimes?.length > 0 && (item.status === "today" || item.status === "tomorrow" || item.status === "soon") ? (
+                            <span className="block text-[10px] text-gray-400 font-medium truncate">
+                              🕐 {item.firstTimes.join(" · ")}{item.count > item.firstTimes.length ? " y más" : ""}
+                            </span>
+                          ) : (
+                            <span className="block text-[10px] text-[#C2006B]/70 font-medium truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                              Reservar este servicio →
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <span className={`flex items-center gap-1.5 text-[11px] font-bold ${cfg.text} ${cfg.bg} pl-2 pr-2.5 py-1.5 rounded-full flex-shrink-0`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                         {cfg.label}
                       </span>
-                    </div>
+                    </a>
                   );
                 })}
 
@@ -913,7 +945,7 @@ export default function App() {
 
                     // Build dynamic WhatsApp text
                     const waText = encodeURIComponent(
-                      `Hola BA Consultorios Médicos. Quisiera solicitar un turno para la práctica o consulta: "${service.name}" (Especialidad: ${service.specialty}).`
+                      `Hola BA Consultorios Médicos. Quisiera solicitar un turno para la práctica o consulta: "${service.name}" (Especialidad: ${service.specialty}). (Vengo de la web)`
                     );
                     const serviceWaUrl = `https://wa.me/5491164344822?text=${waText}`;
 
@@ -988,7 +1020,7 @@ export default function App() {
             )}
           </div>
 
-          {/* Externally managed studies notice */}
+          {/* Externally managed studies notice + quick search */}
           <div className="bg-[#5C1A3D] text-white rounded-2xl p-8 mt-12 max-w-4xl mx-auto shadow-xl relative overflow-hidden">
             <div className="absolute right-0 top-0 w-32 h-32 bg-[#C2006B]/15 rounded-full blur-2xl pointer-events-none"></div>
             <div className="flex flex-col md:flex-row gap-6 items-center">
@@ -996,11 +1028,11 @@ export default function App() {
               <div className="text-left flex-1">
                 <h3 className="font-bold text-lg mb-1 text-[#F2C4D0]">Estudios Externos de Alta Complejidad</h3>
                 <p className="text-sm font-light leading-relaxed text-[#F8F6F4]/90">
-                  En BA Consultorios gestionamos las derivaciones para estudios complejos como <strong>Resonancia magnética, Tomografía computada y Densitometría ósea</strong>. Te brindamos las órdenes médicas, indicaciones detalladas y el seguimiento clínico correspondiente para coordinar con centros asociados.
+                  En BA Consultorios gestionamos las derivaciones para estudios complejos como <strong>Resonancia magnética, Tomografía computada y Densitometría ósea</strong> en centros de diagnóstico de confianza, con aranceles preferenciales para nuestros pacientes.
                 </p>
               </div>
               <a
-                href="https://wa.me/5491164344822?text=Hola!%20Quiero%20consultar%20por%20un%20estudio%20derivado%20(resonancia,%20tomografía,%20densitometría)."
+                href="https://wa.me/5491164344822?text=Hola!%20Quiero%20consultar%20por%20un%20estudio%20derivado%20(resonancia,%20tomografía,%20densitometría).%20(Vengo%20de%20la%20web)"
                 onClick={() => trackConversion("Estudios Externos", "Estudio derivado")}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1008,6 +1040,64 @@ export default function App() {
               >
                 Consultar derivación
               </a>
+            </div>
+
+            {/* Quick derived-studies search */}
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#F2C4D0] mb-2">
+                ¿Tenés una orden para un estudio? Fijate si lo gestionamos:
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5C1A3D]/50" />
+                <input
+                  type="text"
+                  value={derivedQuery}
+                  onChange={(e) => setDerivedQuery(e.target.value)}
+                  placeholder="Ej: resonancia rodilla, tomografía tórax, densitometría..."
+                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-[#2C2C2C] bg-white focus:outline-none focus:ring-2 focus:ring-[#C2006B]"
+                />
+              </div>
+
+              {derivedQuery.trim().length >= 3 && (
+                <div className="mt-3">
+                  {derivedResults.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {derivedResults.map((s, idx) => (
+                          <a
+                            key={idx}
+                            href={`https://wa.me/5491164344822?text=${encodeURIComponent(`Hola BA! Quiero consultar por la derivación del estudio: "${s.name}" (${s.category}). (Vengo de la web)`)}`}
+                            onClick={() => trackConversion(`Derivación - ${s.name}`, "Estudio derivado")}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between gap-2 bg-white/10 hover:bg-white/20 rounded-lg px-3.5 py-2.5 transition-colors group"
+                          >
+                            <div className="min-w-0">
+                              <span className="block text-sm font-semibold truncate">{s.name}</span>
+                              <span className="block text-[10px] text-[#F2C4D0] uppercase tracking-wider">{s.category}</span>
+                            </div>
+                            <ArrowRight className="w-4 h-4 flex-shrink-0 text-[#F2C4D0] group-hover:translate-x-0.5 transition-transform" />
+                          </a>
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-[#F8F6F4]/60 font-light mt-2">Tocá el estudio para consultar disponibilidad y arancel por WhatsApp.</p>
+                    </>
+                  ) : (
+                    <div className="bg-white/10 rounded-lg px-4 py-3 text-sm font-light">
+                      No lo encontramos con ese nombre — igual consultanos por{" "}
+                      <a
+                        href={`https://wa.me/5491164344822?text=${encodeURIComponent(`Hola BA! Tengo una orden para "${derivedQuery.trim()}" y quiero saber si gestionan la derivación. (Vengo de la web)`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-[#F2C4D0] underline"
+                      >
+                        WhatsApp
+                      </a>{" "}
+                      que lo verificamos al instante.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1063,18 +1153,32 @@ export default function App() {
         </div>
       </section>
 
-      {/* INSTALLATIONS GALLERY — real photos, only renders once populated */}
+      {/* INSTALLATIONS GALLERY — auto-scrolling carousel of real photos */}
       {INSTALLATION_PHOTOS.length > 0 && (
-        <section className="py-20 bg-[#F8F6F4] border-t border-[#E8D5C4]/30">
+        <section className="py-20 bg-[#F8F6F4] border-t border-[#E8D5C4]/30 overflow-hidden">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
               <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">NUESTRAS INSTALACIONES</span>
               <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2">Conocé BA por dentro</h2>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {INSTALLATION_PHOTOS.map((photo, idx) => (
-                <div key={idx} className="aspect-square rounded-2xl overflow-hidden border border-[#E8D5C4]/40">
-                  <img src={photo.src} alt={photo.alt} className="w-full h-full object-cover" />
+          </div>
+          <div className="relative">
+            <style>{`
+              @keyframes ba-marquee {
+                from { transform: translateX(0); }
+                to { transform: translateX(-50%); }
+              }
+              .ba-marquee-track {
+                animation: ba-marquee 35s linear infinite;
+              }
+              .ba-marquee-track:hover {
+                animation-play-state: paused;
+              }
+            `}</style>
+            <div className="flex ba-marquee-track w-max gap-4">
+              {[...INSTALLATION_PHOTOS, ...INSTALLATION_PHOTOS].map((photo, idx) => (
+                <div key={idx} className="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden border border-[#E8D5C4]/40 flex-shrink-0">
+                  <img src={photo.src} alt={photo.alt} className="w-full h-full object-cover" loading="lazy" />
                 </div>
               ))}
             </div>
@@ -1393,7 +1497,15 @@ export default function App() {
                     </div>
                     <div>
                       <h4 className="font-extrabold text-sm text-[#5C1A3D]">Dirección</h4>
-                      <p className="text-sm text-gray-600 font-light mt-0.5">{BRAND_INFO.address}</p>
+                      <a
+                        href="https://maps.google.com/?q=BA+Consultorios+Médicos,+Almafuerte+3558,+San+Justo,+La+Matanza"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackConversion("Contacto - Dirección Maps", "CTA")}
+                        className="block text-sm text-gray-600 font-light mt-0.5 hover:text-[#C2006B] hover:underline transition-colors"
+                      >
+                        {BRAND_INFO.address}
+                      </a>
                       <p className="text-xs text-[#C2006B] font-semibold mt-1">San Justo, Provincia de Buenos Aires (La Matanza)</p>
                     </div>
                   </div>
@@ -1417,25 +1529,49 @@ export default function App() {
                     </div>
                     <div>
                       <h4 className="font-extrabold text-sm text-[#5C1A3D]">Teléfono Directo</h4>
-                      <p className="text-sm text-gray-600 font-bold mt-0.5">Tel: {BRAND_INFO.phone}</p>
-                      <p className="text-sm text-green-600 font-bold mt-0.5">WhatsApp: {BRAND_INFO.whatsapp}</p>
+                      <a
+                        href="tel:+541139701945"
+                        className="block text-sm text-gray-600 font-bold mt-0.5 hover:text-[#C2006B] transition-colors"
+                      >
+                        Tel: {BRAND_INFO.phone}
+                      </a>
+                      <a
+                        href={BRAND_INFO.whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackConversion("Contacto - WhatsApp", "CTA")}
+                        className="block text-sm text-green-600 font-bold mt-0.5 hover:underline"
+                      >
+                        WhatsApp: {BRAND_INFO.whatsapp}
+                      </a>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Instagram link */}
+              {/* Social links */}
               <div className="mt-8 pt-8 border-t border-[#E8D5C4]/60">
                 <h4 className="font-bold text-sm text-[#5C1A3D] mb-3">Seguinos en redes</h4>
-                <a 
-                  href={BRAND_INFO.instagramUrl}
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="inline-flex items-center gap-2 bg-white hover:bg-[#F2C4D0]/40 text-[#5C1A3D] border border-gray-200 hover:border-[#5C1A3D]/40 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
-                >
-                  <Instagram className="w-4 h-4 text-[#C2006B]" />
-                  <span>{BRAND_INFO.instagramHandle}</span>
-                </a>
+                <div className="flex flex-wrap gap-2">
+                  <a 
+                    href={BRAND_INFO.instagramUrl}
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F2C4D0]/40 text-[#5C1A3D] border border-gray-200 hover:border-[#5C1A3D]/40 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    <Instagram className="w-4 h-4 text-[#C2006B]" />
+                    <span>{BRAND_INFO.instagramHandle}</span>
+                  </a>
+                  <a 
+                    href={BRAND_INFO.facebookUrl}
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F2C4D0]/40 text-[#5C1A3D] border border-gray-200 hover:border-[#5C1A3D]/40 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    <span className="w-4 h-4 rounded-full bg-[#C2006B] text-white flex items-center justify-center text-[10px] font-black leading-none">f</span>
+                    <span>BA Consultorios Médicos</span>
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -1471,6 +1607,61 @@ export default function App() {
         </div>
       </section>
 
+      {/* JOIN BA — professionals & health providers */}
+      <section id="sumate" className="py-20 bg-white scroll-mt-20 border-t border-[#E8D5C4]/30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">SUMATE A BA</span>
+            <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2 mb-3">¿Trabajamos juntos?</h2>
+            <p className="text-sm text-gray-500 font-light max-w-xl mx-auto">
+              BA crece con profesionales y aliados que comparten nuestra forma de atender: rapidez real y calidad para la comunidad de Zona Oeste.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Professionals card */}
+            <div className="bg-[#F8F6F4] rounded-2xl p-8 border border-[#E8D5C4]/40 flex flex-col">
+              <div className="w-12 h-12 rounded-xl bg-[#5C1A3D] flex items-center justify-center mb-5">
+                <UserRound className="w-6 h-6 text-[#F2C4D0]" strokeWidth={2} />
+              </div>
+              <h3 className="font-extrabold text-lg text-[#5C1A3D] mb-2">Soy profesional de la salud</h3>
+              <p className="text-sm text-gray-600 font-light leading-relaxed flex-1">
+                ¿Buscás un lugar de atención en Zona Oeste preparado para recibir a tus pacientes como corresponde? Sumate al staff de BA: consultorios equipados, gestión de turnos resuelta y una comunidad de +20.000 pacientes.
+              </p>
+              <a
+                href={`https://wa.me/5491164344822?text=${encodeURIComponent("Hola BA! Soy profesional de la salud y me interesa sumarme al staff / atender en sus consultorios. (Vengo de la web)")}`}
+                onClick={() => trackConversion("Sumate - Profesional", "Lead B2B")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 bg-[#5C1A3D] hover:bg-[#44122d] text-white text-center py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
+              >
+                Quiero sumarme
+              </a>
+            </div>
+
+            {/* Providers card */}
+            <div className="bg-[#F8F6F4] rounded-2xl p-8 border border-[#E8D5C4]/40 flex flex-col">
+              <div className="w-12 h-12 rounded-xl bg-[#C2006B] flex items-center justify-center mb-5">
+                <Sparkles className="w-6 h-6 text-white" strokeWidth={2} />
+              </div>
+              <h3 className="font-extrabold text-lg text-[#5C1A3D] mb-2">Tengo un comercio o servicio de salud</h3>
+              <p className="text-sm text-gray-600 font-light leading-relaxed flex-1">
+                Laboratorios, farmacias, ópticas, ortopedias y otros servicios de salud: adherite a la red de beneficios de BA y ofrecé descuentos a nuestros pacientes, ganando visibilidad en la comunidad.
+              </p>
+              <a
+                href={`https://wa.me/5491164344822?text=${encodeURIComponent("Hola BA! Tengo un comercio/servicio de salud y me interesa adherirme a su red de beneficios para pacientes. (Vengo de la web)")}`}
+                onClick={() => trackConversion("Sumate - Proveedor", "Lead B2B")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 bg-[#C2006B] hover:bg-[#a10058] text-white text-center py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
+              >
+                Quiero adherirme
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer className="bg-[#5C1A3D] text-[#F8F6F4]/90 py-12 border-t border-[#C2006B]/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left">
@@ -1499,6 +1690,22 @@ export default function App() {
               <a href="#reserva-online" className="hover:text-white transition-colors">Reservar online</a>
               <a href="#testimonios" className="hover:text-white transition-colors">Opiniones</a>
               <a href="#contacto" className="hover:text-white transition-colors">Ubicación</a>
+              <a 
+                href={BRAND_INFO.instagramUrl}
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-[#F2C4D0] hover:text-white transition-colors"
+              >
+                Instagram
+              </a>
+              <a 
+                href={BRAND_INFO.facebookUrl}
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-[#F2C4D0] hover:text-white transition-colors"
+              >
+                Facebook
+              </a>
               <a 
                 href={BRAND_INFO.whatsappUrl}
                 target="_blank" 

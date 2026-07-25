@@ -9,9 +9,12 @@
 
 interface Env {
   RESEND_API_KEY: string;
+  ORDER_DESTINATION_EMAIL?: string;
 }
 
-const DESTINATION_EMAIL = "baconsultoriosmedicos@gmail.com";
+// Sin dominio propio verificado en Resend, el destino DEBE ser la casilla con la
+// que se creó la cuenta de Resend. Configurable vía env ORDER_DESTINATION_EMAIL.
+const DEFAULT_DESTINATION = "baconsultoriosmedicos@gmail.com";
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
 
@@ -105,7 +108,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       },
       body: JSON.stringify({
         from: "BA Consultorios Médicos <onboarding@resend.dev>",
-        to: [DESTINATION_EMAIL],
+        to: [context.env.ORDER_DESTINATION_EMAIL || DEFAULT_DESTINATION],
         reply_to: email,
         subject,
         html,

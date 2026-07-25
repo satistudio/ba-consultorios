@@ -67,15 +67,19 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     });
   }
 
-  const detailsRes = await fetch(
+  // Intentamos pedir las más recientes; si esa variante del endpoint falla,
+  // caemos a la llamada estándar (orden "más relevantes" de Google).
+  const headers = {
+    "X-Goog-Api-Key": apiKey,
+    "X-Goog-FieldMask": "rating,userRatingCount,googleMapsUri,reviews"
+  };
+  let detailsRes = await fetch(
     `https://places.googleapis.com/v1/places/${placeId}?reviewsSort=NEWEST`,
-    {
-      headers: {
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": "rating,userRatingCount,googleMapsUri,reviews"
-      }
-    }
+    { headers }
   );
+  if (!detailsRes.ok) {
+    detailsRes = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, { headers });
+  }
 
   if (!detailsRes.ok) {
     return new Response(JSON.stringify({ ok: false, reason: "api_error" }), {
