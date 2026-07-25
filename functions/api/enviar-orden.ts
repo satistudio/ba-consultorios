@@ -117,7 +117,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
 
     if (!resendRes.ok) {
-      return new Response(JSON.stringify({ ok: false, reason: "send_failed" }), {
+      let detail = "";
+      try {
+        const errJson = (await resendRes.json()) as { message?: string; name?: string };
+        detail = errJson?.message || errJson?.name || "";
+      } catch {
+        detail = `HTTP ${resendRes.status}`;
+      }
+      return new Response(JSON.stringify({ ok: false, reason: "send_failed", detail }), {
         status: 200,
         headers: { "content-type": "application/json" }
       });

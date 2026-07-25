@@ -41,8 +41,30 @@ async function resolvePlaceId(apiKey: string): Promise<string | null> {
 interface GoogleReview {
   authorAttribution?: { displayName?: string; photoUri?: string };
   rating?: number;
-  text?: { text?: string };
+  text?: { text?: string; languageCode?: string };
+  originalText?: { text?: string; languageCode?: string };
   relativePublishTimeDescription?: string;
+  publishTime?: string;
+}
+
+// Google devuelve la fecha relativa en el idioma de la request; por las dudas
+// traducimos las formas más comunes en inglés.
+function esRelativeTime(input: string): string {
+  if (!input) return "";
+  const map: [RegExp, string][] = [
+    [/^a day ago$/i, "hace 1 día"],
+    [/^(\d+) days? ago$/i, "hace $1 días"],
+    [/^a week ago$/i, "hace 1 semana"],
+    [/^(\d+) weeks? ago$/i, "hace $1 semanas"],
+    [/^a month ago$/i, "hace 1 mes"],
+    [/^(\d+) months? ago$/i, "hace $1 meses"],
+    [/^a year ago$/i, "hace 1 año"],
+    [/^(\d+) years? ago$/i, "hace $1 años"]
+  ];
+  for (const [re, out] of map) {
+    if (re.test(input)) return input.replace(re, out);
+  }
+  return input;
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -69,16 +91,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   // Intentamos pedir las más recientes; si esa variante del endpoint falla,
   // caemos a la llamada estándar (orden "más relevantes" de Google).
+  // languageCode=es evita que Google devuelva las reseñas traducidas al inglés.
   const headers = {
     "X-Goog-Api-Key": apiKey,
     "X-Goog-FieldMask": "rating,userRatingCount,googleMapsUri,reviews"
   };
   let detailsRes = await fetch(
-    `https://places.googleapis.com/v1/places/${placeId}?reviewsSort=NEWEST`,
+    `https://places.googleapis.com/v1/places/${placeId}?languageCode=es&reviewsSort=NEWEST`,
     { headers }
   );
   if (!detailsRes.ok) {
-    detailsRes = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, { headers });
+    detailsRes = await fetch(
+      `https://places.googleapis.com/v1/places/${placeId}?languageCode=es`,
+      { headers }
+    );
   }
 
   if (!detailsRes.ok) {
@@ -103,8 +129,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       author: r.authorAttribution?.displayName ?? "Paciente de Google",
       photoUrl: r.authorAttribution?.photoUri ?? null,
       rating: r.rating ?? 5,
-      text: r.text?.text ?? "",
-      relativeTime: r.relativePublishTimeDescription ?? ""
+      text: r.originalText?.text ?? r.text?.text ?? "",
+      relativeTime: esRelativeTime(r.relativePublishTimeDescription ?? "")
     }));
 
   const body = JSON.stringify({

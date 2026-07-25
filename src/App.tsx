@@ -250,7 +250,11 @@ export default function App() {
         setOrderFile(null);
       } else {
         setOrderStatus("error");
-        setOrderErrorMsg("No pudimos enviar la orden. Probá de nuevo o escribinos por WhatsApp.");
+        setOrderErrorMsg(
+          json.detail
+            ? `No pudimos enviar la orden (${json.detail}). Probá de nuevo o escribinos por WhatsApp.`
+            : "No pudimos enviar la orden. Probá de nuevo o escribinos por WhatsApp."
+        );
       }
     } catch {
       setOrderStatus("error");
@@ -521,46 +525,87 @@ export default function App() {
       </div>
 
       {/* HEADER / NAVIGATION */}
-      <header id="main-header" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-[#E8D5C4]/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-          {/* Logo container */}
-          <a href="#" className="flex items-center gap-3 group">
+      <header
+        id="main-header"
+        className="sticky top-0 z-40 backdrop-blur-xl bg-gradient-to-b from-white via-white to-[#F8F6F4]/90 border-b border-[#E8D5C4]/60 shadow-[0_4px_24px_-8px_rgba(92,26,61,0.12)]"
+      >
+        {/* Hairline de marca */}
+        <div className="h-[3px] w-full bg-gradient-to-r from-[#5C1A3D] via-[#C2006B] to-[#F2C4D0]" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center gap-4">
+          {/* Logo */}
+          <a href="#" className="flex items-center group flex-shrink-0">
             <img 
               src="/ba-isotipo.png" 
               alt="BA Consultorios Médicos" 
-              className="h-14 w-auto object-contain"
+              className="h-12 md:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               referrerPolicy="no-referrer"
             />
           </a>
 
           {/* Nav Menu */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#propuesta" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Propuesta</a>
-            <a href="#directorio" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Especialidades y Estudios</a>
-            <a href="#equipo" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Nuestro Equipo</a>
-            <a href="#reserva-online" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Reservar online</a>
-            <a href="#subir-orden" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Subir orden médica</a>
-            <a href="#sumate" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Sumate a BA</a>
-            <a href="#testimonios" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Opiniones</a>
-            <a href="#contacto" className="text-gray-600 hover:text-[#5C1A3D] transition-colors">Contacto</a>
+          <nav className="hidden lg:flex items-center gap-1 text-[13px] font-medium">
+            {[
+              { href: "#propuesta", label: "Propuesta" },
+              { href: "#directorio", label: "Especialidades" },
+              { href: "#equipo", label: "Equipo" },
+              { href: "#reserva-online", label: "Reservar online" },
+              { href: "#subir-orden", label: "Subir orden" },
+              { href: "#sumate", label: "Sumate a BA" },
+              { href: "#testimonios", label: "Opiniones" },
+              { href: "#contacto", label: "Contacto" }
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="px-3 py-2 rounded-full text-gray-600 hover:text-[#5C1A3D] hover:bg-[#F2C4D0]/30 transition-all duration-200"
+              >
+                {link.label}
+              </a>
+            ))}
           </nav>
 
-          {/* Header CTA */}
-          <div className="flex items-center gap-4">
-            <a
-              href={BRAND_INFO.whatsappUrl}
-              onClick={() => trackConversion("Header WhatsApp", "CTA")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:block text-[#5C1A3D] hover:text-[#C2006B] px-2 text-xs md:text-sm font-semibold transition-colors"
-            >
-              WhatsApp
-            </a>
+          {/* Social + CTA */}
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+            {/* Redes */}
+            <div className="hidden sm:flex items-center gap-1.5">
+              <a
+                href={BRAND_INFO.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram de BA Consultorios Médicos"
+                onClick={() => trackConversion("Header Instagram", "Social")}
+                className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-[#C2006B] hover:border-[#C2006B] text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a
+                href={BRAND_INFO.facebookUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook de BA Consultorios Médicos"
+                onClick={() => trackConversion("Header Facebook", "Social")}
+                className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-[#C2006B] hover:border-[#C2006B] text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm font-black text-sm leading-none"
+              >
+                f
+              </a>
+              <a
+                href={BRAND_INFO.whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp de BA Consultorios Médicos"
+                onClick={() => trackConversion("Header WhatsApp", "CTA")}
+                className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-green-500 hover:border-green-500 text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm"
+              >
+                <Phone className="w-4 h-4" />
+              </a>
+            </div>
+
             <button
               onClick={() => openBookingModal("Header")}
-              className="bg-[#C2006B] hover:bg-[#a10058] text-white px-5 py-2.5 rounded-full text-xs md:text-sm font-semibold tracking-wider uppercase transition-all duration-300 transform hover:scale-[1.03] shadow-md shadow-[#C2006B]/20 cursor-pointer"
+              className="relative bg-gradient-to-br from-[#C2006B] to-[#a10058] hover:from-[#a10058] hover:to-[#8a0049] text-white px-4 md:px-6 py-2.5 rounded-full text-[11px] md:text-xs font-bold tracking-wider uppercase transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-[#C2006B]/25 hover:shadow-xl hover:shadow-[#C2006B]/35 cursor-pointer whitespace-nowrap"
             >
-              Reservá tu Turno
+              Reservá tu turno
             </button>
           </div>
         </div>
