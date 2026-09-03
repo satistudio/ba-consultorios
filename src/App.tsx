@@ -123,8 +123,6 @@ export default function App() {
   // (Pages > Settings > Environment variables). No son secretos, pero no van hardcodeados
   // en el repo para poder cambiarlos sin tocar código.
   const gtmId = import.meta.env.VITE_GTM_ID || "";
-  const gaId = import.meta.env.VITE_GA_ID || "";
-  const pixelId = import.meta.env.VITE_META_PIXEL_ID || "";
 
   // Active FAQ state
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -317,106 +315,42 @@ export default function App() {
     };
   }, []);
 
-  // Load analytics scripts if configured
+  // Solo GTM se inyecta desde el código. GA4 y Meta Pixel se configuran DENTRO
+  // de GTM — un único lugar donde se decide qué herramienta recibe qué evento.
   useEffect(() => {
-    // Inject GTM if present
-    if (gtmId) {
-      const gtmScript = document.createElement("script");
-      gtmScript.innerHTML = `
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','${gtmId}');
-      `;
-      document.head.appendChild(gtmScript);
-    }
+    if (!gtmId) return;
+    if (document.getElementById("gtm-base")) return; // evita doble inyección
 
-    // Inject GA4 if present
-    if (gaId) {
-      const gaScript = document.createElement("script");
-      gaScript.async = true;
-      gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
-      document.head.appendChild(gaScript);
+    const gtmScript = document.createElement("script");
+    gtmScript.id = "gtm-base";
+    gtmScript.innerHTML = `
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','${gtmId}');
+    `;
+    document.head.appendChild(gtmScript);
+  }, [gtmId]);
 
-      const gaConfigScript = document.createElement("script");
-      gaConfigScript.innerHTML = `
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '${gaId}');
-      `;
-      document.head.appendChild(gaConfigScript);
-    }
-
-    // Inject Meta Pixel if present
-    if (pixelId) {
-      const pixelScript = document.createElement("script");
-      pixelScript.innerHTML = `
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '${pixelId}');
-        fbq('track', 'PageView');
-      `;
-      document.head.appendChild(pixelScript);
-    }
-  }, [gtmId, gaId, pixelId]);
-
-  // Tracking Click Event helper (triggers standard events)
+  // Único punto de salida de datos del sitio: empujamos al dataLayer y GTM
+  // decide qué herramienta recibe qué. Nunca llamar gtag() ni fbq() desde acá.
   const trackConversion = (serviceName: string, type: string) => {
     const win = window as any;
-    // 1. GTM tracking
-    if (win.dataLayer) {
-      win.dataLayer.push({
-        event: "whatsapp_click",
-        service_name: serviceName,
-        service_type: type
-      });
-    }
-
-    // 2. Google Analytics tracking
-    if (typeof win.gtag === "function") {
-      win.gtag("event", "generate_lead", {
-        event_category: "Engagement",
-        event_label: serviceName,
-        value: 1.0
-      });
-    }
-
-    // 3. Meta Pixel tracking
-    if (typeof win.fbq === "function") {
-      win.fbq("track", "Lead", {
-        content_name: serviceName,
-        content_category: type
-      });
-    }
-
-    console.log(`Conversion tracked for: ${serviceName} (${type})`);
+    win.dataLayer = win.dataLayer || [];
+    win.dataLayer.push({
+      event: "whatsapp_click",
+      service_name: serviceName,
+      service_type: type
+    });
   };
 
-  // Opens the AgendaPro self-service booking modal, tracked as its own event
-  // (kept separate from "whatsapp_click" so both channels can be measured independently)
+  // Abre el modal de reserva de AgendaPro. Evento propio para poder medir
+  // el canal de autogestión por separado del canal WhatsApp.
   const openBookingModal = (origin: string) => {
     const win = window as any;
-    if (win.dataLayer) {
-      win.dataLayer.push({ event: "agendapro_booking_open", origin });
-    }
-    if (typeof win.gtag === "function") {
-      win.gtag("event", "generate_lead", {
-        event_category: "Engagement",
-        event_label: `AgendaPro - ${origin}`,
-        value: 1.0
-      });
-    }
-    if (typeof win.fbq === "function") {
-      win.fbq("track", "Lead", { content_name: `AgendaPro - ${origin}`, content_category: "Autogestión" });
-    }
+    win.dataLayer = win.dataLayer || [];
+    win.dataLayer.push({ event: "agendapro_booking_open", origin });
     setIsBookingModalOpen(true);
   };
 
