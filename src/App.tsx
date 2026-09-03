@@ -128,6 +128,66 @@ export default function App() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
+  // ==========================================================================
+  //  MEDICIÓN — único punto de salida de datos del sitio
+  // ==========================================================================
+  //  El código SOLO empuja eventos al dataLayer. Qué herramienta recibe qué
+  //  (GA4, Meta Pixel, futuras) se decide dentro de GTM, nunca acá.
+  //  Nunca llamar gtag() ni fbq() directamente desde este archivo.
+  //
+  //  Los nombres de evento son genéricos a propósito: no pueden contener
+  //  terminología médica (restricción de tracking sensible de salud, Meta 2026).
+  //  El nombre del estudio viaja como parámetro y GTM lo manda solo a GA4.
+  //
+  //  Eventos:
+  //   whatsapp_click         → CTA que lleva a WhatsApp .......... CONVERSIÓN
+  //   agendapro_booking_open → se abre el modal de reserva ....... CONVERSIÓN
+  //   agendapro_direct_click → link directo a AgendaPro .......... CONVERSIÓN
+  //   lead_form_submit       → formulario propio enviado ......... CONVERSIÓN
+  //   social_click           → redes o mapa ..................... NO conversión
+  // ==========================================================================
+
+  const pushEvent = (payload: Record<string, unknown>) => {
+    const win = window as any;
+    win.dataLayer = win.dataLayer || [];
+    win.dataLayer.push(payload);
+  };
+
+  // CONVERSIÓN. origin identifica QUÉ botón se tocó (para saber qué convierte).
+  const trackWhatsApp = (origin: string, serviceName?: string, serviceType?: string) => {
+    pushEvent({
+      event: "whatsapp_click",
+      origin,
+      service_name: serviceName || "",
+      service_type: serviceType || ""
+    });
+  };
+
+  // CONVERSIÓN. Link que va derecho a AgendaPro sin pasar por el modal.
+  const trackAgendaProDirect = (origin: string, serviceName?: string) => {
+    pushEvent({
+      event: "agendapro_direct_click",
+      origin,
+      service_name: serviceName || ""
+    });
+  };
+
+  // CONVERSIÓN. Formularios propios (orden médica, newsletter).
+  const trackFormSubmit = (formName: string) => {
+    pushEvent({ event: "lead_form_submit", form_name: formName });
+  };
+
+  // NO es conversión. Solo para saber hacia dónde se va el tráfico.
+  const trackSocial = (destination: string) => {
+    pushEvent({ event: "social_click", destination });
+  };
+
+  // CONVERSIÓN. Apertura del modal de reserva online (canal autogestión).
+  const openBookingModal = (origin: string) => {
+    pushEvent({ event: "agendapro_booking_open", origin });
+    setIsBookingModalOpen(true);
+  };
+
   // Newsletter popup: aparece a los 5s, una sola vez por visitante.
   // En móvil se muestra como banner inferior (no intersticial) para no caer
   // en la penalización de Google por interstitials intrusivos en mobile.
@@ -167,7 +227,7 @@ export default function App() {
       const json = await res.json();
       if (json.ok) {
         setSubStatus("sent");
-        trackConversion("Suscripción newsletter", "Lead");
+        trackFormSubmit("newsletter");
         try {
           localStorage.setItem("ba_newsletter_dismissed", "1");
         } catch {
@@ -243,7 +303,7 @@ export default function App() {
 
       if (json.ok) {
         setOrderStatus("sent");
-        trackConversion("Orden médica enviada", "Lead");
+        trackFormSubmit("orden_medica");
         setOrderForm({ name: "", email: "", phone: "", consent: false });
         setOrderFile(null);
       } else {
@@ -332,27 +392,6 @@ export default function App() {
     `;
     document.head.appendChild(gtmScript);
   }, [gtmId]);
-
-  // Único punto de salida de datos del sitio: empujamos al dataLayer y GTM
-  // decide qué herramienta recibe qué. Nunca llamar gtag() ni fbq() desde acá.
-  const trackConversion = (serviceName: string, type: string) => {
-    const win = window as any;
-    win.dataLayer = win.dataLayer || [];
-    win.dataLayer.push({
-      event: "whatsapp_click",
-      service_name: serviceName,
-      service_type: type
-    });
-  };
-
-  // Abre el modal de reserva de AgendaPro. Evento propio para poder medir
-  // el canal de autogestión por separado del canal WhatsApp.
-  const openBookingModal = (origin: string) => {
-    const win = window as any;
-    win.dataLayer = win.dataLayer || [];
-    win.dataLayer.push({ event: "agendapro_booking_open", origin });
-    setIsBookingModalOpen(true);
-  };
 
   // Close booking modal on Escape key
   useEffect(() => {
@@ -448,7 +487,7 @@ export default function App() {
           <span className="hidden md:inline-block text-[#F2C4D0]">|</span>
           <a 
             href={BRAND_INFO.whatsappUrl}
-            onClick={() => trackConversion("Top Bar Announcement", "CTA")}
+            onClick={() => trackWhatsApp("top_bar")}
             target="_blank" 
             rel="noopener noreferrer" 
             className="underline hover:text-[#F2C4D0] transition-colors"
@@ -508,7 +547,7 @@ export default function App() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram de BA Consultorios Médicos"
-                onClick={() => trackConversion("Header Instagram", "Social")}
+                onClick={() => trackSocial("instagram_header")}
                 className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-[#C2006B] hover:border-[#C2006B] text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm"
               >
                 <Instagram className="w-4 h-4" />
@@ -518,7 +557,7 @@ export default function App() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook de BA Consultorios Médicos"
-                onClick={() => trackConversion("Header Facebook", "Social")}
+                onClick={() => trackSocial("facebook_header")}
                 className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-[#C2006B] hover:border-[#C2006B] text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm font-black text-sm leading-none"
               >
                 f
@@ -528,7 +567,7 @@ export default function App() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp de BA Consultorios Médicos"
-                onClick={() => trackConversion("Header WhatsApp", "CTA")}
+                onClick={() => trackWhatsApp("header_icono")}
                 className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-green-500 hover:border-green-500 text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm"
               >
                 <Phone className="w-4 h-4" />
@@ -536,7 +575,7 @@ export default function App() {
             </div>
 
             <button
-              onClick={() => openBookingModal("Header")}
+              onClick={() => openBookingModal("header")}
               className="relative bg-gradient-to-br from-[#C2006B] to-[#a10058] hover:from-[#a10058] hover:to-[#8a0049] text-white px-4 md:px-6 py-2.5 rounded-full text-[11px] md:text-xs font-bold tracking-wider uppercase transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-[#C2006B]/25 hover:shadow-xl hover:shadow-[#C2006B]/35 cursor-pointer whitespace-nowrap"
             >
               Reservá tu turno
@@ -572,7 +611,7 @@ export default function App() {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <button
-                onClick={() => openBookingModal("Hero Primary")}
+                onClick={() => openBookingModal("hero")}
                 className="bg-[#C2006B] hover:bg-[#a10058] text-white px-8 py-4 rounded-full text-sm md:text-base font-bold tracking-wider uppercase text-center transition-all duration-300 shadow-xl shadow-[#C2006B]/30 flex items-center justify-center gap-3 group cursor-pointer"
               >
                 Pedí tu turno hoy mismo
@@ -661,7 +700,7 @@ export default function App() {
                       href={item.service_id
                         ? `https://baconsultorios.site.agendapro.com/ar/sucursal/9099?services_id=${item.service_id}`
                         : BRAND_INFO.agendaProUrl}
-                      onClick={() => trackConversion(`Card especialidad - ${item.name}`, "Reserva directa")}
+                      onClick={() => trackAgendaProDirect("card_disponibilidad", item.name)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="group flex items-center justify-between gap-3 bg-white p-2.5 pr-3 rounded-xl border border-gray-100 hover:border-[#C2006B]/25 hover:shadow-[0_2px_12px_-4px_rgba(194,0,107,0.15)] transition-all duration-200 cursor-pointer"
@@ -700,7 +739,7 @@ export default function App() {
               </div>
 
               <button
-                onClick={() => openBookingModal("Simulator")}
+                onClick={() => openBookingModal("simulador")}
                 className="block w-full bg-[#5C1A3D] hover:bg-[#44122d] text-white text-center py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
               >
                 📅 Reservar Turno al Instante
@@ -710,7 +749,7 @@ export default function App() {
                 Elegí día y horario vos mismo. ¿Preferís coordinar por WhatsApp?{" "}
                 <a
                   href={BRAND_INFO.whatsappUrl}
-                  onClick={() => trackConversion("Simulator WhatsApp Link", "CTA")}
+                  onClick={() => trackWhatsApp("simulador_link")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#C2006B] font-semibold hover:underline"
@@ -792,7 +831,7 @@ export default function App() {
             </div>
             <a 
               href={BRAND_INFO.whatsappUrl}
-              onClick={() => trackConversion("Golden Rule Banner", "CTA")}
+              onClick={() => trackWhatsApp("banner_propuesta")}
               target="_blank" 
               rel="noopener noreferrer"
               className="bg-[#5C1A3D] hover:bg-[#44122d] text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors"
@@ -1021,7 +1060,7 @@ export default function App() {
                           <span className="text-xs text-gray-400">Atención particular</span>
                           <a
                             href={serviceWaUrl}
-                            onClick={() => trackConversion(service.name, service.type)}
+                            onClick={() => trackWhatsApp("card_servicio", service.name, service.type)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-[#5C1A3D] hover:bg-[#C2006B] text-white text-xs font-bold uppercase tracking-wider px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 group cursor-pointer"
@@ -1066,7 +1105,7 @@ export default function App() {
               </div>
               <a
                 href="https://wa.me/5491164344822?text=Hola!%20Quiero%20consultar%20por%20un%20estudio%20derivado%20(resonancia,%20tomografía,%20densitometría).%20(Vengo%20de%20la%20web)"
-                onClick={() => trackConversion("Estudios Externos", "Estudio derivado")}
+                onClick={() => trackWhatsApp("estudios_externos")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white hover:bg-[#F2C4D0] text-[#5C1A3D] px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors shadow-lg"
@@ -1100,7 +1139,7 @@ export default function App() {
                           <a
                             key={idx}
                             href={`https://wa.me/5491164344822?text=${encodeURIComponent(`Hola BA! Quiero consultar por la derivación del estudio: "${s.name}" (${s.category}). (Vengo de la web)`)}`}
-                            onClick={() => trackConversion(`Derivación - ${s.name}`, "Estudio derivado")}
+                            onClick={() => trackWhatsApp("buscador_derivados", s.name, "Estudio derivado")}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-between gap-2 bg-white/10 hover:bg-white/20 rounded-lg px-3.5 py-2.5 transition-colors group"
@@ -1120,6 +1159,7 @@ export default function App() {
                       No lo encontramos con ese nombre — igual consultanos por{" "}
                       <a
                         href={`https://wa.me/5491164344822?text=${encodeURIComponent(`Hola BA! Tengo una orden para "${derivedQuery.trim()}" y quiero saber si gestionan la derivación. (Vengo de la web)`)}`}
+                        onClick={() => trackWhatsApp("buscador_derivados_sin_resultado")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-bold text-[#F2C4D0] underline"
@@ -1284,6 +1324,7 @@ export default function App() {
                   href={reviewsMeta.mapsUri ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackSocial("google_reviews")}
                   className="text-xs text-gray-400 hover:text-[#C2006B] font-medium transition-colors"
                 >
                   {reviewsMeta.rating && reviewsMeta.count
@@ -1301,6 +1342,7 @@ export default function App() {
                 href="https://www.google.com/search?q=BA+Consultorios+Medicos+San+Justo+reseñas"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackSocial("google_reviews_fallback")}
                 className="text-sm font-bold text-[#C2006B] hover:underline"
               >
                 Ver reseñas reales en Google →
@@ -1400,7 +1442,7 @@ export default function App() {
             <span className="text-gray-400 font-light">¿No ves lo que buscás acá?</span>
             <a
               href={BRAND_INFO.whatsappUrl}
-              onClick={() => trackConversion("Reserva Online - WhatsApp fallback", "CTA")}
+              onClick={() => trackWhatsApp("reserva_online_fallback")}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#C2006B] font-bold hover:underline"
@@ -1534,7 +1576,7 @@ export default function App() {
                         href="https://maps.google.com/?q=BA+Consultorios+Médicos,+Almafuerte+3558,+San+Justo,+La+Matanza"
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => trackConversion("Contacto - Dirección Maps", "CTA")}
+                        onClick={() => trackSocial("google_maps")}
                         className="block text-sm text-gray-600 font-light mt-0.5 hover:text-[#C2006B] hover:underline transition-colors"
                       >
                         {BRAND_INFO.address}
@@ -1572,7 +1614,7 @@ export default function App() {
                         href={BRAND_INFO.whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => trackConversion("Contacto - WhatsApp", "CTA")}
+                        onClick={() => trackWhatsApp("contacto")}
                         className="block text-sm text-green-600 font-bold mt-0.5 hover:underline"
                       >
                         WhatsApp: {BRAND_INFO.whatsapp}
@@ -1590,6 +1632,7 @@ export default function App() {
                     href={BRAND_INFO.instagramUrl}
                     target="_blank" 
                     rel="noopener noreferrer" 
+                    onClick={() => trackSocial("instagram_contacto")}
                     className="inline-flex items-center gap-2 bg-white hover:bg-[#F2C4D0]/40 text-[#5C1A3D] border border-gray-200 hover:border-[#5C1A3D]/40 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
                   >
                     <Instagram className="w-4 h-4 text-[#C2006B]" />
@@ -1599,6 +1642,7 @@ export default function App() {
                     href={BRAND_INFO.facebookUrl}
                     target="_blank" 
                     rel="noopener noreferrer" 
+                    onClick={() => trackSocial("facebook_contacto")}
                     className="inline-flex items-center gap-2 bg-white hover:bg-[#F2C4D0]/40 text-[#5C1A3D] border border-gray-200 hover:border-[#5C1A3D]/40 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
                   >
                     <span className="w-4 h-4 rounded-full bg-[#C2006B] text-white flex items-center justify-center text-[10px] font-black leading-none">f</span>
@@ -1617,6 +1661,7 @@ export default function App() {
                     href="https://maps.google.com/?q=Almafuerte+3558,+San+Justo,+La+Matanza"
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackSocial("google_maps_header")}
                     className="text-[#C2006B] hover:underline flex items-center gap-1"
                   >
                     Abrir en Google Maps <ExternalLink className="w-3.5 h-3.5" />
@@ -1663,7 +1708,7 @@ export default function App() {
               </p>
               <a
                 href={`https://wa.me/5491164344822?text=${encodeURIComponent("Hola BA! Soy profesional de la salud y me interesa sumarme al staff / atender en sus consultorios. (Vengo de la web)")}`}
-                onClick={() => trackConversion("Sumate - Profesional", "Lead B2B")}
+                onClick={() => trackWhatsApp("sumate_profesional")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-6 bg-[#5C1A3D] hover:bg-[#44122d] text-white text-center py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
@@ -1683,7 +1728,7 @@ export default function App() {
               </p>
               <a
                 href={`https://wa.me/5491164344822?text=${encodeURIComponent("Hola BA! Tengo un comercio/servicio de salud y me interesa adherirme a su red de beneficios para pacientes. (Vengo de la web)")}`}
-                onClick={() => trackConversion("Sumate - Proveedor", "Lead B2B")}
+                onClick={() => trackWhatsApp("sumate_proveedor")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-6 bg-[#C2006B] hover:bg-[#a10058] text-white text-center py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
@@ -1727,6 +1772,7 @@ export default function App() {
                 href={BRAND_INFO.instagramUrl}
                 target="_blank" 
                 rel="noopener noreferrer" 
+                onClick={() => trackSocial("instagram_footer")}
                 className="text-[#F2C4D0] hover:text-white transition-colors"
               >
                 Instagram
@@ -1735,6 +1781,7 @@ export default function App() {
                 href={BRAND_INFO.facebookUrl}
                 target="_blank" 
                 rel="noopener noreferrer" 
+                onClick={() => trackSocial("facebook_footer")}
                 className="text-[#F2C4D0] hover:text-white transition-colors"
               >
                 Facebook
@@ -1743,6 +1790,7 @@ export default function App() {
                 href={BRAND_INFO.whatsappUrl}
                 target="_blank" 
                 rel="noopener noreferrer" 
+                onClick={() => trackWhatsApp("footer")}
                 className="text-[#F2C4D0] hover:text-white transition-colors"
               >
                 Escribinos por WhatsApp
@@ -1808,7 +1856,7 @@ export default function App() {
               <div className="px-5 py-3 bg-[#F8F6F4] border-t border-[#E8D5C4]/40 flex-shrink-0 text-center">
                 <a
                   href={BRAND_INFO.whatsappUrl}
-                  onClick={() => trackConversion("Modal WhatsApp fallback", "CTA")}
+                  onClick={() => trackWhatsApp("modal_fallback")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-[#C2006B] font-semibold hover:underline"
@@ -1934,7 +1982,7 @@ export default function App() {
         </span>
         <a 
           href={BRAND_INFO.whatsappUrl}
-          onClick={() => trackConversion("Floating WhatsApp Button", "CTA")}
+          onClick={() => trackWhatsApp("boton_flotante")}
           target="_blank" 
           rel="noopener noreferrer"
           className="bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 duration-200 focus:outline-none"
