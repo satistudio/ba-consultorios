@@ -1,18 +1,43 @@
 // Cloudflare Pages Function — recibe webhooks de AgendaPro (reservas creadas,
-// modificadas, canceladas) y reenvía un aviso por mail vía Resend.
+// actualizadas, canceladas) y reenvía un aviso por mail vía Resend.
 //
 // Para qué sirve: registro automático de cada reserva con su origen, sin
 // depender de que nadie lo anote a mano. Base para cruzar contra sprints de Meta.
 //
 // Configuración (una vez):
 // 1. Cloudflare ya debe tener RESEND_API_KEY cargada (la misma del formulario).
-// 2. En AgendaPro > Configuraciones > Integraciones / API Pública > Webhooks >
-//    "Crear Webhook": pegar la URL
-//      https://ba-consultorios.pages.dev/api/webhook-agendapro
-//    y elegir los eventos de reservas (creada / actualizada / cancelada).
+// 2. En AgendaPro > Configuraciones > Integraciones / API Pública > Webhooks:
+//      https://baconsultoriosmedicos.com.ar/api/webhook-agendapro
+//    (confirmado activo al 14/09/2026)
 //
-// El formato exacto del payload varía según el evento; esta función es tolerante:
-// extrae los campos comunes si existen y adjunta el JSON completo como respaldo.
+// Estructura real del payload (confirmada con capturas de webhook.site,
+// 14/09/2026 — reemplaza los nombres "tentativos" de la versión anterior,
+// que buscaba en payload.data / payload.booking y nunca miraba acá):
+// {
+//   trigger: "create" | "update" | ...,
+//   resource_type: "Booking" | "Client" | ...,
+//   created_at: string,
+//   user: string | null,   // null = generado por el paciente (widget online);
+//                           // string (email) = generado por alguien logueado
+//                           // en el panel de AgendaPro (staff)
+//   resource: {
+//     service: string,             // nombre de la especialidad
+//     service_provider: string,    // profesional + especialidad
+//     status: string,              // "Reservado" | "Confirmado" | ...
+//     start: string,
+//     end: string,
+//     client: { first_name, last_name, email, identification_number, ... },
+//     company_name, location_address, links: { confirm, cancel, edit }
+//   }
+// }
+//
+// Reglas de negocio de este archivo:
+// - Solo procesamos resource_type === "Booking" (ignoramos eventos de alta
+//   de Cliente, que llegan aparte y no aportan nada útil a este mail — y
+//   antes generaban un segundo mail vacío por cada reserva online).
+// - Solo notificamos cuando el evento lo generó el paciente (user === null).
+//   Si "user" tiene un email, fue staff quien tocó la reserva (la creó,
+//   la confirmó, la editó) — ya lo sabe, no hace falta avisarle por mail.
 
 interface Env {
   RESEND_API_KEY: string;
@@ -64,20 +89,37 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return okResponse;
   }
 
-  // Campos comunes en payloads de reservas (nombres tentativos, con fallback al JSON crudo)
-  const inner = (payload.data ?? payload.booking ?? payload) as Record<string, unknown>;
-  const eventType = pick(payload, ["event", "event_type", "type", "action"]);
-  const clientName = pick(inner, ["client_name", "customer_name", "name", "first_name"]);
-  const serviceName = pick(inner, ["service_name", "service", "title"]);
-  const startTime = pick(inner, ["start_time", "start", "date", "datetime"]);
+  const resourceType = pick(payload, ["resource_type"]);
+  const trigger = pick(payload, ["trigger"]);
+  const staffUser = payload["user"]; // null (paciente) o email (staff)
+
+  // Ignorar todo lo que no sea una reserva (ej: alta de Cliente).
+  if (resourceType !== "Booking") return okResponse;
+
+  // Ignorar todo lo generado por alguien logueado en AgendaPro (staff).
+  if (staffUser) return okResponse;
+
+  const inner = (payload.resource ?? {}) as Record<string, unknown>;
+  const client = (inner.client ?? {}) as Record<string, unknown>;
+
+  const clientName =
+    [pick(client, ["first_name"]), pick(client, ["last_name"])]
+      .filter((v) => v !== "—")
+      .join(" ") || "—";
+  const serviceName = pick(inner, ["service"]);
+  const provider = pick(inner, ["service_provider"]);
+  const status = pick(inner, ["status"]);
+  const startTime = pick(inner, ["start"]);
 
   const html = `
     <div style="font-family: Arial, sans-serif; font-size: 14px; color: #2C2C2C;">
-      <h2 style="color: #5C1A3D;">Actividad de reservas — AgendaPro</h2>
+      <h2 style="color: #5C1A3D;">Nueva reserva online — AgendaPro</h2>
       <table style="border-collapse: collapse; margin-top: 12px;">
-        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Evento:</td><td>${escapeHtml(eventType)}</td></tr>
+        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Evento:</td><td>${escapeHtml(trigger)} / ${escapeHtml(resourceType)}</td></tr>
         <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Paciente:</td><td>${escapeHtml(clientName)}</td></tr>
         <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Servicio:</td><td>${escapeHtml(serviceName)}</td></tr>
+        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Profesional:</td><td>${escapeHtml(provider)}</td></tr>
+        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Estado:</td><td>${escapeHtml(status)}</td></tr>
         <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Fecha/hora:</td><td>${escapeHtml(startTime)}</td></tr>
       </table>
       <p style="margin-top: 16px; color: #888; font-size: 11px;">Payload completo (respaldo técnico):</p>
@@ -86,7 +128,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   `;
 
   try {
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -95,12 +137,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       body: JSON.stringify({
         from: "BA Consultorios Médicos <onboarding@resend.dev>",
         to: [context.env.ORDER_DESTINATION_EMAIL || DEFAULT_DESTINATION],
-        subject: `AgendaPro: ${eventType !== "—" ? eventType : "actividad de reserva"}`,
+        subject: `AgendaPro: reserva ${status !== "—" ? status.toLowerCase() : "nueva"} — ${serviceName}`,
         html
       })
     });
-  } catch {
-    // silencioso: nunca devolvemos error a AgendaPro
+    if (!res.ok) {
+      // Antes esto se tragaba en silencio. Cloudflare Pages muestra esto en
+      // Functions > Real-time Logs — es la única forma de enterarse si Resend
+      // empieza a fallar, en vez de descubrirlo dos meses después.
+      console.error("Resend respondió con error:", res.status, await res.text());
+    }
+  } catch (err) {
+    console.error("Falló el fetch a Resend:", err);
   }
 
   return okResponse;
