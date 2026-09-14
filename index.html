@@ -3,14 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-MG27TQ4T');</script>
-<!-- End Google Tag Manager -->
+
+    <!-- Redirect de seguridad: si alguien llega por error a cualquier
+         variante de .pages.dev, lo mandamos al dominio real preservando
+         la ruta. Va antes que todo lo demás para que dispare lo antes posible. -->
+    <script>
+      if (window.location.hostname.includes("pages.dev")) {
+        window.location.replace("https://baconsultoriosmedicos.com.ar" + window.location.pathname + window.location.search);
+      }
+    </script>
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MG27TQ4T');</script>
+    <!-- End Google Tag Manager -->
 
     <!-- SEO Básico -->
     <title>BA Consultorios Médicos | San Justo | Turnos Rápidos por WhatsApp</title>
@@ -18,21 +27,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="keywords" content="consultorios medicos, san justo, la matanza, ecografia, ginecologia, cardiologia, traumatologia, podologia, turnos rapidos, clinica medica, ba consultorios" />
     <meta name="author" content="BA Consultorios Médicos" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://ba-consultorios.pages.dev/" />
+    <link rel="canonical" href="https://baconsultoriosmedicos.com.ar/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://ba-consultorios.pages.dev/" />
+    <meta property="og:url" content="https://baconsultoriosmedicos.com.ar/" />
     <meta property="og:title" content="BA Consultorios Médicos | San Justo | Turnos Rápidos" />
     <meta property="og:description" content="Atención médica de calidad, rápida y accesible en San Justo. Más de 30 especialidades y estudios en el día. Pedí tu turno hoy mismo por WhatsApp." />
-    <meta property="og:image" content="https://ba-consultorios.pages.dev/ba-isotipo.png" />
+    <meta property="og:image" content="https://baconsultoriosmedicos.com.ar/ba-isotipo.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://ba-consultorios.pages.dev/" />
+    <meta property="twitter:url" content="https://baconsultoriosmedicos.com.ar/" />
     <meta property="twitter:title" content="BA Consultorios Médicos | San Justo" />
     <meta property="twitter:description" content="Atención médica privada de calidad en San Justo. Turnos hoy o mañana." />
-    <meta property="twitter:image" content="https://ba-consultorios.pages.dev/ba-isotipo.png" />
+    <meta property="twitter:image" content="https://baconsultoriosmedicos.com.ar/ba-isotipo.png" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/ba-isotipo.png" />
@@ -43,9 +52,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         "@context": "https://schema.org",
         "@type": "MedicalClinic",
         "name": "BA Consultorios Médicos",
-        "image": "https://ba-consultorios.pages.dev/ba-isotipo.png",
-        "@id": "https://ba-consultorios.pages.dev/#clinic",
-        "url": "https://ba-consultorios.pages.dev/",
+        "image": "https://baconsultoriosmedicos.com.ar/ba-isotipo.png",
+        "@id": "https://baconsultoriosmedicos.com.ar/#clinic",
+        "url": "https://baconsultoriosmedicos.com.ar/",
         "telephone": "+54 11 3970-1945",
         "address": {
           "@type": "PostalAddress",
@@ -87,10 +96,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </script>
   </head>
   <body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MG27TQ4T"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MG27TQ4T"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
