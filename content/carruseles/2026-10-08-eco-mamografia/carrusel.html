@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<title>BA · Carrusel ¿Eco, mamografía o las dos? · 08/10</title>
+<style>
+@font-face{font-family:Montserrat;font-weight:400;src:url(fonts/montserrat-latin-400-normal.woff2)}
+@font-face{font-family:Montserrat;font-weight:500;src:url(fonts/montserrat-latin-500-normal.woff2)}
+@font-face{font-family:Montserrat;font-weight:900;src:url(fonts/montserrat-latin-900-normal.woff2)}
+:root{--magenta:#C2006B;--vino:#5C1A3D;--blanco:#fff;--calido:#F8F6F4;--nude:#E8D5C4;--rosa:#F2C4D0}
+*{box-sizing:border-box;margin:0}
+body{background:#999;font-family:Montserrat,sans-serif}
+.p{width:1080px;height:1350px;position:relative;overflow:hidden;padding:110px 90px;display:flex;flex-direction:column;justify-content:center}
+.v{background:var(--vino);color:#fff}.c{background:var(--calido);color:var(--vino)}.n{background:var(--nude);color:var(--vino)}.m{background:var(--magenta);color:#fff}
+.v1{background:radial-gradient(circle at 70% 25%,#7a2a52 0,var(--vino) 60%)}
+.grain{position:absolute;inset:0;opacity:.035;mix-blend-mode:overlay;pointer-events:none;
+ background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='200' height='200' filter='url(%23f)'/></svg>")}
+.kicker{font-weight:900;font-size:40px;letter-spacing:.14em;color:var(--rosa);margin-bottom:36px}
+h1{font-weight:900;font-size:112px;line-height:1.02;text-transform:uppercase;letter-spacing:-.01em}
+h2{font-weight:900;font-size:76px;line-height:1.05;text-transform:uppercase}
+.sub{font-weight:500;font-size:40px;line-height:1.35;margin-top:44px;color:var(--rosa)}
+.body{font-weight:500;font-size:44px;line-height:1.35;margin-top:44px}
+.foot{font-weight:500;font-size:34px;line-height:1.4;margin-top:56px;padding-top:30px;border-top:4px solid var(--magenta)}
+.icon{width:300px;height:300px;margin-bottom:56px}
+.ul{position:relative;display:inline-block}
+.ul svg{position:absolute;left:-4px;bottom:-22px;width:calc(100% + 8px);height:26px}
+.cir{border:3px solid var(--rosa);border-radius:28px;padding:40px 44px;margin-top:34px}
+.cir .age{font-weight:900;font-size:34px;letter-spacing:.08em;color:var(--rosa);text-transform:uppercase}
+.cir .what{font-weight:500;font-size:34px;line-height:1.3;margin-top:10px}
+.cir .price{font-weight:900;font-size:96px;line-height:1.1;margin-top:8px}
+.cir .when{font-weight:500;font-size:30px;margin-top:6px;color:var(--rosa)}
+.small{font-weight:500;font-size:30px;line-height:1.4;margin-top:34px}
+.btn{background:#fff;color:var(--vino);border-radius:28px;padding:44px 48px;font-weight:900;font-size:50px;line-height:1.2;margin-top:56px;text-align:center}
+.web{font-weight:500;font-size:38px;line-height:1.4;margin-top:48px}
+.save{display:flex;align-items:center;gap:22px;margin-top:56px;font-weight:900;font-size:46px}
+.page{position:absolute;right:60px;top:56px;font-weight:500;font-size:26px;opacity:.7}
+.id{position:absolute;left:0;right:0;bottom:0;height:120px;background:var(--calido);color:var(--vino);display:none;align-items:center;gap:26px;padding:0 60px;font-weight:500;font-size:26px;line-height:1.35}
+.id img{height:62px}
+body.ident .id{display:flex}
+body.ident .p{padding-bottom:200px}
+</style></head><body>
+
+<!-- 1 -->
+<section class="p v v1" id="p1">
+  <div class="kicker">PASÁ LA ROSA</div>
+  <h1>¿Eco, mamografía o las dos?</h1>
+  <div class="sub">Te lo explicamos en 4 placas.</div>
+  <div class="grain"></div>
+  <div class="id"><img src="ba-isotipo.png"><div>Almafuerte 3558, San Justo · baconsultoriosmedicos.com.ar</div></div>
+</section>
+
+<!-- 2 -->
+<section class="p c" id="p2">
+  <svg class="icon" viewBox="0 0 300 300" fill="none" stroke="#C2006B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M70 100h40v40h40v40h-40v40h-40v-40H30v-40h40z" fill="#C2006B" stroke="none"/>
+    <path d="M170 110a50 50 0 0 1 0 80"/><path d="M200 85a90 90 0 0 1 0 130"/><path d="M230 60a130 130 0 0 1 0 180" opacity=".6"/>
+  </svg>
+  <h2>La ecografía mamaria</h2>
+  <div class="body">Usa ondas de sonido.<br><span class="ul">No usa radiación.<svg viewBox="0 0 400 26" preserveAspectRatio="none"><path d="M4 16 C80 4 150 22 220 12 S340 6 396 14" fill="none" stroke="#C2006B" stroke-width="7" stroke-linecap="round"/></svg></span></div>
+  <div class="page">2/5</div>
+  <div class="id"><img src="ba-isotipo.png"><div>Almafuerte 3558, San Justo · baconsultoriosmedicos.com.ar</div></div>
+</section>
+
+<!-- 3 -->
+<section class="p n" id="p3">
+  <svg class="icon" viewBox="0 0 300 300" fill="none" stroke="#C2006B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="40" y="50" width="220" height="26" rx="8"/><rect x="40" y="224" width="220" height="26" rx="8"/>
+    <path d="M70 224c0-70 30-110 80-110s80 40 80 110"/>
+    <path d="M150 140v50M125 165h50"/>
+  </svg>
+  <h2>La mamografía</h2>
+  <div class="body">Es una radiografía de baja dosis, hecha con un equipo especial para mamas.</div>
+  <div class="foot">Se complementan. La indicación la da tu médico o médica.</div>
+  <div class="page">3/5</div>
+  <div class="id"><img src="ba-isotipo.png"><div>Almafuerte 3558, San Justo · baconsultoriosmedicos.com.ar</div></div>
+</section>
+
+<!-- 4 -->
+<section class="p v" id="p4">
+  <h2 style="font-size:68px">Dos circuitos en BA</h2>
+  <div class="cir">
+    <div class="age">Hasta 39 años</div>
+    <div class="what">Ecografía mamaria + consulta ginecológica</div>
+    <div class="price">$60.000</div>
+    <div class="when">De lunes a sábado, hasta el 31/10</div>
+  </div>
+  <div class="cir">
+    <div class="age">Desde 40 años</div>
+    <div class="what">Ecografía mamaria + mamografía + consulta ginecológica</div>
+    <div class="price">$120.000</div>
+    <div class="when">De lunes a viernes, hasta el 30/10</div>
+  </div>
+  <div class="small">Antes de los 40, con orden médica, también se hace el circuito con mamografía.</div>
+  <div class="page">4/5</div>
+  <div class="grain"></div>
+  <div class="id"><img src="ba-isotipo.png"><div>Almafuerte 3558, San Justo · baconsultoriosmedicos.com.ar</div></div>
+</section>
+
+<!-- 5 -->
+<section class="p m" id="p5">
+  <h1 style="font-size:104px">Turno para esta semana</h1>
+  <div class="btn">Escribinos ROSA<br>por WhatsApp</div>
+  <div class="web">¿Solo el estudio?<br>Turno online en<br><b style="font-weight:900">baconsultoriosmedicos.com.ar</b></div>
+  <div class="save">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Guardalo
+  </div>
+  <div class="id"><img src="ba-isotipo.png"><div>Almafuerte 3558, San Justo · baconsultoriosmedicos.com.ar</div></div>
+</section>
+</body></html>
