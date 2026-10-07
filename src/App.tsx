@@ -483,17 +483,15 @@ export default function App() {
       {/* TOP ANNOUNCEMENT BAR */}
       <div id="top-bar" className="bg-[#5C1A3D] text-white py-2 px-4 text-center text-xs md:text-sm font-semibold tracking-wide border-b border-[#C2006B]/20">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-center items-center gap-1 md:gap-4">
-          <span>📅 Turnos para hoy o mañana — rapidez real, sin esperas.</span>
+          <span>📅 Turnos esta semana — rapidez real, sin esperas.</span>
           <span className="hidden md:inline-block text-[#F2C4D0]">|</span>
-          <a 
-            href={BRAND_INFO.whatsappUrl}
-            onClick={() => trackWhatsApp("top_bar")}
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="underline hover:text-[#F2C4D0] transition-colors"
+          <button
+            type="button"
+            onClick={() => openBookingModal("top_bar")}
+            className="underline hover:text-[#F2C4D0] transition-colors cursor-pointer"
           >
-            Pedí tu turno hoy mismo por WhatsApp →
-          </a>
+            Reservá tu turno →
+          </button>
         </div>
       </div>
 
@@ -601,12 +599,12 @@ export default function App() {
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-[900] tracking-tight text-white leading-[1.1] mb-6">
               MÁS DE 30 ESPECIALIDADES.<br />
-              <span className="text-[#F2C4D0]">TURNOS HOY O MAÑANA.</span><br />
+              <span className="text-[#F2C4D0]">TURNOS ESTA SEMANA.</span><br />
               RAPIDEZ REAL.
             </h1>
             
             <p className="text-lg md:text-xl text-[#F8F6F4]/90 font-light leading-relaxed max-w-2xl mb-8">
-              En <strong className="font-semibold text-white">BA Consultorios Médicos</strong> resolvemos tu salud de forma directa y profesional. Sin las esperas eternas del sistema tradicional. Escribinos ahora y programamos tu consulta o estudio de inmediato.
+              En <strong className="font-semibold text-white">BA Consultorios Médicos</strong> resolvemos tu salud de forma directa y profesional. Sin las esperas eternas del sistema tradicional. ¿Lo necesitás antes? Escribinos y evaluamos un sobreturno.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -614,7 +612,7 @@ export default function App() {
                 onClick={() => openBookingModal("hero")}
                 className="bg-[#C2006B] hover:bg-[#a10058] text-white px-8 py-4 rounded-full text-sm md:text-base font-bold tracking-wider uppercase text-center transition-all duration-300 shadow-xl shadow-[#C2006B]/30 flex items-center justify-center gap-3 group cursor-pointer"
               >
-                Pedí tu turno hoy mismo
+                Reservá tu turno
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <a 
@@ -732,7 +730,7 @@ export default function App() {
 
                 {(availabilityStatus === "not_configured" || availabilityStatus === "error") && (
                   <div className="bg-[#F8F6F4] p-4 rounded-lg border border-gray-100 text-center">
-                    <p className="text-sm font-semibold text-gray-700">Turnos para hoy y mañana en la mayoría de las especialidades.</p>
+                    <p className="text-sm font-semibold text-gray-700">Turnos esta semana en la mayoría de las especialidades.</p>
                     <p className="text-xs text-gray-400 font-light mt-1">Consultá la agenda actualizada al reservar.</p>
                   </div>
                 )}
@@ -779,8 +777,8 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {[
               {
-                title: "Turnos hoy o mañana",
-                desc: "Rapidez real, no prometida. Programamos tus consultas y estudios en un máximo de 24-48 horas hábiles.",
+                title: "Turnos esta semana",
+                desc: "Rapidez real, no prometida. Reservás online con la agenda a la vista. ¿Lo necesitás antes? Escribinos y evaluamos un sobreturno.",
                 color: "border-l-4 border-[#C2006B] bg-white",
                 badge: "Rapidez"
               },
@@ -1366,11 +1364,11 @@ export default function App() {
             {[
               {
                 q: "¿Atienden por obra social o prepaga?",
-                a: "No, la atención en BA Consultorios Médicos es exclusivamente particular. Esto nos permite mantener aranceles altamente accesibles, eliminar los extensos plazos de espera de los sistemas de obras sociales y garantizar turnos casi de inmediato (para hoy o mañana)."
+                a: "No, la atención en BA Consultorios Médicos es exclusivamente particular. Esto nos permite mantener aranceles altamente accesibles, eliminar los extensos plazos de espera de los sistemas de obras sociales y ofrecer turnos en pocos días, sin meses de espera."
               },
               {
                 q: "¿Cómo solicito un turno y en cuánto tiempo me responden?",
-                a: "La solicitud de turnos se realiza íntegramente por WhatsApp haciendo clic en cualquier botón de la web. Nuestro equipo de recepción responde casi de inmediato dentro de nuestros horarios de atención para coordinar tu día y hora de visita en el acto."
+                a: "Podés reservar online desde el botón «Reservá tu turno»: ves días y horarios disponibles y te llega el recordatorio. Si lo necesitás antes o preferís hablar con una persona, escribinos por WhatsApp dentro de nuestros horarios de atención y evaluamos un sobreturno."
               },
               {
                 q: "¿Cuáles son los métodos de pago aceptados?",
@@ -1978,7 +1976,7 @@ export default function App() {
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 group">
         <span className="bg-white text-[#5C1A3D] text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg border border-green-200 opacity-90 group-hover:opacity-100 transition-opacity whitespace-nowrap animate-pulse flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-          Pedí tu turno hoy
+          Reservá tu turno
         </span>
         <a 
           href={BRAND_INFO.whatsappUrl}
