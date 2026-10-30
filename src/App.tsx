@@ -119,10 +119,6 @@ export default function App() {
   const [selectedType, setSelectedType] = useState<string>("Todos");
   const [showAllByDefault, setShowAllByDefault] = useState(false);
   
-  // Analytics: IDs cargados en tiempo de build desde variables de entorno de Cloudflare
-  // (Pages > Settings > Environment variables). No son secretos, pero no van hardcodeados
-  // en el repo para poder cambiarlos sin tocar código.
-  const gtmId = import.meta.env.VITE_GTM_ID || "";
 
   // Active FAQ state
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -375,23 +371,9 @@ export default function App() {
     };
   }, []);
 
-  // Solo GTM se inyecta desde el código. GA4 y Meta Pixel se configuran DENTRO
-  // de GTM — un único lugar donde se decide qué herramienta recibe qué evento.
-  useEffect(() => {
-    if (!gtmId) return;
-    if (document.getElementById("gtm-base")) return; // evita doble inyección
-
-    const gtmScript = document.createElement("script");
-    gtmScript.id = "gtm-base";
-    gtmScript.innerHTML = `
-      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-      })(window,document,'script','dataLayer','${gtmId}');
-    `;
-    document.head.appendChild(gtmScript);
-  }, [gtmId]);
+  // GTM se carga UNA sola vez, desde index.html (head + noscript). No volver a
+  // inyectarlo acá: cargar el contenedor dos veces duplica page views y eventos
+  // en GA4 y Meta Pixel. GA4 y Pixel se configuran DENTRO de GTM.
 
   // Close booking modal on Escape key
   useEffect(() => {
