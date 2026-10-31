@@ -638,7 +638,7 @@ export default function App() {
                 <span className="text-xs font-medium text-[#5C1A3D] bg-[#F2C4D0] px-2 py-1 rounded">Esta semana</span>
               </div>
 
-              <h3 className="font-bold text-lg text-[#5C1A3D] mb-4">Especialidades con turnos inmediatos:</h3>
+              <h3 className="font-bold text-lg text-[#5C1A3D] mb-4">Especialidades con turnos esta semana:</h3>
               
               <div className="space-y-2.5 mb-6">
                 {availabilityStatus === "loading" && (
@@ -766,7 +766,7 @@ export default function App() {
               },
               {
                 title: "+30 Especialidades",
-                desc: "Todo tu cuidado médico en un mismo lugar. Desde clínica y cardiología hasta podología, cosmiatría y pediatría.",
+                desc: "Todo tu cuidado médico en un mismo lugar. Desde clínica y cardiología hasta podología y pediatría.",
                 color: "border-l-4 border-[#5C1A3D] bg-white",
                 badge: "Integral"
               },
@@ -777,8 +777,8 @@ export default function App() {
                 badge: "Accesible"
               },
               {
-                title: "Respuesta Inmediata",
-                desc: "Chateá directamente con nuestro equipo por WhatsApp. Respondemos al instante para coordinar tu visita.",
+                title: "Escribinos por WhatsApp",
+                desc: "Chateá directamente con el equipo de BA para coordinar tu visita. Respondemos en el horario de atención.",
                 color: "border-l-4 border-[#F2C4D0] bg-white",
                 badge: "Directo"
               }
@@ -1573,7 +1573,7 @@ export default function App() {
                     <div>
                       <h4 className="font-extrabold text-sm text-[#5C1A3D]">Horarios de Atención</h4>
                       <p className="text-sm text-gray-600 font-light mt-0.5">{BRAND_INFO.schedule}</p>
-                      <p className="text-xs text-gray-400 font-light mt-1">Coordinación de turnos online las 24 hs por WhatsApp.</p>
+                      <p className="text-xs text-gray-400 font-light mt-1">Turnos online en cualquier momento. Por WhatsApp respondemos en el horario de atención.</p>
                     </div>
                   </div>
 
@@ -1886,13 +1886,13 @@ export default function App() {
                       <Check className="w-6 h-6 text-emerald-600" />
                     </div>
                     <h3 className="font-extrabold text-lg text-[#5C1A3D]">¡Listo!</h3>
-                    <p className="text-sm text-gray-500 font-light mt-1">Te vamos a escribir con información útil sobre controles y prevención.</p>
+                    <p className="text-sm text-gray-500 font-light mt-1">Te vamos a escribir con información útil sobre controles y detección a tiempo.</p>
                   </div>
                 ) : (
                   <>
                     <span className="text-[11px] font-bold tracking-widest uppercase text-[#C2006B]">GRATIS</span>
                     <h3 className="text-xl sm:text-2xl font-extrabold text-[#5C1A3D] mt-1 mb-2 leading-tight">
-                      Recordatorios de control y prevención
+                      Recordatorios de controles por edad
                     </h3>
                     <p className="text-sm text-gray-500 font-light mb-5 leading-relaxed">
                       Dejanos tu mail y te enviamos guías simples sobre chequeos por edad, señales a las que prestar atención y novedades de BA. Sin costo.
