@@ -1,0 +1,20 @@
+# Publica el redireccionador 301 en el proyecto viejo de Cloudflare Pages
+# (ba-consultorios.pages.dev → baconsultoriosmedicos.com.ar). Se corre a mano
+# desde Actions; no hace falta volver a correrlo salvo que cambie el destino.
+# Requiere el secreto CF_OLD_ACCOUNT_TOKEN (token de la cuenta vieja con
+# permiso Cloudflare Pages: Editar).
+name: Redirigir pages.dev viejo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_OLD_ACCOUNT_TOKEN }}
+          accountId: 8ac8956810a4c32c49c62d6b1bb8cdca
+          command: pages deploy deploy/old-pages-redirect --project-name=ba-consultorios --branch=main
