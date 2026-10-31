@@ -54,7 +54,6 @@ export const SPECIALTIES: string[] = [
   "Urología",
   "Psicopedagogía",
   "Podología",
-  "Cosmiatría y estética",
   "Audiometría y estudios auditivos"
 ];
 
@@ -233,6 +232,7 @@ export const SERVICES_DATA: MedicalService[] = [
   { id: "de-12", name: "Tratamiento de una o dos lesiones dermatológicas", specialty: "Dermatología", type: "Práctica o procedimiento" },
   { id: "de-13", name: "Tratamiento de tres a cinco lesiones dermatológicas", specialty: "Dermatología", type: "Práctica o procedimiento" },
   { id: "de-14", name: "Tratamiento de seis a diez lesiones dermatológicas", specialty: "Dermatología", type: "Práctica o procedimiento" },
+  { id: "de-15", name: "Peeling químico", specialty: "Dermatología", type: "Práctica o procedimiento" },
 
   // 15. Flebología
   { id: "fl-1", name: "Escleroterapia de una pierna", specialty: "Flebología", type: "Práctica o procedimiento" },
@@ -244,8 +244,6 @@ export const SERVICES_DATA: MedicalService[] = [
   { id: "fl-7", name: "Doppler arterial y venoso combinado", specialty: "Flebología", type: "Estudio realizado en BA" },
 
   // 16. Cirugía plástica
-  { id: "cp-1", name: "Aplicación de toxina botulínica", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
-  { id: "cp-2", name: "Relleno con ácido hialurónico", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-3", name: "Extracción de lipoma", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-4", name: "Extracción de quiste", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-5", name: "Curación de úlceras", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
@@ -273,16 +271,6 @@ export const SERVICES_DATA: MedicalService[] = [
   { id: "po-10", name: "Atención de pacientes anticoagulados en podología", specialty: "Podología", type: "Práctica o procedimiento" },
   { id: "po-11", name: "Podología pediátrica", specialty: "Podología", type: "Práctica o procedimiento" },
   { id: "po-12", name: "Estudio de la pisada", specialty: "Podología", type: "Práctica o procedimiento" },
-
-  // 19. Cosmiatría y estética
-  { id: "cos-1", name: "Plasma rico en plaquetas capilar", specialty: "Cosmiatría y estética", type: "Práctica o procedimiento" },
-  { id: "cos-2", name: "Plasma rico en plaquetas facial", specialty: "Cosmiatría y estética", type: "Práctica o procedimiento" },
-  { id: "cos-3", name: "Limpieza facial profunda", specialty: "Cosmiatría y estética", type: "Práctica o procedimiento" },
-  { id: "cos-4", name: "Mesoterapia capilar", specialty: "Cosmiatría y estética", type: "Práctica o procedimiento" },
-  { id: "cos-5", name: "Mesoterapia facial", specialty: "Cosmiatría y estética", type: "Práctica o procedimiento" },
-  { id: "cos-6", name: "Peeling químico/estético", specialty: "Cosmiatría y estética", type: "Práctica o procedimiento" },
-  { id: "cos-7", name: "Radiofrecuencia facial/corporal", specialty: "Cosmiatría y estética", type: "Práctica o procedimiento" },
-  { id: "cos-8", name: "Dermaplaning", specialty: "Cosmiatría y estética", type: "Práctica o procedimiento" },
 
   // 20. Nutrición y evaluación corporal
   { id: "nu-1", name: "Consulta nutricional individual", specialty: "Nutrición", type: "Consulta" },
