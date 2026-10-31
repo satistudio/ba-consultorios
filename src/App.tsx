@@ -487,7 +487,7 @@ export default function App() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center gap-4">
           {/* Logo */}
-          <a href="#" className="flex items-center group flex-shrink-0">
+          <a href="/" className="flex items-center group flex-shrink-0">
             <img 
               src="/ba-isotipo.png" 
               alt="BA Consultorios Médicos" 
@@ -837,6 +837,9 @@ export default function App() {
             <p className="text-sm md:text-base text-gray-600 font-light">
               Buscá tu estudio o especialidad, verificá la etiqueta comercial de realización y consultá el turno directamente por WhatsApp con un solo clic.
             </p>
+            <a href="/especialidades/" className="inline-block mt-3 text-sm font-bold text-[#C2006B] hover:text-[#5C1A3D] underline underline-offset-4">
+              Ver el valor de la consulta de cada especialidad
+            </a>
           </div>
 
           {/* SEARCH & FILTER CONTROLS */}
@@ -1744,7 +1747,7 @@ export default function App() {
             {/* Right side: quick actions */}
             <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold">
               <a href="#propuesta" className="hover:text-white transition-colors">Propuesta</a>
-              <a href="#directorio" className="hover:text-white transition-colors">Especialidades</a>
+              <a href="/especialidades/" className="hover:text-white transition-colors">Especialidades</a>
               <a href="#reserva-online" className="hover:text-white transition-colors">Reservar online</a>
               <a href="#testimonios" className="hover:text-white transition-colors">Opiniones</a>
               <a href="#contacto" className="hover:text-white transition-colors">Ubicación</a>
