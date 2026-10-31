@@ -244,7 +244,6 @@ export const SERVICES_DATA: MedicalService[] = [
   { id: "fl-7", name: "Doppler arterial y venoso combinado", specialty: "Flebología", type: "Estudio realizado en BA" },
 
   // 16. Cirugía plástica
-  { id: "cp-1", name: "Aplicación de toxina botulínica", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-3", name: "Extracción de lipoma", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-4", name: "Extracción de quiste", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-5", name: "Curación de úlceras", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
