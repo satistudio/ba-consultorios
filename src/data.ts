@@ -245,7 +245,6 @@ export const SERVICES_DATA: MedicalService[] = [
 
   // 16. Cirugía plástica
   { id: "cp-1", name: "Aplicación de toxina botulínica", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
-  { id: "cp-2", name: "Relleno con ácido hialurónico", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-3", name: "Extracción de lipoma", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-4", name: "Extracción de quiste", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },
   { id: "cp-5", name: "Curación de úlceras", specialty: "Cirugía plástica", type: "Práctica o procedimiento" },

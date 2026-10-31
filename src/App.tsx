@@ -1362,7 +1362,7 @@ export default function App() {
               },
               {
                 q: "¿En cuánto tiempo entregan los informes de los estudios?",
-                a: "Estudios como el Electrocardiograma o ecografías estándar se entregan con informe oficial en formato digital por WhatsApp en un plazo de 24 a 48 horas hábiles, o impresos si así lo solicitás al momento de la realización."
+                a: "El plazo depende de cada estudio. Consultalo al sacar el turno o escribinos por WhatsApp. El informe se entrega en formato digital por WhatsApp, o impreso si lo pedís al momento de hacerte el estudio."
               }
             ].map((faq, index) => {
               const isOpen = activeFaq === index;
