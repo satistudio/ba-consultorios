@@ -14,7 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cloudflare/wrangler-action@v3
+        id: deploy
         with:
           apiToken: ${{ secrets.CF_OLD_ACCOUNT_TOKEN }}
           accountId: 8ac8956810a4c32c49c62d6b1bb8cdca
           command: pages deploy deploy/old-pages-redirect --project-name=ba-consultorios --branch=main
+      # Muestra qué responde cada dirección, para confirmar el 301 sin depender
+      # de un navegador (que puede tener la web vieja en caché).
+      - name: Verificar redirección
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          sleep 30
+          for url in "$DEPLOY_URL/" "https://ba-consultorios.pages.dev/" "https://ba-consultorios.pages.dev/precios?x=1"; do
+            echo "== $url"
+            curl -sS -o /dev/null -w "%{http_code} -> %{redirect_url}\n" "$url"
+            curl -sS "$url" | grep -o '<title>[^<]*' || true
+          done
