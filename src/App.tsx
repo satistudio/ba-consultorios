@@ -840,6 +840,10 @@ export default function App() {
             <a href="/especialidades/" className="inline-block mt-3 text-sm font-bold text-[#C2006B] hover:text-[#5C1A3D] underline underline-offset-4">
               Ver el valor de la consulta de cada especialidad
             </a>
+            <span className="mx-2 text-gray-300">·</span>
+            <a href="/precios/" className="inline-block mt-3 text-sm font-bold text-[#C2006B] hover:text-[#5C1A3D] underline underline-offset-4">
+              Ver precios de estudios y prácticas
+            </a>
           </div>
 
           {/* SEARCH & FILTER CONTROLS */}
@@ -1748,6 +1752,7 @@ export default function App() {
             <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold">
               <a href="#propuesta" className="hover:text-white transition-colors">Propuesta</a>
               <a href="/especialidades/" className="hover:text-white transition-colors">Especialidades</a>
+              <a href="/precios/" className="hover:text-white transition-colors">Precios</a>
               <a href="#reserva-online" className="hover:text-white transition-colors">Reservar online</a>
               <a href="#testimonios" className="hover:text-white transition-colors">Opiniones</a>
               <a href="#contacto" className="hover:text-white transition-colors">Ubicación</a>

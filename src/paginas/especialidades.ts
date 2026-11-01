@@ -40,6 +40,11 @@ const CONSULTA: Record<string, { lista: number; desde: number; nota?: string }> 
   "Traumatología": { lista: 37000, desde: 31500 },
   "Urología": { lista: 37000, desde: 31500 },
   "Podología": { lista: 42000, desde: 36000 },
+  "Dermatología infantil": { lista: 42000, desde: 36000 },
+  "Endocrinología infantil": { lista: 39000, desde: 33300 },
+  "Ginecología infanto juvenil": { lista: 42000, desde: 36000, nota: "Atiende desde bebés." },
+  "Especialista en columna": { lista: 39000, desde: 33300 },
+  "Nefrología": { lista: 42000, desde: 36000 },
 };
 
 // Sin página propia: especialidades y prácticas marcadas "no usar" en la guía

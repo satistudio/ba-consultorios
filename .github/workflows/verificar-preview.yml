@@ -15,10 +15,27 @@ jobs:
           sleep 150
           SUB=$(echo "$RAMA" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-28 | sed 's/-*$//')
           BASE="https://$SUB.ba-consultorios-3da.pages.dev"
-          for p in / /especialidades/ /especialidades/ginecologia/ /sitemap.xml; do
+          # main no tiene alias de rama: se verifica el dominio publicado.
+          if [ "$RAMA" = "main" ]; then BASE="https://baconsultoriosmedicos.com.ar"; fi
+          for p in / /especialidades/ /especialidades/ginecologia/ /precios/ /sitemap.xml; do
             echo "== $BASE$p"
             curl -sS -o body.html -w "status=%{http_code} redirect=%{redirect_url}\n" "$BASE$p"
             grep -o '<title>[^<]*' body.html | head -1 || true
             grep -o '<h1[^>]*>[^<]*' body.html | head -1 || true
             head -c 300 body.html; echo
           done
+
+      - name: Comprobar redirección del pages.dev viejo
+        run: |
+          # ba-consultorios.pages.dev (cuenta vieja) debe responder 301 al dominio real,
+          # también para Googlebot: es lo que pide el Cambio de dirección de Search Console.
+          GOOGLEBOT="Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.52 Mobile Safari/537.36 (compatible; Google-InspectionTool/1.0)"
+          for ua in "curl" "$GOOGLEBOT"; do
+            for u in https://ba-consultorios.pages.dev/ http://ba-consultorios.pages.dev/ https://www.ba-consultorios.pages.dev/; do
+              echo "== $u ($ua)"
+              curl -sS -A "$ua" -o body.html -D headers.txt -w "status=%{http_code} redirect=%{redirect_url}\n" "$u" || true
+              grep -i -E "^(location|cf-ray|server|cache-control|cf-cache-status):" headers.txt || true
+              grep -o '<title>[^<]*' body.html | head -1 || true
+            done
+          done
+          echo "== IPs"; getent ahosts ba-consultorios.pages.dev | awk '{print $1}' | sort -u

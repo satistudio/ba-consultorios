@@ -5,7 +5,8 @@
 
 import type { ReactNode } from "react";
 import { BRAND_INFO, MedicalService } from "../data";
-import { ESPECIALIDADES, Especialidad, formatoPrecio } from "./especialidades";
+import { ESPECIALIDADES, Especialidad, formatoPrecio, PRECIOS_VIGENTES } from "./especialidades";
+import { GRUPOS_PRECIOS, gruposDeEspecialidad } from "./precios";
 
 const WA_NUMERO = "5491164344822";
 
@@ -19,10 +20,11 @@ function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <a href="/" className="flex items-center gap-2 flex-shrink-0">
           <img src="/ba-isotipo-vino.png" alt="" width={36} height={36} className="w-9 h-9 object-contain" />
-          <span className="font-extrabold text-[#5C1A3D] text-sm sm:text-base leading-tight">BA Consultorios Médicos</span>
+          <span className="hidden min-[420px]:inline font-extrabold text-[#5C1A3D] text-sm sm:text-base leading-tight">BA Consultorios Médicos</span>
         </a>
         <nav className="flex items-center gap-1 sm:gap-3 text-[13px] font-medium">
           <a href="/especialidades/" className="hidden sm:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Especialidades</a>
+          <a href="/precios/" className="px-2 sm:px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Precios</a>
           <a href="/" className="hidden sm:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Inicio</a>
           <a
             href={BRAND_INFO.whatsappUrl}
@@ -55,6 +57,7 @@ function Footer() {
         <div className="flex flex-col gap-1">
           <p className="font-extrabold text-white mb-1">Turnos</p>
           <a href="/especialidades/" className="hover:text-white">Todas las especialidades</a>
+          <a href="/precios/" className="hover:text-white">Precios de estudios y prácticas</a>
           <a href={BRAND_INFO.agendaProUrl} target="_blank" rel="noopener" data-track="agendapro_direct_click" data-origin="pagina_footer" className="hover:text-white">Reservar online</a>
           <a href={BRAND_INFO.whatsappUrl} target="_blank" rel="noopener" data-track="whatsapp_click" data-origin="pagina_footer" className="hover:text-white">WhatsApp: {BRAND_INFO.whatsapp}</a>
         </div>
@@ -109,6 +112,7 @@ export function EspecialidadPage({ esp }: { esp: Especialidad }) {
   const textoWa = `Hola BA! Quiero un turno de ${esp.nombre}. (Vengo de la web)`;
   const otras = ESPECIALIDADES.filter((e) => e.slug !== esp.slug);
   const teleconsulta = !SIN_TELECONSULTA.has(esp.nombre);
+  const grupos = gruposDeEspecialidad(esp.nombre);
   return (
     <Shell>
       <section className="bg-white border-b border-[#E8D5C4]/40">
@@ -216,6 +220,20 @@ export function EspecialidadPage({ esp }: { esp: Especialidad }) {
 
         <aside className="space-y-8">
           <Beneficios />
+          {grupos.length > 0 && (
+            <section>
+              <h2 className="font-extrabold text-lg text-[#5C1A3D] mb-3">Precios de estudios y prácticas</h2>
+              <ul className="space-y-2 text-sm">
+                {grupos.map((g) => (
+                  <li key={g.id}>
+                    <a href={`/precios/#${g.id}`} className="font-bold text-[#C2006B] hover:text-[#5C1A3D] underline underline-offset-4">
+                      {g.titulo}: ver precios
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <section>
             <h2 className="font-extrabold text-lg text-[#5C1A3D] mb-3">Otras especialidades</h2>
             <ul className="flex flex-wrap gap-2">
@@ -263,5 +281,207 @@ export function EspecialidadesIndex() {
         </aside>
       </div>
     </Shell>
+  );
+}
+
+// Buscador de /precios/: muestra los resultados en un bloque debajo del campo,
+// con los valores, sin mover la página ni tocar la lista completa. Arma el
+// índice leyendo las filas ya renderizadas (data-*), así no duplica datos.
+// Sin acentos ni mayúsculas, para que "ecografia" encuentre "Ecografía".
+export const BUSCADOR_PRECIOS = `<script>(function(){var i=document.getElementById("buscar-precio");if(!i)return;var n=function(s){return s.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase()};var panel=document.getElementById("resultados-busqueda"),lista=document.getElementById("lista-resultados"),vacio=document.getElementById("sin-resultados"),info=document.getElementById("cantidad-resultados"),tpl=document.getElementById("tpl-resultado"),chips=document.querySelectorAll("[data-chip]"),MAX=8;var filas=[].map.call(document.querySelectorAll("[data-practica]"),function(r){var g=r.closest("[data-grupo]").dataset.grupo;return{d:r.dataset,g:g,k:n(r.dataset.practica+" "+g)}});var marcar=function(c){chips.forEach(function(x){var on=x===c;x.setAttribute("aria-pressed",on);x.classList.toggle("bg-[#C2006B]",on);x.classList.toggle("text-white",on);x.classList.toggle("border-[#C2006B]",on);x.classList.toggle("bg-white",!on);x.classList.toggle("text-[#5C1A3D]",!on)})};var nav=document.querySelector("[data-chips]");var mostrar=function(hit,texto,conGrupo){lista.innerHTML="";(conGrupo?i:nav).insertAdjacentElement("afterend",panel);panel.hidden=false;vacio.hidden=hit.length>0;info.hidden=hit.length===0;info.textContent=texto;hit.forEach(function(f){var c=tpl.content.cloneNode(true),q=function(x){return c.querySelector("[data-campo="+x+"]")};var nom=q("nombre");nom.textContent=f.d.practica;if(f.d.href){var a=document.createElement("a");a.href=f.d.href;a.className=nom.className+" underline underline-offset-4";a.textContent=f.d.practica;nom.replaceWith(a)}if(conGrupo)q("grupo").textContent=f.g;else q("grupo").remove();q("lista").textContent=f.d.lista;q("desde").textContent=f.d.desde||"Consultar";lista.appendChild(c)})};i.addEventListener("input",function(){marcar(null);var q=n(i.value.trim());if(q.length<2){panel.hidden=true;lista.innerHTML="";return}var t=q.split(/\\s+/),hit=filas.filter(function(f){return t.every(function(w){return f.k.indexOf(w)>-1})});mostrar(hit.slice(0,MAX),hit.length>MAX?"Mostramos "+MAX+" de "+hit.length+" resultados. Escribí algo más para afinar la búsqueda.":hit.length===1?"1 resultado":hit.length+" resultados",true)});chips.forEach(function(c){c.addEventListener("click",function(e){e.preventDefault();if(c.getAttribute("aria-pressed")==="true"){marcar(null);panel.hidden=true;lista.innerHTML="";return}i.value="";marcar(c);var g=c.dataset.chip,hit=filas.filter(function(f){return f.g===g});mostrar(hit,g+": "+hit.length+(hit.length===1?" precio":" precios"),false)})})})();</script>`;
+
+export function PreciosPage() {
+  const consultas = ESPECIALIDADES.filter((e) => e.consulta);
+  return (
+    <Shell>
+      <section className="bg-white border-b border-[#E8D5C4]/40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <Migas items={[{ href: "/", label: "Inicio" }, { label: "Precios" }]} />
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#5C1A3D] leading-tight">Precios de consultas, estudios y prácticas</h1>
+          <p className="mt-4 text-gray-600 font-light leading-relaxed max-w-2xl">
+            Atención particular en BA Consultorios Médicos, San Justo. Te mostramos el precio de lista y el valor con
+            beneficios: pagando en efectivo y con LinkMed. Valores vigentes desde el {PRECIOS_VIGENTES.replace(/-/g, "/")}.
+          </p>
+          <div className="mt-6 max-w-xl">
+            <label htmlFor="buscar-precio" className="block text-sm font-bold text-[#5C1A3D] mb-2">Buscá una especialidad, estudio o práctica</label>
+            <input
+              id="buscar-precio"
+              type="search"
+              placeholder="Por ejemplo: dermatología, ecografía mamaria, PAP"
+              autoComplete="off"
+              className="w-full rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] px-4 py-3 text-sm focus:outline-none focus:border-[#C2006B]"
+            />
+            <div id="resultados-busqueda" hidden aria-live="polite" className="mt-3 rounded-2xl border border-[#E8D5C4] bg-white shadow-sm overflow-hidden">
+              <p id="cantidad-resultados" className="px-4 pt-3 text-xs text-gray-500"></p>
+              <ul id="lista-resultados" className="divide-y divide-gray-100"></ul>
+              <p id="sin-resultados" hidden className="p-4 text-sm text-gray-700">
+                No encontramos ese estudio en la lista.{" "}
+                <a href={BRAND_INFO.whatsappUrl} target="_blank" rel="noopener" data-track="whatsapp_click" data-origin="precios_sin_resultados" className="font-bold text-[#C2006B] underline underline-offset-4">
+                  Consultanos por WhatsApp
+                </a>
+                .
+              </p>
+            </div>
+            <template
+              id="tpl-resultado"
+              dangerouslySetInnerHTML={{
+                __html:
+                  '<li class="px-4 py-3"><span data-campo="nombre" class="block font-bold text-[#5C1A3D] text-sm"></span><span data-campo="grupo" class="block text-xs text-gray-500"></span><div class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm"><span class="text-gray-600">Precio de lista <strong data-campo="lista" class="font-bold text-gray-800"></strong></span><span class="text-gray-600">Con beneficios, desde <strong data-campo="desde" class="font-extrabold text-[#C2006B]"></strong></span></div></li>',
+              }}
+            />
+          </div>
+          <nav aria-label="Grupos de precios" data-chips className="mt-5 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible pb-1">
+            {[{ id: "consultas", titulo: "Consultas" }, ...GRUPOS_PRECIOS].map((g) => (
+              <a
+                key={g.id}
+                href={`#${g.id}`}
+                data-chip={g.titulo}
+                aria-pressed="false"
+                className="shrink-0 whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white border border-[#E8D5C4] text-[#5C1A3D] hover:border-[#C2006B] transition-colors"
+              >
+                {g.titulo}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 grid gap-10 lg:grid-cols-[1.6fr_1fr] items-start">
+        <div className="space-y-10">
+          <section id="consultas" data-grupo="Consultas" className="scroll-mt-20">
+            <TituloGrupo titulo="Consultas" />
+            <TablaPrecios columna="Especialidad">
+              {consultas.map((e) => (
+                <FilaPrecio
+                  key={e.slug}
+                  nombre={e.nombre}
+                  href={`/especialidades/${e.slug}/`}
+                  lista={e.consulta!.lista}
+                  desde={e.consulta!.desde}
+                  nota={e.consulta!.nota}
+                />
+              ))}
+            </TablaPrecios>
+          </section>
+
+          {GRUPOS_PRECIOS.map((g) => (
+            <section key={g.id} id={g.id} data-grupo={g.titulo} className="scroll-mt-20">
+              <TituloGrupo titulo={g.titulo} />
+              <TablaPrecios>
+                {g.practicas.map((pr) => (
+                  <FilaPrecio key={pr.nombre} nombre={pr.nombre} lista={pr.lista} desde={pr.desde} nota={pr.nota} />
+                ))}
+              </TablaPrecios>
+              <a
+                href={waUrl(`Hola BA! Quiero consultar por ${g.titulo.toLowerCase()}. (Vengo de la web)`)}
+                target="_blank"
+                rel="noopener"
+                data-track="whatsapp_click"
+                data-origin="precios_grupo"
+                data-service={g.titulo}
+                data-stype="Estudio o práctica"
+                className="inline-block mt-3 text-sm font-bold text-[#C2006B] hover:text-[#5C1A3D] underline underline-offset-4"
+              >
+                Consultar turno de {g.titulo.toLowerCase()} por WhatsApp
+              </a>
+            </section>
+          ))}
+
+          <section>
+            <h2 className="font-extrabold text-xl text-[#5C1A3D] mb-3">Preguntas frecuentes</h2>
+            <dl className="space-y-4 text-sm">
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Qué es el precio "con beneficios, desde"?</dt>
+                <dd className="text-gray-600 font-light mt-1">
+                  Es el valor pagando en efectivo y con LinkMed, los dos beneficios juntos. Si usás solo uno, el valor queda entre el precio de lista y ese número.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Atienden por obra social o prepaga?</dt>
+                <dd className="text-gray-600 font-light mt-1">No. La atención en BA es particular.</dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Hay promociones?</dt>
+                <dd className="text-gray-600 font-light mt-1">Sí, cambian cada mes. Consultá las vigentes por WhatsApp.</dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Y los análisis de laboratorio?</dt>
+                <dd className="text-gray-600 font-light mt-1">Dependen de cada orden médica. Mandanos una foto de la orden por WhatsApp y te pasamos el valor.</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+
+        <aside className="space-y-8 lg:sticky lg:top-20">
+          <Beneficios />
+          <section className="rounded-2xl border border-[#E8D5C4] bg-[#F8F6F4] p-6">
+            <h2 className="font-extrabold text-lg text-[#5C1A3D] mb-2">¿No encontrás tu estudio?</h2>
+            <p className="text-sm text-gray-600 font-light mb-4">Escribinos con el nombre del estudio o una foto de la orden y te decimos el valor.</p>
+            <a
+              href={BRAND_INFO.whatsappUrl}
+              target="_blank"
+              rel="noopener"
+              data-track="whatsapp_click"
+              data-origin="precios_aside"
+              className="block text-center px-6 py-3 rounded-full bg-[#C2006B] text-white font-bold hover:bg-[#5C1A3D] transition-colors"
+            >
+              Escribinos por WhatsApp
+            </a>
+          </section>
+          <p className="text-[11px] text-gray-400">
+            Valores de referencia. Pueden cambiar: confirmalos al reservar.
+          </p>
+        </aside>
+      </div>
+    </Shell>
+  );
+}
+
+function TituloGrupo({ titulo }: { titulo: string }) {
+  return <h2 className="font-extrabold text-xl text-[#5C1A3D] mb-3">{titulo}</h2>;
+}
+
+function TablaPrecios({ children, columna = "Estudio o práctica" }: { children: ReactNode; columna?: string }) {
+  return (
+    <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden">
+      <div className="hidden sm:grid grid-cols-[1fr_7.5rem_7.5rem] gap-3 px-4 py-2 bg-[#F8F6F4] text-[11px] font-bold uppercase tracking-wider text-gray-500">
+        <span>{columna}</span>
+        <span className="text-right">Precio de lista</span>
+        <span className="text-right">Con beneficios</span>
+      </div>
+      <ul className="divide-y divide-gray-100">{children}</ul>
+    </div>
+  );
+}
+
+function FilaPrecio({ nombre, href, lista, desde, nota }: { key?: string; nombre: string; href?: string; lista: number; desde?: number; nota?: string }) {
+  return (
+    <li
+      data-practica={nombre}
+      data-lista={formatoPrecio(lista)}
+      data-desde={desde ? formatoPrecio(desde) : undefined}
+      data-href={href}
+      className="px-4 py-3 grid grid-cols-2 sm:grid-cols-[1fr_7.5rem_7.5rem] gap-x-3 gap-y-1 text-sm">
+      <div className="col-span-2 sm:col-span-1">
+        {href ? (
+          <a href={href} className="font-bold text-[#5C1A3D] hover:text-[#C2006B]">{nombre}</a>
+        ) : (
+          <span className="text-gray-800">{nombre}</span>
+        )}
+        {nota && <span className="block text-xs text-gray-500">{nota}</span>}
+      </div>
+      <span className="sm:text-right text-gray-600">
+        <span className="sm:hidden text-xs text-gray-400">Lista </span>
+        {formatoPrecio(lista)}
+      </span>
+      {desde ? (
+        <span className="text-right font-bold text-[#C2006B]">
+          <span className="sm:hidden text-xs font-normal text-gray-400">Desde </span>
+          {formatoPrecio(desde)}
+        </span>
+      ) : (
+        <span className="text-right text-gray-400">—</span>
+      )}
+    </li>
   );
 }
