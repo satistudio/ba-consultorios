@@ -280,7 +280,7 @@ export default function App() {
 
   const handleOrderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderFile || !orderForm.name.trim() || !orderForm.email.trim() || !orderForm.phone.trim() || !orderForm.consent) {
+    if (!orderFile || !orderForm.name.trim() || !orderForm.phone.trim() || !orderForm.consent) {
       setOrderErrorMsg("Completá todos los campos, adjuntá la orden y aceptá el consentimiento.");
       return;
     }
@@ -1486,10 +1486,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Email</label>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Email (opcional)</label>
                   <input
                     type="email"
-                    required
                     value={orderForm.email}
                     onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"

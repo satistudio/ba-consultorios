@@ -25,6 +25,7 @@ function Header() {
         <nav className="flex items-center gap-1 sm:gap-3 text-[13px] font-medium">
           <a href="/especialidades/" className="hidden sm:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Especialidades</a>
           <a href="/precios/" className="px-2 sm:px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Precios</a>
+          <a href="/turnos/" className="px-2 sm:px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Turnos</a>
           <a href="/" className="hidden sm:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Inicio</a>
           <a
             href={BRAND_INFO.whatsappUrl}
@@ -58,6 +59,7 @@ function Footer() {
           <p className="font-extrabold text-white mb-1">Turnos</p>
           <a href="/especialidades/" className="hover:text-white">Todas las especialidades</a>
           <a href="/precios/" className="hover:text-white">Precios de estudios y prácticas</a>
+          <a href="/turnos/" className="hover:text-white">Cómo pedir turno</a>
           <a href={BRAND_INFO.agendaProUrl} target="_blank" rel="noopener" data-track="agendapro_direct_click" data-origin="pagina_footer" className="hover:text-white">Reservar online</a>
           <a href={BRAND_INFO.whatsappUrl} target="_blank" rel="noopener" data-track="whatsapp_click" data-origin="pagina_footer" className="hover:text-white">WhatsApp: {BRAND_INFO.whatsapp}</a>
         </div>
@@ -483,5 +485,185 @@ function FilaPrecio({ nombre, href, lista, desde, nota }: { key?: string; nombre
         <span className="text-right text-gray-400">—</span>
       )}
     </li>
+  );
+}
+
+// Envío de la orden médica desde /turnos/ (misma API que la home:
+// /api/enviar-orden, que la manda por mail a BA). Al enviarse bien empuja
+// lead_form_submit con el mismo form_name que la home.
+export const FORMULARIO_ORDEN = `<script>(function(){var f=document.getElementById("form-orden");if(!f)return;var msg=document.getElementById("orden-mensaje"),btn=document.getElementById("orden-enviar"),file=document.getElementById("orden-archivo"),nombreArchivo=document.getElementById("orden-archivo-nombre"),ok=document.getElementById("orden-ok"),TIPOS=["image/jpeg","image/png","image/webp","image/heic","application/pdf"],MAX=10485760;var error=function(t){msg.textContent=t;msg.hidden=false};file.addEventListener("change",function(){var a=file.files[0];nombreArchivo.textContent=a?a.name:"Ningún archivo elegido";msg.hidden=true;if(!a)return;if(a.type&&TIPOS.indexOf(a.type)<0){error("Subí una foto (JPG, PNG o HEIC) o un PDF.");file.value="";nombreArchivo.textContent="Ningún archivo elegido"}else if(a.size>MAX){error("El archivo pesa demasiado (máximo 10 MB).");file.value="";nombreArchivo.textContent="Ningún archivo elegido"}});f.addEventListener("submit",function(e){e.preventDefault();msg.hidden=true;var d=new FormData(f);if(!file.files[0]){error("Falta la foto o el PDF de la orden.");return}if(!String(d.get("name")||"").trim()||!String(d.get("phone")||"").trim()){error("Completá tu nombre y tu celular.");return}if(!f.querySelector("[name=consent]").checked){error("Para enviarla, aceptá el uso de tus datos.");return}d.set("consent","true");btn.disabled=true;btn.textContent="Enviando...";fetch("/api/enviar-orden",{method:"POST",body:d}).then(function(r){return r.json()}).then(function(j){if(!j.ok)throw 0;window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"lead_form_submit",form_name:"orden_medica",origin:"pagina_turnos"});f.hidden=true;ok.hidden=false}).catch(function(){error("No pudimos enviar la orden. Probá de nuevo o mandala por WhatsApp.");btn.disabled=false;btn.textContent="Enviar orden"})})})();</script>`;
+
+const WA_ORDEN = "Hola BA! Tengo una orden médica y quiero sacar turno. Te mando la foto. (Vengo de la web)";
+
+export function TurnosPage() {
+  return (
+    <Shell>
+      <section className="bg-white border-b border-[#E8D5C4]/40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <Migas items={[{ href: "/", label: "Inicio" }, { label: "Turnos" }]} />
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#5C1A3D] leading-tight">Pedí tu turno en BA</h1>
+          <p className="mt-4 text-gray-600 font-light leading-relaxed max-w-2xl">
+            Atención particular en {BRAND_INFO.address}. Elegí la forma que te quede más cómoda.
+          </p>
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+        <div className="grid gap-4 md:grid-cols-3">
+          <OpcionTurno numero="1" titulo="Ya sé qué necesito" texto="Reservá online: elegís especialidad, día y horario, y te llega la confirmación.">
+            <a
+              href={BRAND_INFO.agendaProUrl}
+              target="_blank"
+              rel="noopener"
+              data-track="agendapro_direct_click"
+              data-origin="turnos_opcion"
+              className="block text-center px-6 py-3 rounded-full bg-[#5C1A3D] text-white font-bold hover:bg-[#C2006B] transition-colors"
+            >
+              Reservá online
+            </a>
+          </OpcionTurno>
+          <OpcionTurno numero="2" titulo="Tengo una orden médica" texto="Mandanos la orden y te decimos qué turno sacar, cómo prepararte y cuánto sale.">
+            <a href="#orden" className="block text-center px-6 py-3 rounded-full border-2 border-[#5C1A3D] text-[#5C1A3D] font-bold hover:bg-[#5C1A3D] hover:text-white transition-colors">
+              Subir la orden
+            </a>
+          </OpcionTurno>
+          <OpcionTurno numero="3" titulo="Tengo dudas" texto="Escribinos y te ayudamos a elegir especialista o estudio.">
+            <a
+              href={BRAND_INFO.whatsappUrl}
+              target="_blank"
+              rel="noopener"
+              data-track="whatsapp_click"
+              data-origin="turnos_opcion"
+              className="block text-center px-6 py-3 rounded-full bg-[#C2006B] text-white font-bold hover:bg-[#5C1A3D] transition-colors"
+            >
+              Escribinos por WhatsApp
+            </a>
+          </OpcionTurno>
+        </div>
+
+        <section id="orden" className="scroll-mt-20 grid gap-8 lg:grid-cols-[1.3fr_1fr] items-start">
+          <div className="rounded-2xl border border-[#E8D5C4] bg-white p-6 sm:p-8">
+            <h2 className="font-extrabold text-2xl text-[#5C1A3D]">Subí tu orden médica</h2>
+            <p className="mt-2 text-sm text-gray-600 font-light">
+              Te contactamos por WhatsApp o por teléfono, en el horario de atención, para darte el turno.
+            </p>
+
+            <form id="form-orden" noValidate className="mt-6 space-y-4">
+              <div>
+                <span className="block text-xs font-bold text-gray-600 mb-1.5">Foto o PDF de la orden</span>
+                <label htmlFor="orden-archivo" className="flex items-center gap-3 rounded-xl border-2 border-dashed border-[#E8D5C4] bg-[#F8F6F4] px-4 py-4 cursor-pointer hover:border-[#C2006B]">
+                  <span className="px-3 py-1.5 rounded-full bg-[#5C1A3D] text-white text-xs font-bold whitespace-nowrap">Elegir archivo</span>
+                  <span id="orden-archivo-nombre" className="text-sm text-gray-500 truncate">Ningún archivo elegido</span>
+                </label>
+                <input id="orden-archivo" name="file" type="file" accept="image/*,application/pdf" className="sr-only" />
+                <span className="block mt-1 text-[11px] text-gray-400">Podés sacarle una foto con el celular. Hasta 10 MB.</span>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <CampoOrden id="orden-nombre" name="name" label="Nombre y apellido" type="text" autoComplete="name" />
+                <CampoOrden id="orden-celular" name="phone" label="Celular" type="tel" autoComplete="tel" />
+              </div>
+              <CampoOrden id="orden-email" name="email" label="Email (opcional)" type="email" autoComplete="email" />
+              <label className="flex items-start gap-2 text-xs text-gray-600">
+                <input type="checkbox" name="consent" className="mt-0.5" />
+                <span>
+                  Acepto que BA Consultorios Médicos use estos datos y la orden solo para contactarme por este turno, conforme a la Ley de
+                  Protección de Datos Personales N.º 25.326.
+                </span>
+              </label>
+              <p id="orden-mensaje" hidden role="alert" className="text-sm text-[#C2006B] font-bold"></p>
+              <button id="orden-enviar" type="submit" className="w-full px-6 py-3 rounded-full bg-[#5C1A3D] text-white font-bold hover:bg-[#C2006B] transition-colors disabled:opacity-60">
+                Enviar orden
+              </button>
+            </form>
+
+            <div id="orden-ok" hidden role="status" className="mt-6 rounded-xl bg-[#F2C4D0]/30 border border-[#F2C4D0] p-5">
+              <p className="font-extrabold text-[#5C1A3D]">¡Recibimos tu orden!</p>
+              <p className="mt-1 text-sm text-gray-700 font-light">Te contactamos en el horario de atención para darte el turno.</p>
+            </div>
+          </div>
+
+          <aside className="space-y-6">
+            <div className="rounded-2xl border border-[#E8D5C4] bg-[#F8F6F4] p-6">
+              <h3 className="font-extrabold text-lg text-[#5C1A3D]">¿Preferís WhatsApp?</h3>
+              <p className="mt-2 text-sm text-gray-600 font-light">Abrí el chat y mandanos la foto de la orden.</p>
+              <a
+                href={waUrl(WA_ORDEN)}
+                target="_blank"
+                rel="noopener"
+                data-track="whatsapp_click"
+                data-origin="turnos_orden"
+                data-stype="Orden médica"
+                className="mt-4 block text-center px-6 py-3 rounded-full bg-[#C2006B] text-white font-bold hover:bg-[#5C1A3D] transition-colors"
+              >
+                Mandar la orden por WhatsApp
+              </a>
+            </div>
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 text-sm">
+              <h3 className="font-extrabold text-lg text-[#5C1A3D] mb-3">Qué pasa después</h3>
+              <ol className="space-y-2 text-gray-600 font-light list-decimal pl-5">
+                <li>Revisamos la orden.</li>
+                <li>Te escribimos con el turno, el valor y la preparación, si hace falta.</li>
+                <li>El día del turno, traé la orden.</li>
+              </ol>
+            </div>
+          </aside>
+        </section>
+
+        <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
+          <section>
+            <h2 className="font-extrabold text-xl text-[#5C1A3D] mb-3">Preguntas frecuentes</h2>
+            <dl className="space-y-4 text-sm">
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Atienden por obra social o prepaga?</dt>
+                <dd className="text-gray-600 font-light mt-1">No. La atención es particular, con beneficios por pago en efectivo y con LinkMed.</dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Cuánto sale?</dt>
+                <dd className="text-gray-600 font-light mt-1">
+                  Mirá los valores en <a href="/precios/" className="font-bold text-[#C2006B] underline underline-offset-4">precios</a>, o consultanos con tu orden.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿En qué horario atienden?</dt>
+                <dd className="text-gray-600 font-light mt-1">{BRAND_INFO.schedule}. Los días de cada especialidad cambian seguido: los ves en la agenda online.</dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Dónde queda BA?</dt>
+                <dd className="text-gray-600 font-light mt-1">En {BRAND_INFO.address}.</dd>
+              </div>
+            </dl>
+          </section>
+          <aside>
+            <Beneficios />
+          </aside>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+function OpcionTurno({ numero, titulo, texto, children }: { numero: string; titulo: string; texto: string; children: ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-[#E8D5C4] bg-white p-6 flex flex-col">
+      <span className="w-8 h-8 rounded-full bg-[#F2C4D0]/50 text-[#5C1A3D] font-extrabold flex items-center justify-center text-sm">{numero}</span>
+      <h2 className="mt-3 font-extrabold text-lg text-[#5C1A3D]">{titulo}</h2>
+      <p className="mt-1 mb-5 text-sm text-gray-600 font-light flex-1">{texto}</p>
+      {children}
+    </div>
+  );
+}
+
+function CampoOrden({ id, name, label, type, autoComplete }: { id: string; name: string; label: string; type: string; autoComplete: string }) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-bold text-gray-600 mb-1.5">{label}</label>
+      <input
+        id={id}
+        name={name}
+        type={type}
+        autoComplete={autoComplete}
+        className="w-full rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] px-4 py-3 text-sm focus:outline-none focus:border-[#C2006B]"
+      />
+    </div>
   );
 }

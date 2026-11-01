@@ -61,7 +61,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const consent = form.get("consent");
   const file = form.get("file") as File | null;
 
-  if (!name || !email || !phone || !file || consent !== "true") {
+  // El email es opcional: BA responde por teléfono o WhatsApp, y pedirlo
+  // hacía abandonar el formulario.
+  if (!name || !phone || !file || consent !== "true") {
     return new Response(JSON.stringify({ ok: false, reason: "missing_fields" }), {
       status: 400,
       headers: { "content-type": "application/json" }
@@ -92,7 +94,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       <p>Una persona subió una orden médica a través del sitio y pidió que la contacten para orientarla.</p>
       <table style="border-collapse: collapse; margin-top: 12px;">
         <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Nombre:</td><td>${escapeHtml(name)}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Email:</td><td>${escapeHtml(email)}</td></tr>
+        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Email:</td><td>${email ? escapeHtml(email) : "(no lo dejó)"}</td></tr>
         <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Celular:</td><td>${escapeHtml(phone)}</td></tr>
       </table>
       <p style="margin-top: 16px; color: #888; font-size: 12px;">La orden médica está adjunta a este mail.</p>
@@ -109,7 +111,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       body: JSON.stringify({
         from: "BA Consultorios Médicos <onboarding@resend.dev>",
         to: [context.env.ORDER_DESTINATION_EMAIL || DEFAULT_DESTINATION],
-        reply_to: email,
+        ...(email ? { reply_to: email } : {}),
         subject,
         html,
         attachments: [{ filename: file.name || "orden-medica", content: base64Content }]
