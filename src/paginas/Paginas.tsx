@@ -813,8 +813,8 @@ const MAPS_COMO_LLEGAR = "https://www.google.com/maps/dir/?api=1&destination=BA+
 const MAPS_EMBED =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.9430887002068!2d-58.5548508!3d-34.6813858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcc7e7a188c227%3A0x2b693e1d88229b3!2sBA%20Consultorios%20M%C3%A9dicos%20-%20Cl%C3%ADnica%20de%20Especialidades%20en%20San%20Justo!5e0!3m2!1ses-419!2sar!4v1784852093873!5m2!1ses-419!2sar";
 
-// Sin referencias del barrio, colectivos ni accesibilidad hasta que BA las
-// confirme (regla de la marca: no nombrar lugares sin confirmar).
+// Referencias del barrio confirmadas por Dani (1/11/2026): shopping y plaza de
+// San Justo. Colectivos y accesibilidad: no se publican hasta que BA los confirme.
 export function ContactoPage() {
   return (
     <Shell>
@@ -823,7 +823,8 @@ export function ContactoPage() {
           <Migas items={[{ href: "/", label: "Inicio" }, { label: "Contacto" }]} />
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#5C1A3D] leading-tight">Contacto y cómo llegar</h1>
           <p className="mt-4 text-gray-600 font-light leading-relaxed max-w-2xl">
-            Estamos en {BRAND_INFO.address}. Escribinos por WhatsApp o reservá tu turno online.
+            Estamos en {BRAND_INFO.address}, a metros del shopping de San Justo y de la plaza de San Justo. Escribinos por WhatsApp o
+            reservá tu turno online.
           </p>
         </div>
       </section>
@@ -835,6 +836,10 @@ export function ContactoPage() {
               <h2 className="font-extrabold text-lg text-[#5C1A3D]">Dirección</h2>
               <p className="mt-1 text-sm text-gray-700">{BRAND_INFO.address}</p>
               <p className="text-xs text-gray-500 font-light">Provincia de Buenos Aires</p>
+              <ul className="mt-3 space-y-1 text-sm text-gray-700">
+                <li className="flex gap-2"><span aria-hidden="true" className="text-[#C2006B]">·</span>A metros del shopping de San Justo</li>
+                <li className="flex gap-2"><span aria-hidden="true" className="text-[#C2006B]">·</span>A metros de la plaza de San Justo</li>
+              </ul>
               <div className="mt-4 flex flex-wrap gap-2">
                 <a
                   href={MAPS_COMO_LLEGAR}

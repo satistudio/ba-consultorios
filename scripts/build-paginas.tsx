@@ -131,7 +131,7 @@ const CLINICA = {
 pagina({
   path: "/contacto/",
   titulo: "Contacto y cómo llegar: Almafuerte 3558, San Justo | BA Consultorios Médicos",
-  descripcion: "BA Consultorios Médicos en Almafuerte 3558, San Justo, La Matanza. Horarios, mapa, cómo llegar, WhatsApp y teléfono. Atención particular.",
+  descripcion: "BA Consultorios Médicos en Almafuerte 3558, San Justo, a metros del shopping y de la plaza de San Justo. Horarios, mapa, cómo llegar, WhatsApp y teléfono. Atención particular.",
   ld: [migas([{ name: "Inicio", path: "/" }, { name: "Contacto", path: "/contacto/" }]), CLINICA],
   body: renderToStaticMarkup(<ContactoPage />),
 });
