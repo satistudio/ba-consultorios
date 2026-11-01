@@ -580,9 +580,9 @@ export default function App() {
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-[900] tracking-tight text-white leading-[1.1] mb-6">
-              MÁS DE 30 ESPECIALIDADES.<br />
-              <span className="text-[#F2C4D0]">TURNOS ESTA SEMANA.</span><br />
-              RAPIDEZ REAL.
+              Más de 30 especialidades.<br />
+              <span className="text-[#F2C4D0]">Turnos esta semana.</span><br />
+              <em className="acento">Rapidez real.</em>
             </h1>
             
             <p className="text-lg md:text-xl text-[#F8F6F4]/90 font-light leading-relaxed max-w-2xl mb-8">
