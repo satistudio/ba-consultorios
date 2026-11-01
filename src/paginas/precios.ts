@@ -11,7 +11,8 @@
 export interface Practica {
   nombre: string;
   lista: number;
-  desde: number;
+  // Sin valor: la planilla no tiene precio con beneficios para esa práctica.
+  desde?: number;
   nota?: string;
 }
 
@@ -23,7 +24,7 @@ export interface GrupoPrecios {
   practicas: Practica[];
 }
 
-const p = (nombre: string, lista: number, desde: number, nota?: string): Practica => ({ nombre, lista, desde, nota });
+const p = (nombre: string, lista: number, desde: number | undefined, nota?: string): Practica => ({ nombre, lista, desde, nota });
 
 export const GRUPOS_PRECIOS: GrupoPrecios[] = [
   {
@@ -88,6 +89,12 @@ export const GRUPOS_PRECIOS: GrupoPrecios[] = [
       p("Translucencia nucal o scan + arterias uterinas", 77000, 67500),
       p("Doppler obstétrico + translucencia nucal o scan + arterias uterinas", 87000, 76500),
     ],
+  },
+  {
+    id: "mamografia",
+    titulo: "Mamografía",
+    especialidades: ["Ginecología"],
+    practicas: [p("Mamografía", 75000, undefined, "Consultá los beneficios por WhatsApp.")],
   },
   {
     id: "cardiologia",

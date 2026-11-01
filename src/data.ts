@@ -54,7 +54,12 @@ export const SPECIALTIES: string[] = [
   "Urología",
   "Psicopedagogía",
   "Podología",
-  "Audiometría y estudios auditivos"
+  "Audiometría y estudios auditivos",
+  "Dermatología infantil",
+  "Endocrinología infantil",
+  "Ginecología infanto juvenil",
+  "Especialista en columna",
+  "Nefrología"
 ];
 
 export const SERVICES_DATA: MedicalService[] = [
@@ -286,6 +291,8 @@ export const SERVICES_DATA: MedicalService[] = [
   { id: "dm-3", name: "Mamografía digital", specialty: "Ginecología", type: "Estudio realizado en BA" },
   { id: "dm-4", name: "Ecografía mamaria más mamografía combinadas", specialty: "Ginecología", type: "Estudio realizado en BA" },
 
+  { id: "col-1", name: "Consulta con especialista en columna", specialty: "Especialista en columna", type: "Consulta" },
+
   // 23. Estudios derivados o gestionados externamente
   { id: "ext-1", name: "Resonancia magnética (RMN)", specialty: "Diagnóstico por Imágenes", type: "Estudio derivado", details: "Derivado por BA consultorios a centros de alta complejidad." },
   { id: "ext-2", name: "Tomografía computada (TC)", specialty: "Diagnóstico por Imágenes", type: "Estudio derivado", details: "Derivado por BA consultorios a centros de alta complejidad." },
@@ -293,7 +300,7 @@ export const SERVICES_DATA: MedicalService[] = [
 
   // General specialty Consultas
   ...SPECIALTIES.filter(spec => 
-    !["Cardiología", "Cardiología infantil", "Oftalmología", "Otorrinolaringología", "Podología", "Nutrición", "Kinesiología"].includes(spec)
+    !["Cardiología", "Cardiología infantil", "Oftalmología", "Otorrinolaringología", "Podología", "Nutrición", "Kinesiología", "Especialista en columna"].includes(spec)
   ).map((spec, index) => ({
     id: `gspec-${index}`,
     name: `Consulta médica de ${spec}`,

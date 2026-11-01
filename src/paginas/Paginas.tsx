@@ -436,7 +436,7 @@ function TablaPrecios({ children, columna = "Estudio o práctica" }: { children:
   );
 }
 
-function FilaPrecio({ nombre, href, lista, desde, nota }: { key?: string; nombre: string; href?: string; lista: number; desde: number; nota?: string }) {
+function FilaPrecio({ nombre, href, lista, desde, nota }: { key?: string; nombre: string; href?: string; lista: number; desde?: number; nota?: string }) {
   return (
     <li data-practica={nombre} className="px-4 py-3 grid grid-cols-2 sm:grid-cols-[1fr_7.5rem_7.5rem] gap-x-3 gap-y-1 text-sm">
       <div className="col-span-2 sm:col-span-1">
@@ -451,10 +451,14 @@ function FilaPrecio({ nombre, href, lista, desde, nota }: { key?: string; nombre
         <span className="sm:hidden text-xs text-gray-400">Lista </span>
         {formatoPrecio(lista)}
       </span>
-      <span className="text-right font-bold text-[#C2006B]">
-        <span className="sm:hidden text-xs font-normal text-gray-400">Desde </span>
-        {formatoPrecio(desde)}
-      </span>
+      {desde ? (
+        <span className="text-right font-bold text-[#C2006B]">
+          <span className="sm:hidden text-xs font-normal text-gray-400">Desde </span>
+          {formatoPrecio(desde)}
+        </span>
+      ) : (
+        <span className="text-right text-gray-400">—</span>
+      )}
     </li>
   );
 }
