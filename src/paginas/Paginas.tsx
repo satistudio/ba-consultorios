@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { BRAND_INFO, MedicalService } from "../data";
 import { ESPECIALIDADES, Especialidad, formatoPrecio, PRECIOS_VIGENTES } from "./especialidades";
 import { GRUPOS_PRECIOS, gruposDeEspecialidad } from "./precios";
+import { DERIVADOS, GRUPOS_ESTUDIO, PREPARACIONES } from "./estudios";
 
 const WA_NUMERO = "5491164344822";
 
@@ -20,13 +21,14 @@ function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <a href="/" className="flex items-center gap-2 flex-shrink-0">
           <img src="/ba-isotipo-vino.png" alt="" width={36} height={36} className="w-9 h-9 object-contain" />
-          <span className="hidden min-[420px]:inline font-extrabold text-[#5C1A3D] text-sm sm:text-base leading-tight">BA Consultorios Médicos</span>
+          <span className="hidden min-[420px]:inline md:hidden lg:inline font-extrabold text-[#5C1A3D] text-sm sm:text-base leading-tight">BA Consultorios Médicos</span>
         </a>
         <nav className="flex items-center gap-1 sm:gap-3 text-[13px] font-medium">
-          <a href="/especialidades/" className="hidden sm:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Especialidades</a>
+          <a href="/especialidades/" className="hidden md:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Especialidades</a>
+          <a href="/estudios/" className="hidden md:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Estudios</a>
           <a href="/precios/" className="px-2 sm:px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Precios</a>
           <a href="/turnos/" className="px-2 sm:px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Turnos</a>
-          <a href="/" className="hidden sm:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Inicio</a>
+          <a href="/" className="hidden lg:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Inicio</a>
           <a
             href={BRAND_INFO.whatsappUrl}
             target="_blank"
@@ -58,6 +60,7 @@ function Footer() {
         <div className="flex flex-col gap-1">
           <p className="font-extrabold text-white mb-1">Turnos</p>
           <a href="/especialidades/" className="hover:text-white">Todas las especialidades</a>
+          <a href="/estudios/" className="hover:text-white">Estudios y preparación</a>
           <a href="/precios/" className="hover:text-white">Precios de estudios y prácticas</a>
           <a href="/turnos/" className="hover:text-white">Cómo pedir turno</a>
           <a href={BRAND_INFO.agendaProUrl} target="_blank" rel="noopener" data-track="agendapro_direct_click" data-origin="pagina_footer" className="hover:text-white">Reservar online</a>
@@ -665,5 +668,142 @@ function CampoOrden({ id, name, label, type, autoComplete }: { id: string; name:
         className="w-full rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] px-4 py-3 text-sm focus:outline-none focus:border-[#C2006B]"
       />
     </div>
+  );
+}
+
+const WA_DERIVADO = "Hola BA! Quiero consultar el valor y el turno de un estudio. (Vengo de la web)";
+const WA_LABORATORIO = "Hola BA! Quiero hacerme un análisis de laboratorio. Te mando la foto de la orden. (Vengo de la web)";
+
+// Los grupos se abren en el lugar (<details>), sin desplazar la página.
+export function EstudiosPage() {
+  const grupos = GRUPOS_ESTUDIO.map((e) => ({ ...e, grupo: GRUPOS_PRECIOS.find((g) => g.id === e.id) })).filter((e) => e.grupo);
+  return (
+    <Shell>
+      <section className="bg-white border-b border-[#E8D5C4]/40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <Migas items={[{ href: "/", label: "Inicio" }, { label: "Estudios" }]} />
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#5C1A3D] leading-tight">Estudios en San Justo</h1>
+          <p className="mt-4 text-gray-600 font-light leading-relaxed max-w-2xl">
+            Ecografías, Doppler, estudios cardiológicos y más, en {BRAND_INFO.address}. Mirá qué hacemos en BA, cómo prepararte y a dónde
+            te derivamos para estudios de alta complejidad.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a
+              href={BRAND_INFO.agendaProUrl}
+              target="_blank"
+              rel="noopener"
+              data-track="agendapro_direct_click"
+              data-origin="estudios_hero"
+              className="px-6 py-3 rounded-full bg-[#5C1A3D] text-white font-bold hover:bg-[#C2006B] transition-colors"
+            >
+              Reservá online
+            </a>
+            <a href="/turnos/#orden" className="px-6 py-3 rounded-full border-2 border-[#5C1A3D] text-[#5C1A3D] font-bold hover:bg-[#5C1A3D] hover:text-white transition-colors">
+              Tengo una orden médica
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+        <section>
+          <h2 className="font-extrabold text-2xl text-[#5C1A3D]">Estudios que se hacen en BA</h2>
+          <p className="mt-2 mb-5 text-sm text-gray-600 font-light">Tocá cada grupo para ver la lista completa.</p>
+          <div className="grid gap-3 md:grid-cols-2 items-start">
+            {grupos.map(({ id, titulo, grupo }) => (
+              <details key={id} id={id} className="group rounded-2xl border border-[#E8D5C4] bg-white">
+                <summary className="flex items-center justify-between gap-3 cursor-pointer list-none px-5 py-4">
+                  <span>
+                    <span className="block font-extrabold text-[#5C1A3D]">{titulo}</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">
+                      {grupo!.practicas.length} {grupo!.practicas.length === 1 ? "estudio" : "estudios"}
+                    </span>
+                  </span>
+                  <span aria-hidden="true" className="text-[#C2006B] text-xl font-bold transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <div className="px-5 pb-5">
+                  <ul className="space-y-1.5 text-sm text-gray-700 font-light">
+                    {grupo!.practicas.map((p) => (
+                      <li key={p.nombre} className="flex gap-2">
+                        <span aria-hidden="true" className="text-[#C2006B]">·</span>
+                        {p.nombre}
+                      </li>
+                    ))}
+                  </ul>
+                  <a href={`/precios/#${id}`} className="inline-block mt-4 text-sm font-bold text-[#C2006B] underline underline-offset-4">
+                    Ver precios
+                  </a>
+                </div>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <section id="preparacion" className="scroll-mt-20">
+          <h2 className="font-extrabold text-2xl text-[#5C1A3D]">Cómo prepararte</h2>
+          <p className="mt-2 mb-5 text-sm text-gray-600 font-light max-w-2xl">
+            Estos estudios necesitan una preparación. Para el resto, te indicamos cómo venir cuando sacás el turno.
+          </p>
+          <div className="rounded-2xl border border-[#E8D5C4] bg-white divide-y divide-[#E8D5C4]/60">
+            {PREPARACIONES.map((p) => (
+              <div key={p.estudio} className="px-5 py-4 sm:grid sm:grid-cols-[16rem_1fr] sm:gap-6">
+                <p className="font-bold text-[#5C1A3D] text-sm">{p.estudio}</p>
+                <p className="mt-1 sm:mt-0 text-sm text-gray-600 font-light leading-relaxed">{p.indicacion}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-gray-500">Si tenés dudas sobre la preparación, escribinos antes del turno.</p>
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-2 items-start">
+          <section className="rounded-2xl border border-[#E8D5C4] bg-[#F8F6F4] p-6">
+            <h2 className="font-extrabold text-xl text-[#5C1A3D]">Estudios de alta complejidad</h2>
+            <p className="mt-2 text-sm text-gray-600 font-light">Estos estudios no se hacen en BA: te derivamos a un centro de alta complejidad. Escribinos y te pasamos el valor y cómo sacar el turno.</p>
+            <ul className="mt-4 space-y-2 text-sm text-gray-700">
+              {DERIVADOS.map((d) => (
+                <li key={d.nombre}>
+                  <span className="font-bold text-[#5C1A3D]">{d.nombre}</span>
+                  {d.detalle && <span className="block text-xs text-gray-500 font-light">{d.detalle}</span>}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={waUrl(WA_DERIVADO)}
+              target="_blank"
+              rel="noopener"
+              data-track="whatsapp_click"
+              data-origin="estudios_derivados"
+              data-stype="Estudio derivado"
+              className="mt-5 block text-center px-6 py-3 rounded-full bg-[#C2006B] text-white font-bold hover:bg-[#5C1A3D] transition-colors"
+            >
+              Consultá valor y turno por WhatsApp
+            </a>
+          </section>
+
+          <section className="rounded-2xl border border-[#E8D5C4] bg-white p-6">
+            <h2 className="font-extrabold text-xl text-[#5C1A3D]">Laboratorio</h2>
+            <p className="mt-2 text-sm text-gray-600 font-light">
+              El valor y la preparación dependen de lo que pida tu orden. Mandanos una foto y te respondemos con todo.
+            </p>
+            <a
+              href={waUrl(WA_LABORATORIO)}
+              target="_blank"
+              rel="noopener"
+              data-track="whatsapp_click"
+              data-origin="estudios_laboratorio"
+              data-stype="Laboratorio"
+              className="mt-5 block text-center px-6 py-3 rounded-full bg-[#C2006B] text-white font-bold hover:bg-[#5C1A3D] transition-colors"
+            >
+              Mandar la orden por WhatsApp
+            </a>
+            <a href="/turnos/#orden" className="mt-3 block text-center text-sm font-bold text-[#5C1A3D] underline underline-offset-4">
+              O subila desde la web
+            </a>
+          </section>
+        </div>
+
+        <Beneficios />
+      </div>
+    </Shell>
   );
 }

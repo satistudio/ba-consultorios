@@ -1751,6 +1751,7 @@ export default function App() {
             <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold">
               <a href="#propuesta" className="hover:text-white transition-colors">Propuesta</a>
               <a href="/especialidades/" className="hover:text-white transition-colors">Especialidades</a>
+              <a href="/estudios/" className="hover:text-white transition-colors">Estudios</a>
               <a href="/precios/" className="hover:text-white transition-colors">Precios</a>
               <a href="#reserva-online" className="hover:text-white transition-colors">Reservar online</a>
               <a href="#testimonios" className="hover:text-white transition-colors">Opiniones</a>

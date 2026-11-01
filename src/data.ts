@@ -84,7 +84,7 @@ export const SERVICES_DATA: MedicalService[] = [
   { id: "e-2", name: "Ecografía hepatobiliopancreática", specialty: "Ecografía", type: "Estudio realizado en BA" },
   { id: "e-3", name: "Ecografía pleural", specialty: "Ecografía", type: "Estudio realizado en BA" },
   { id: "e-4", name: "Ecografía renal", specialty: "Ecografía", type: "Estudio realizado en BA" },
-  { id: "e-5", name: "Ecografía vesical", specialty: "Ecografía", type: "Estudio realizado en BA" },
+  { id: "e-5", name: "Ecografía de vesícula", specialty: "Ecografía", type: "Estudio realizado en BA" },
   { id: "e-6", name: "Ecografía renovesical (con o sin residuo posmiccional)", specialty: "Ecografía", type: "Estudio realizado en BA" },
   { id: "e-7", name: "Ecografía renovesicoprostática", specialty: "Ecografía", type: "Estudio realizado en BA" },
   { id: "e-8", name: "Ecografía vesicoprostática (con o sin residuo posmiccional)", specialty: "Ecografía", type: "Estudio realizado en BA" },
