@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=DM+Serif+Display:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=DM+Serif+Display:ital@0;1&family=Barlow+Condensed:wght@800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "DM Serif Display", serif;
+  --font-titular: "Barlow Condensed", "Arial Narrow", sans-serif;
   
   /* Custom colors matching the Brand Book */
   --color-brand-magenta: #C2006B;
@@ -24,4 +25,46 @@
 /* Custom utility for smooth scrolling */
 html {
   scroll-behavior: smooth;
+}
+
+/* FASE 2: dirección tipográfica. Se elige con data-tipo en <html> (index.html),
+   así la home y las páginas estáticas cambian juntas sin tocar cada título.
+   Fuera de @layer a propósito: le gana a las utilidades de Tailwind.
+   - editorial: sistema "editorial con luz" de redes (aprobado 21/10/2026):
+     titulares Barlow Condensed Black en mayúsculas, acento DM Serif Italic,
+     cuerpo Montserrat.
+   - clasica: alternativa más serena: titulares DM Serif Display en tipo
+     oración, cuerpo Montserrat. */
+html[data-tipo="editorial"] h1,
+html[data-tipo="editorial"] h2:not(.font-serif) {
+  font-family: var(--font-titular);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 0.95;
+  /* La condensada se ve más chica al mismo tamaño: se agranda ~20%. */
+  --text-xl: 1.5rem;
+  --text-2xl: 1.8rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 2.75rem;
+  --text-5xl: 3.6rem;
+  --text-6xl: 4.5rem;
+}
+
+html[data-tipo="clasica"] h1,
+html[data-tipo="clasica"] h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+/* Acento: una palabra o frase corta, nunca un párrafo. */
+.acento {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
 }
