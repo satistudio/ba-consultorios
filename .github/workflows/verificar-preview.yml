@@ -17,7 +17,7 @@ jobs:
           BASE="https://$SUB.ba-consultorios-3da.pages.dev"
           # main no tiene alias de rama: se verifica el dominio publicado.
           if [ "$RAMA" = "main" ]; then BASE="https://baconsultoriosmedicos.com.ar"; fi
-          for p in / /especialidades/ /especialidades/ginecologia/ /precios/ /turnos/ /estudios/ /sitemap.xml; do
+          for p in / /especialidades/ /especialidades/ginecologia/ /precios/ /turnos/ /estudios/ /contacto/ /sitemap.xml; do
             echo "== $BASE$p"
             curl -sS -o body.html -w "status=%{http_code} redirect=%{redirect_url}\n" "$BASE$p"
             grep -o '<title>[^<]*' body.html | head -1 || true

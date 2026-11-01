@@ -7,14 +7,14 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ESPECIALIDADES, formatoPrecio } from "../src/paginas/especialidades";
-import { EspecialidadPage, EspecialidadesIndex, PreciosPage, BUSCADOR_PRECIOS, TurnosPage, FORMULARIO_ORDEN, EstudiosPage } from "../src/paginas/Paginas";
+import { EspecialidadPage, EspecialidadesIndex, PreciosPage, BUSCADOR_PRECIOS, TurnosPage, FORMULARIO_ORDEN, EstudiosPage, ContactoPage } from "../src/paginas/Paginas";
 
 const SITE = "https://baconsultoriosmedicos.com.ar";
 const DIST = "dist";
 const base = readFileSync(`${DIST}/index.html`, "utf8");
 
 // Mismos eventos y parámetros que la home (ver MEDICIÓN en App.tsx).
-const TRACKING = `<script>document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-track]");if(!a)return;var d=a.dataset,p={event:d.track,origin:d.origin||""};if(d.track==="whatsapp_click"){p.service_name=d.service||"";p.service_type=d.stype||""}else if(d.track==="agendapro_direct_click"){p.service_name=d.service||""}window.dataLayer=window.dataLayer||[];window.dataLayer.push(p)});</script>`;
+const TRACKING = `<script>document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-track]");if(!a)return;var d=a.dataset,p={event:d.track,origin:d.origin||""};if(d.track==="whatsapp_click"){p.service_name=d.service||"";p.service_type=d.stype||""}else if(d.track==="agendapro_direct_click"){p.service_name=d.service||""}else if(d.track==="social_click"){p.destination=d.destination||""}window.dataLayer=window.dataLayer||[];window.dataLayer.push(p)});</script>`;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 const jsonLd = (data: unknown) =>
@@ -110,9 +110,35 @@ pagina({
   body: renderToStaticMarkup(<EstudiosPage />),
 });
 
+// Mismos datos que el JSON-LD de la home (index.html), para SEO local.
+const CLINICA = {
+  "@context": "https://schema.org",
+  "@type": "MedicalClinic",
+  "@id": `${SITE}/#clinic`,
+  name: "BA Consultorios Médicos",
+  url: `${SITE}/`,
+  image: `${SITE}/ba-isotipo.png`,
+  telephone: "+54 11 3970-1945",
+  address: { "@type": "PostalAddress", streetAddress: "Almafuerte 3558", addressLocality: "San Justo", addressRegion: "La Matanza, Buenos Aires", postalCode: "1754", addressCountry: "AR" },
+  geo: { "@type": "GeoCoordinates", latitude: -34.680077, longitude: -58.560411 },
+  openingHoursSpecification: [
+    { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "08:00", closes: "20:00" },
+    { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "08:00", closes: "14:00" },
+  ],
+  sameAs: ["https://www.instagram.com/baconsultoriosmedicos"],
+};
+
+pagina({
+  path: "/contacto/",
+  titulo: "Contacto y cómo llegar: Almafuerte 3558, San Justo | BA Consultorios Médicos",
+  descripcion: "BA Consultorios Médicos en Almafuerte 3558, San Justo, a metros del shopping y de la plaza de San Justo. Horarios, mapa, cómo llegar, WhatsApp y teléfono. Atención particular.",
+  ld: [migas([{ name: "Inicio", path: "/" }, { name: "Contacto", path: "/contacto/" }]), CLINICA],
+  body: renderToStaticMarkup(<ContactoPage />),
+});
+
 // Sitemap: home + índice + estudios + precios + turnos + una URL por especialidad.
 const hoy = new Date().toISOString().slice(0, 10);
-const urls = ["/", "/especialidades/", "/estudios/", "/precios/", "/turnos/", ...ESPECIALIDADES.map((e) => `/especialidades/${e.slug}/`)];
+const urls = ["/", "/especialidades/", "/estudios/", "/precios/", "/turnos/", "/contacto/", ...ESPECIALIDADES.map((e) => `/especialidades/${e.slug}/`)];
 writeFileSync(
   `${DIST}/sitemap.xml`,
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
@@ -120,4 +146,4 @@ writeFileSync(
     `\n</urlset>\n`,
 );
 
-console.log(`Páginas generadas: ${ESPECIALIDADES.length} especialidades + índice + estudios + precios + turnos. Sitemap: ${urls.length} URLs.`);
+console.log(`Páginas generadas: ${ESPECIALIDADES.length} especialidades + índice + estudios + precios + turnos + contacto. Sitemap: ${urls.length} URLs.`);
