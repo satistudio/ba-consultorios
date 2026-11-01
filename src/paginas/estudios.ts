@@ -4,8 +4,9 @@
 // claras; el resto se indica al sacar el turno. Quedó afuera "Ecografía vesical:
 // ayuno 6 hs" hasta confirmar si es vesícula o vejiga. Sin marcas comerciales
 // de medicamentos.
-// Derivados: estudios que BA gestiona en un centro asociado. No se publican
-// valores ni el nombre del centro.
+// Derivados: estudios que BA deriva a un centro de alta complejidad. No se
+// publican valores ni el nombre del centro, y no se lo llama "centro asociado"
+// (en BA ese término es farmacias Vilela, por LinkMed).
 
 export const GRUPOS_ESTUDIO: { id: string; titulo: string }[] = [
   { id: "ecografias", titulo: "Ecografías" },

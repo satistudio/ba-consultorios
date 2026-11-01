@@ -105,7 +105,7 @@ pagina({
 pagina({
   path: "/estudios/",
   titulo: "Ecografías, Doppler y estudios en San Justo | BA Consultorios Médicos",
-  descripcion: "Ecografías, Doppler, estudios cardiológicos, electroencefalograma y más en San Justo. Cómo prepararte y estudios en centros asociados. Atención particular.",
+  descripcion: "Ecografías, Doppler, estudios cardiológicos, electroencefalograma y más en San Justo. Cómo prepararte y estudios de alta complejidad. Atención particular.",
   ld: [migas([{ name: "Inicio", path: "/" }, { name: "Estudios", path: "/estudios/" }])],
   body: renderToStaticMarkup(<EstudiosPage />),
 });

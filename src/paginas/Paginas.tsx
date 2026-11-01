@@ -684,8 +684,8 @@ export function EstudiosPage() {
           <Migas items={[{ href: "/", label: "Inicio" }, { label: "Estudios" }]} />
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#5C1A3D] leading-tight">Estudios en San Justo</h1>
           <p className="mt-4 text-gray-600 font-light leading-relaxed max-w-2xl">
-            Ecografías, Doppler, estudios cardiológicos y más, en {BRAND_INFO.address}. Mirá qué hacemos en BA, cómo prepararte y qué
-            estudios te gestionamos en centros asociados.
+            Ecografías, Doppler, estudios cardiológicos y más, en {BRAND_INFO.address}. Mirá qué hacemos en BA, cómo prepararte y a dónde
+            te derivamos para estudios de alta complejidad.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <a
@@ -757,8 +757,8 @@ export function EstudiosPage() {
 
         <div className="grid gap-6 lg:grid-cols-2 items-start">
           <section className="rounded-2xl border border-[#E8D5C4] bg-[#F8F6F4] p-6">
-            <h2 className="font-extrabold text-xl text-[#5C1A3D]">Estudios en centros asociados</h2>
-            <p className="mt-2 text-sm text-gray-600 font-light">Estos estudios no se hacen en BA: te los gestionamos en un centro asociado.</p>
+            <h2 className="font-extrabold text-xl text-[#5C1A3D]">Estudios de alta complejidad</h2>
+            <p className="mt-2 text-sm text-gray-600 font-light">Estos estudios no se hacen en BA: te derivamos a un centro de alta complejidad. Escribinos y te pasamos el valor y cómo sacar el turno.</p>
             <ul className="mt-4 space-y-2 text-sm text-gray-700">
               {DERIVADOS.map((d) => (
                 <li key={d.nombre}>
