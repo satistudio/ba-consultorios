@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ESPECIALIDADES, formatoPrecio } from "../src/paginas/especialidades";
-import { EspecialidadPage, EspecialidadesIndex } from "../src/paginas/Paginas";
+import { EspecialidadPage, EspecialidadesIndex, PreciosPage, BUSCADOR_PRECIOS } from "../src/paginas/Paginas";
 
 const SITE = "https://baconsultoriosmedicos.com.ar";
 const DIST = "dist";
@@ -25,7 +25,7 @@ function reemplazar(html: string, patron: RegExp, valor: string) {
   return html.replace(patron, valor);
 }
 
-function pagina(opts: { path: string; titulo: string; descripcion: string; ld: unknown[]; body: string }) {
+function pagina(opts: { path: string; titulo: string; descripcion: string; ld: unknown[]; body: string; script?: string }) {
   const url = SITE + opts.path;
   let html = base;
   html = reemplazar(html, /<title>[^<]*<\/title>/, `<title>${esc(opts.titulo)}</title>`);
@@ -42,7 +42,7 @@ function pagina(opts: { path: string; titulo: string; descripcion: string; ld: u
   // Sin bundle de React ni modulepreload: la página es HTML estático.
   html = html.replace(/\s*<script type="module"[^>]*><\/script>/g, "");
   html = html.replace(/\s*<link rel="modulepreload"[^>]*>/g, "");
-  html = reemplazar(html, /<div id="root"><\/div>/, `<div id="root">${opts.body}</div>\n    ${TRACKING}`);
+  html = reemplazar(html, /<div id="root"><\/div>/, `<div id="root">${opts.body}</div>\n    ${TRACKING}${opts.script ?? ""}`);
   if (!html.includes("GTM-MG27TQ4T")) throw new Error("La página perdió GTM");
 
   const dir = `${DIST}${opts.path}`;
@@ -84,9 +84,18 @@ for (const esp of ESPECIALIDADES) {
   });
 }
 
-// Sitemap: home + índice + una URL por especialidad.
+pagina({
+  path: "/precios/",
+  titulo: "Precios de consultas, ecografías y estudios en San Justo | BA Consultorios Médicos",
+  descripcion: "Precios particulares de consultas, ecografías, Doppler y prácticas en San Justo. Precio de lista y valor con beneficios por pago en efectivo y LinkMed.",
+  ld: [migas([{ name: "Inicio", path: "/" }, { name: "Precios", path: "/precios/" }])],
+  body: renderToStaticMarkup(<PreciosPage />),
+  script: BUSCADOR_PRECIOS,
+});
+
+// Sitemap: home + índice + precios + una URL por especialidad.
 const hoy = new Date().toISOString().slice(0, 10);
-const urls = ["/", "/especialidades/", ...ESPECIALIDADES.map((e) => `/especialidades/${e.slug}/`)];
+const urls = ["/", "/especialidades/", "/precios/", ...ESPECIALIDADES.map((e) => `/especialidades/${e.slug}/`)];
 writeFileSync(
   `${DIST}/sitemap.xml`,
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
@@ -94,4 +103,4 @@ writeFileSync(
     `\n</urlset>\n`,
 );
 
-console.log(`Páginas generadas: ${ESPECIALIDADES.length} especialidades + índice. Sitemap: ${urls.length} URLs.`);
+console.log(`Páginas generadas: ${ESPECIALIDADES.length} especialidades + índice + precios. Sitemap: ${urls.length} URLs.`);

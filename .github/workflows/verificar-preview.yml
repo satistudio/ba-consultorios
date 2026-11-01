@@ -15,7 +15,9 @@ jobs:
           sleep 150
           SUB=$(echo "$RAMA" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-28 | sed 's/-*$//')
           BASE="https://$SUB.ba-consultorios-3da.pages.dev"
-          for p in / /especialidades/ /especialidades/ginecologia/ /sitemap.xml; do
+          # main no tiene alias de rama: se verifica el dominio publicado.
+          if [ "$RAMA" = "main" ]; then BASE="https://baconsultoriosmedicos.com.ar"; fi
+          for p in / /especialidades/ /especialidades/ginecologia/ /precios/ /sitemap.xml; do
             echo "== $BASE$p"
             curl -sS -o body.html -w "status=%{http_code} redirect=%{redirect_url}\n" "$BASE$p"
             grep -o '<title>[^<]*' body.html | head -1 || true
