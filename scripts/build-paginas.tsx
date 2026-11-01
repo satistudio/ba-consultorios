@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ESPECIALIDADES, formatoPrecio } from "../src/paginas/especialidades";
-import { EspecialidadPage, EspecialidadesIndex, PreciosPage, BUSCADOR_PRECIOS } from "../src/paginas/Paginas";
+import { EspecialidadPage, EspecialidadesIndex, PreciosPage, BUSCADOR_PRECIOS, TurnosPage, FORMULARIO_ORDEN } from "../src/paginas/Paginas";
 
 const SITE = "https://baconsultoriosmedicos.com.ar";
 const DIST = "dist";
@@ -93,9 +93,18 @@ pagina({
   script: BUSCADOR_PRECIOS,
 });
 
-// Sitemap: home + índice + precios + una URL por especialidad.
+pagina({
+  path: "/turnos/",
+  titulo: "Turnos en San Justo: reservá online o mandá tu orden médica | BA Consultorios Médicos",
+  descripcion: "Pedí turno en BA Consultorios Médicos, San Justo: reservá online, subí la foto de tu orden médica o escribinos por WhatsApp. Atención particular.",
+  ld: [migas([{ name: "Inicio", path: "/" }, { name: "Turnos", path: "/turnos/" }])],
+  body: renderToStaticMarkup(<TurnosPage />),
+  script: FORMULARIO_ORDEN,
+});
+
+// Sitemap: home + índice + precios + turnos + una URL por especialidad.
 const hoy = new Date().toISOString().slice(0, 10);
-const urls = ["/", "/especialidades/", "/precios/", ...ESPECIALIDADES.map((e) => `/especialidades/${e.slug}/`)];
+const urls = ["/", "/especialidades/", "/precios/", "/turnos/", ...ESPECIALIDADES.map((e) => `/especialidades/${e.slug}/`)];
 writeFileSync(
   `${DIST}/sitemap.xml`,
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
@@ -103,4 +112,4 @@ writeFileSync(
     `\n</urlset>\n`,
 );
 
-console.log(`Páginas generadas: ${ESPECIALIDADES.length} especialidades + índice + precios. Sitemap: ${urls.length} URLs.`);
+console.log(`Páginas generadas: ${ESPECIALIDADES.length} especialidades + índice + precios + turnos. Sitemap: ${urls.length} URLs.`);
