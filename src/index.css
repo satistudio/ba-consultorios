@@ -68,3 +68,31 @@ html[data-tipo="clasica"] h2 {
   text-transform: none;
   letter-spacing: 0;
 }
+
+/* FASE 2: motion solo donde guía la vista. Animaciones propias (sin librerías
+   ni recursos de terceros), cortas y sin tocar el hero para no demorar la
+   carga. Se anulan si la persona pidió menos movimiento en su sistema. */
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+/* Resultado del buscador y de los botones en /precios/: aparece donde se mira. */
+#resultados-busqueda:not([hidden]),
+/* Lista de cada grupo en /estudios/ al abrirse. */
+details[open] > summary + *,
+/* Confirmación de la orden enviada en /turnos/. */
+#orden-ok:not([hidden]) {
+  animation: aparecer 220ms ease-out both;
+}
+/* El botón de grupo marcado cambia de color con una transición, no de golpe. */
+[data-chip] { transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease; }
+details > summary [aria-hidden="true"] { transition: transform 200ms ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
