@@ -284,9 +284,11 @@ export function EspecialidadesIndex() {
   );
 }
 
-// Filtro del buscador de /precios/: oculta filas y grupos que no coinciden.
+// Buscador de /precios/: muestra los resultados en un bloque debajo del campo,
+// con los valores, sin mover la página ni tocar la lista completa. Arma el
+// índice leyendo las filas ya renderizadas (data-*), así no duplica datos.
 // Sin acentos ni mayúsculas, para que "ecografia" encuentre "Ecografía".
-export const BUSCADOR_PRECIOS = `<script>(function(){var i=document.getElementById("buscar-precio");if(!i)return;var n=function(s){return s.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase()};var v=document.getElementById("sin-resultados");i.addEventListener("input",function(){var q=n(i.value.trim()),total=0;document.querySelectorAll("[data-grupo]").forEach(function(g){var c=0;g.querySelectorAll("[data-practica]").forEach(function(r){var ok=!q||n(r.dataset.practica).indexOf(q)>-1||n(g.dataset.grupo).indexOf(q)>-1;r.hidden=!ok;if(ok)c++});g.hidden=c===0;total+=c});v.hidden=total>0})})();</script>`;
+export const BUSCADOR_PRECIOS = `<script>(function(){var i=document.getElementById("buscar-precio");if(!i)return;var n=function(s){return s.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase()};var panel=document.getElementById("resultados-busqueda"),lista=document.getElementById("lista-resultados"),vacio=document.getElementById("sin-resultados"),info=document.getElementById("cantidad-resultados"),tpl=document.getElementById("tpl-resultado"),MAX=8;var filas=[].map.call(document.querySelectorAll("[data-practica]"),function(r){var g=r.closest("[data-grupo]").dataset.grupo;return{d:r.dataset,g:g,k:n(r.dataset.practica+" "+g)}});i.addEventListener("input",function(){var q=n(i.value.trim());lista.innerHTML="";if(q.length<2){panel.hidden=true;return}var t=q.split(/\\s+/),hit=filas.filter(function(f){return t.every(function(w){return f.k.indexOf(w)>-1})});panel.hidden=false;vacio.hidden=hit.length>0;info.hidden=hit.length===0;info.textContent=hit.length>MAX?"Mostramos "+MAX+" de "+hit.length+" resultados. Escribí algo más para afinar la búsqueda.":hit.length===1?"1 resultado":hit.length+" resultados";hit.slice(0,MAX).forEach(function(f){var c=tpl.content.cloneNode(true),q=function(x){return c.querySelector("[data-campo="+x+"]")};var nom=q("nombre");nom.textContent=f.d.practica;if(f.d.href){var a=document.createElement("a");a.href=f.d.href;a.className=nom.className+" underline underline-offset-4";a.textContent=f.d.practica;nom.replaceWith(a)}q("grupo").textContent=f.g;q("lista").textContent=f.d.lista;q("desde").textContent=f.d.desde||"Consultar";lista.appendChild(c)})})})();</script>`;
 
 export function PreciosPage() {
   const consultas = ESPECIALIDADES.filter((e) => e.consulta);
@@ -301,13 +303,31 @@ export function PreciosPage() {
             beneficios: pagando en efectivo y con LinkMed. Valores vigentes desde el {PRECIOS_VIGENTES.replace(/-/g, "/")}.
           </p>
           <div className="mt-6 max-w-xl">
-            <label htmlFor="buscar-precio" className="block text-sm font-bold text-[#5C1A3D] mb-2">Buscá un estudio o práctica</label>
+            <label htmlFor="buscar-precio" className="block text-sm font-bold text-[#5C1A3D] mb-2">Buscá una especialidad, estudio o práctica</label>
             <input
               id="buscar-precio"
               type="search"
-              placeholder="Por ejemplo: ecografía mamaria, holter, PAP"
+              placeholder="Por ejemplo: dermatología, ecografía mamaria, PAP"
               autoComplete="off"
               className="w-full rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] px-4 py-3 text-sm focus:outline-none focus:border-[#C2006B]"
+            />
+            <div id="resultados-busqueda" hidden aria-live="polite" className="mt-3 rounded-2xl border border-[#E8D5C4] bg-white shadow-sm overflow-hidden">
+              <p id="cantidad-resultados" className="px-4 pt-3 text-xs text-gray-500"></p>
+              <ul id="lista-resultados" className="divide-y divide-gray-100"></ul>
+              <p id="sin-resultados" hidden className="p-4 text-sm text-gray-700">
+                No encontramos ese estudio en la lista.{" "}
+                <a href={BRAND_INFO.whatsappUrl} target="_blank" rel="noopener" data-track="whatsapp_click" data-origin="precios_sin_resultados" className="font-bold text-[#C2006B] underline underline-offset-4">
+                  Consultanos por WhatsApp
+                </a>
+                .
+              </p>
+            </div>
+            <template
+              id="tpl-resultado"
+              dangerouslySetInnerHTML={{
+                __html:
+                  '<li class="px-4 py-3"><span data-campo="nombre" class="block font-bold text-[#5C1A3D] text-sm"></span><span data-campo="grupo" class="block text-xs text-gray-500"></span><div class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm"><span class="text-gray-600">Precio de lista <strong data-campo="lista" class="font-bold text-gray-800"></strong></span><span class="text-gray-600">Con beneficios, desde <strong data-campo="desde" class="font-extrabold text-[#C2006B]"></strong></span></div></li>',
+              }}
             />
           </div>
           <nav aria-label="Grupos de precios" className="mt-5 flex flex-wrap gap-2">
@@ -322,14 +342,6 @@ export function PreciosPage() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 grid gap-10 lg:grid-cols-[1.6fr_1fr] items-start">
         <div className="space-y-10">
-          <p id="sin-resultados" hidden className="rounded-xl bg-[#F8F6F4] border border-[#E8D5C4] p-4 text-sm text-gray-700">
-            No encontramos ese estudio en la lista.{" "}
-            <a href={BRAND_INFO.whatsappUrl} target="_blank" rel="noopener" data-track="whatsapp_click" data-origin="precios_sin_resultados" className="font-bold text-[#C2006B] underline underline-offset-4">
-              Consultanos por WhatsApp
-            </a>
-            .
-          </p>
-
           <section id="consultas" data-grupo="Consultas" className="scroll-mt-20">
             <TituloGrupo titulo="Consultas" />
             <TablaPrecios columna="Especialidad">
@@ -438,7 +450,12 @@ function TablaPrecios({ children, columna = "Estudio o práctica" }: { children:
 
 function FilaPrecio({ nombre, href, lista, desde, nota }: { key?: string; nombre: string; href?: string; lista: number; desde?: number; nota?: string }) {
   return (
-    <li data-practica={nombre} className="px-4 py-3 grid grid-cols-2 sm:grid-cols-[1fr_7.5rem_7.5rem] gap-x-3 gap-y-1 text-sm">
+    <li
+      data-practica={nombre}
+      data-lista={formatoPrecio(lista)}
+      data-desde={desde ? formatoPrecio(desde) : undefined}
+      data-href={href}
+      className="px-4 py-3 grid grid-cols-2 sm:grid-cols-[1fr_7.5rem_7.5rem] gap-x-3 gap-y-1 text-sm">
       <div className="col-span-2 sm:col-span-1">
         {href ? (
           <a href={href} className="font-bold text-[#5C1A3D] hover:text-[#C2006B]">{nombre}</a>
