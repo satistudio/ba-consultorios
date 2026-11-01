@@ -26,8 +26,8 @@ jobs:
           DEPLOY_URL: ${{ steps.deploy.outputs.deployment-url }}
         run: |
           sleep 30
-          for url in "$DEPLOY_URL/" "https://ba-consultorios.pages.dev/" "https://ba-consultorios.pages.dev/precios?x=1"; do
+          for url in "$DEPLOY_URL/" "https://ba-consultorios.pages.dev/" "https://ba-consultorios.pages.dev/precios?x=1" "https://ba-consultorios.pages.dev/googlee9709fbc1b3aad02.html"; do
             echo "== $url"
             curl -sS -o /dev/null -w "%{http_code} -> %{redirect_url}\n" "$url"
-            curl -sS "$url" | grep -o '<title>[^<]*' || true
+            curl -sS "$url" | grep -o -E '<title>[^<]*|google-site-verification.*' || true
           done
