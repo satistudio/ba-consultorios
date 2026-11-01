@@ -1,0 +1,24 @@
+name: Verificar vista previa
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar páginas de la vista previa
+        env:
+          RAMA: ${{ github.head_ref || github.ref_name }}
+        run: |
+          sleep 150
+          SUB=$(echo "$RAMA" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-28 | sed 's/-*$//')
+          BASE="https://$SUB.ba-consultorios-3da.pages.dev"
+          for p in / /especialidades/ /especialidades/ginecologia/ /sitemap.xml; do
+            echo "== $BASE$p"
+            curl -sS -o body.html -w "status=%{http_code} redirect=%{redirect_url}\n" "$BASE$p"
+            grep -o '<title>[^<]*' body.html | head -1 || true
+            grep -o '<h1[^>]*>[^<]*' body.html | head -1 || true
+            head -c 300 body.html; echo
+          done

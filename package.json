@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
+    "build": "vite build && tsx scripts/build-paginas.tsx",
     "preview": "vite preview",
     "pages:dev": "wrangler pages dev dist -- npm run dev",
     "clean": "rm -rf dist server.js",

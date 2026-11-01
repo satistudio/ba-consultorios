@@ -4,11 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Redirect de seguridad: si alguien llega por error a cualquier
-         variante de .pages.dev, lo mandamos al dominio real preservando
-         la ruta. Va antes que todo lo demás para que dispare lo antes posible. -->
+    <!-- Redirect de seguridad: si alguien llega por error a los .pages.dev
+         de producción, lo mandamos al dominio real preservando la ruta.
+         Las vistas previas de cada rama (rama.ba-consultorios-3da.pages.dev)
+         no se redirigen, para poder revisarlas. Va antes que todo lo demás. -->
     <script>
-      if (window.location.hostname.includes("pages.dev")) {
+      var h = window.location.hostname;
+      if (h === "ba-consultorios.pages.dev" || h === "ba-consultorios-3da.pages.dev") {
         window.location.replace("https://baconsultoriosmedicos.com.ar" + window.location.pathname + window.location.search);
       }
     </script>
