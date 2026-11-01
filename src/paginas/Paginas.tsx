@@ -28,7 +28,7 @@ function Header() {
           <a href="/estudios/" className="hidden md:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Estudios</a>
           <a href="/precios/" className="px-2 sm:px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Precios</a>
           <a href="/turnos/" className="px-2 sm:px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Turnos</a>
-          <a href="/" className="hidden lg:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Inicio</a>
+          <a href="/contacto/" className="hidden lg:inline px-3 py-2 rounded-lg text-[#5C1A3D] hover:bg-[#F8F6F4]">Contacto</a>
           <a
             href={BRAND_INFO.whatsappUrl}
             target="_blank"
@@ -51,7 +51,7 @@ function Footer() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 grid gap-6 sm:grid-cols-3 text-sm">
         <div>
           <p className="font-extrabold text-white mb-2">BA Consultorios Médicos</p>
-          <p className="font-light">{BRAND_INFO.address}</p>
+          <a href="/contacto/" className="font-light hover:text-white underline underline-offset-4">{BRAND_INFO.address}</a>
         </div>
         <div>
           <p className="font-extrabold text-white mb-2">Horarios</p>
@@ -803,6 +803,162 @@ export function EstudiosPage() {
         </div>
 
         <Beneficios />
+      </div>
+    </Shell>
+  );
+}
+
+const MAPS_LUGAR = "https://maps.google.com/?q=BA+Consultorios+M%C3%A9dicos,+Almafuerte+3558,+San+Justo,+La+Matanza";
+const MAPS_COMO_LLEGAR = "https://www.google.com/maps/dir/?api=1&destination=BA+Consultorios+M%C3%A9dicos%2C+Almafuerte+3558%2C+San+Justo%2C+La+Matanza";
+const MAPS_EMBED =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.9430887002068!2d-58.5548508!3d-34.6813858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcc7e7a188c227%3A0x2b693e1d88229b3!2sBA%20Consultorios%20M%C3%A9dicos%20-%20Cl%C3%ADnica%20de%20Especialidades%20en%20San%20Justo!5e0!3m2!1ses-419!2sar!4v1784852093873!5m2!1ses-419!2sar";
+
+// Sin referencias del barrio, colectivos ni accesibilidad hasta que BA las
+// confirme (regla de la marca: no nombrar lugares sin confirmar).
+export function ContactoPage() {
+  return (
+    <Shell>
+      <section className="bg-white border-b border-[#E8D5C4]/40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <Migas items={[{ href: "/", label: "Inicio" }, { label: "Contacto" }]} />
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#5C1A3D] leading-tight">Contacto y cómo llegar</h1>
+          <p className="mt-4 text-gray-600 font-light leading-relaxed max-w-2xl">
+            Estamos en {BRAND_INFO.address}. Escribinos por WhatsApp o reservá tu turno online.
+          </p>
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-10">
+        <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] items-start">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-[#E8D5C4] bg-white p-6">
+              <h2 className="font-extrabold text-lg text-[#5C1A3D]">Dirección</h2>
+              <p className="mt-1 text-sm text-gray-700">{BRAND_INFO.address}</p>
+              <p className="text-xs text-gray-500 font-light">Provincia de Buenos Aires</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a
+                  href={MAPS_COMO_LLEGAR}
+                  target="_blank"
+                  rel="noopener"
+                  data-track="social_click"
+                  data-destination="google_maps_como_llegar"
+                  data-origin="pagina_contacto"
+                  className="px-5 py-2.5 rounded-full bg-[#5C1A3D] text-white text-sm font-bold hover:bg-[#C2006B] transition-colors"
+                >
+                  Cómo llegar
+                </a>
+                <a
+                  href={MAPS_LUGAR}
+                  target="_blank"
+                  rel="noopener"
+                  data-track="social_click"
+                  data-destination="google_maps"
+                  data-origin="pagina_contacto"
+                  className="px-5 py-2.5 rounded-full border-2 border-[#5C1A3D] text-[#5C1A3D] text-sm font-bold hover:bg-[#5C1A3D] hover:text-white transition-colors"
+                >
+                  Abrir en Google Maps
+                </a>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[#E8D5C4] bg-white p-6">
+              <h2 className="font-extrabold text-lg text-[#5C1A3D]">Horarios de atención</h2>
+              <dl className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-600 font-light">Lunes a viernes</dt>
+                  <dd className="font-bold text-[#5C1A3D]">8:00 a 20:00</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-600 font-light">Sábados</dt>
+                  <dd className="font-bold text-[#5C1A3D]">8:00 a 14:00</dd>
+                </div>
+              </dl>
+              <p className="mt-3 text-xs text-gray-500 font-light">
+                La reserva online funciona siempre. Por WhatsApp respondemos en el horario de atención.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-[#E8D5C4] bg-[#F8F6F4] p-6">
+              <h2 className="font-extrabold text-lg text-[#5C1A3D]">Escribinos o llamanos</h2>
+              <a
+                href={BRAND_INFO.whatsappUrl}
+                target="_blank"
+                rel="noopener"
+                data-track="whatsapp_click"
+                data-origin="pagina_contacto"
+                className="mt-4 block text-center px-6 py-3 rounded-full bg-[#C2006B] text-white font-bold hover:bg-[#5C1A3D] transition-colors"
+              >
+                WhatsApp {BRAND_INFO.whatsapp}
+              </a>
+              <a
+                href="tel:+541139701945"
+                className="mt-3 block text-center px-6 py-3 rounded-full border-2 border-[#5C1A3D] text-[#5C1A3D] font-bold hover:bg-[#5C1A3D] hover:text-white transition-colors"
+              >
+                Llamar al {BRAND_INFO.phone}
+              </a>
+              <a
+                href={BRAND_INFO.agendaProUrl}
+                target="_blank"
+                rel="noopener"
+                data-track="agendapro_direct_click"
+                data-origin="pagina_contacto"
+                className="mt-3 block text-center text-sm font-bold text-[#5C1A3D] underline underline-offset-4"
+              >
+                O reservá tu turno online
+              </a>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#E8D5C4] bg-white p-3 h-80 sm:h-[28rem] lg:h-full lg:min-h-[32rem]">
+            <iframe
+              src={MAPS_EMBED}
+              title="Mapa: BA Consultorios Médicos, Almafuerte 3558, San Justo"
+              className="w-full h-full rounded-xl"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr] items-start">
+          <section>
+            <h2 className="font-extrabold text-xl text-[#5C1A3D] mb-3">Antes de venir</h2>
+            <dl className="space-y-4 text-sm">
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Necesito turno?</dt>
+                <dd className="text-gray-600 font-light mt-1">
+                  Sí. Sacalo online o por WhatsApp. Si tenés una orden médica, <a href="/turnos/#orden" className="font-bold text-[#C2006B] underline underline-offset-4">mandala desde acá</a>.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Qué traigo?</dt>
+                <dd className="text-gray-600 font-light mt-1">Tu DNI y, si tenés, la orden médica y los estudios anteriores.</dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿Atienden por obra social o prepaga?</dt>
+                <dd className="text-gray-600 font-light mt-1">No. La atención es particular, con beneficios por pago en efectivo y con LinkMed.</dd>
+              </div>
+              <div>
+                <dt className="font-bold text-[#5C1A3D]">¿El estudio necesita preparación?</dt>
+                <dd className="text-gray-600 font-light mt-1">
+                  Mirá <a href="/estudios/#preparacion" className="font-bold text-[#C2006B] underline underline-offset-4">cómo prepararte</a> o consultanos al sacar el turno.
+                </dd>
+              </div>
+            </dl>
+          </section>
+          <aside className="rounded-2xl border border-[#E8D5C4] bg-white p-6">
+            <h2 className="font-extrabold text-lg text-[#5C1A3D]">Seguinos</h2>
+            <div className="mt-3 flex flex-col gap-2 text-sm">
+              <a href={BRAND_INFO.instagramUrl} target="_blank" rel="noopener" data-track="social_click" data-destination="instagram_contacto" data-origin="pagina_contacto" className="font-bold text-[#5C1A3D] hover:text-[#C2006B]">
+                Instagram {BRAND_INFO.instagramHandle}
+              </a>
+              <a href={BRAND_INFO.facebookUrl} target="_blank" rel="noopener" data-track="social_click" data-destination="facebook_contacto" data-origin="pagina_contacto" className="font-bold text-[#5C1A3D] hover:text-[#C2006B]">
+                Facebook BA Consultorios Médicos
+              </a>
+            </div>
+          </aside>
+        </div>
       </div>
     </Shell>
   );
