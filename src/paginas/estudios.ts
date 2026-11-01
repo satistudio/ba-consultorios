@@ -1,9 +1,9 @@
 // Datos de /estudios/.
 // Estudios en BA: se toman de GRUPOS_PRECIOS (misma fuente que /precios/).
 // Preparaciones: planilla "PRECIOS 01-09-2026". Solo se publican las que son
-// claras; el resto se indica al sacar el turno. Quedó afuera "Ecografía vesical:
-// ayuno 6 hs" hasta confirmar si es vesícula o vejiga. Sin marcas comerciales
-// de medicamentos.
+// claras; el resto se indica al sacar el turno. "Ecografía vesical: ayuno 6 hs"
+// de la planilla es de vesícula (confirmado por Dani 1/11). Sin marcas
+// comerciales de medicamentos.
 // Derivados: estudios que BA deriva a un centro de alta complejidad. No se
 // publican valores ni el nombre del centro, y no se lo llama "centro asociado"
 // (en BA ese término es farmacias Vilela, por LinkMed).
@@ -26,6 +26,10 @@ export interface Preparacion {
 }
 
 export const PREPARACIONES: Preparacion[] = [
+  {
+    estudio: "Ecografía de vesícula",
+    indicacion: "Ayuno de 6 horas antes del estudio.",
+  },
   {
     estudio: "Ecografía renal",
     indicacion: "Tomá 1 litro de agua (entre 4 y 8 vasos) entre 30 minutos y 1 hora y media antes del estudio, y no orines.",
