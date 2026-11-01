@@ -24,6 +24,14 @@ jobs:
             grep -o '<h1[^>]*>[^<]*' body.html | head -1 || true
             head -c 300 body.html; echo
           done
+          echo "== $BASE/bea.js"
+          curl -sS -o /dev/null -w "status=%{http_code}\n" "$BASE/bea.js"
+          # BEA: sin clave responde not_configured; con clave, una respuesta real.
+          echo "== $BASE/api/bea"
+          curl -sS -X POST -H "content-type: application/json" -H "origin: $BASE" \
+            -d '{"messages":[{"role":"user","content":"¿Dónde quedan?"}]}' "$BASE/api/bea"; echo
+          echo "== $BASE/api/bea desde otro sitio (debe dar 403)"
+          curl -sS -o /dev/null -w "status=%{http_code}\n" -X POST -H "origin: https://ejemplo.com" -d '{}' "$BASE/api/bea"
 
       - name: Comprobar redirección del pages.dev viejo
         run: |
