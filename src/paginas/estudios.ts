@@ -1,7 +1,7 @@
 // Datos de /estudios/.
 // Estudios en BA: se toman de GRUPOS_PRECIOS (misma fuente que /precios/).
 // Preparaciones: planilla "PRECIOS 01-09-2026". Solo se publican las que son
-// claras; el resto se indica al sacar el turno. "Ecografía vesical: ayuno 6 hs"
+// claras; el resto se indica al sacar el turno. "Ecografía vesical" de la planilla (precio y ayuno 6 hs)
 // de la planilla es de vesícula (confirmado por Dani 1/11). Sin marcas
 // comerciales de medicamentos.
 // Derivados: estudios que BA deriva a un centro de alta complejidad. No se

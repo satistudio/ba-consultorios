@@ -37,7 +37,7 @@ export const GRUPOS_PRECIOS: GrupoPrecios[] = [
       p("Ecografía transvaginal", 37000, 31500),
       p("Ecografía pleural", 37000, 31500),
       p("Ecografía renal", 37000, 31500),
-      p("Ecografía vesical", 37000, 31500),
+      p("Ecografía de vesícula", 37000, 31500),
       p("Ecografía articular (mano, codo, rodilla, hombro o pie)", 42000, 36000),
       p("Ecografía de cadera pediátrica", 39000, 33300),
       p("Ecografía cerebral", 47000, 40500),
