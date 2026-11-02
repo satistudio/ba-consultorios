@@ -24,6 +24,8 @@ jobs:
             grep -o '<h1[^>]*>[^<]*' body.html | head -1 || true
             head -c 300 body.html; echo
           done
+          echo "== $BASE/api/disponibilidad"
+          curl -sS "$BASE/api/disponibilidad" | head -c 900; echo
 
       - name: Comprobar redirección del pages.dev viejo
         run: |
