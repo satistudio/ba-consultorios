@@ -9,7 +9,7 @@ import { StrictMode } from "react";
 import { renderToStaticMarkup, renderToString } from "react-dom/server";
 import App from "../src/App";
 import { ESPECIALIDADES, formatoPrecio } from "../src/paginas/especialidades";
-import { EspecialidadPage, EspecialidadesIndex, PreciosPage, BUSCADOR_PRECIOS, TurnosPage, FORMULARIO_ORDEN, EstudiosPage, ContactoPage } from "../src/paginas/Paginas";
+import { EspecialidadPage, EspecialidadesIndex, BUSCADOR_ESPECIALIDADES, PreciosPage, BUSCADOR_PRECIOS, TurnosPage, FORMULARIO_ORDEN, EstudiosPage, ContactoPage } from "../src/paginas/Paginas";
 
 const SITE = "https://baconsultoriosmedicos.com.ar";
 const DIST = "dist";
@@ -64,6 +64,7 @@ pagina({
   descripcion: "Más de 30 especialidades con atención particular en San Justo, La Matanza. Mirá el valor de cada consulta y pedí tu turno online o por WhatsApp.",
   ld: [migas([{ name: "Inicio", path: "/" }, { name: "Especialidades", path: "/especialidades/" }])],
   body: renderToStaticMarkup(<EspecialidadesIndex />),
+  script: BUSCADOR_ESPECIALIDADES,
 });
 
 for (const esp of ESPECIALIDADES) {

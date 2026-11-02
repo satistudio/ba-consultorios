@@ -11,6 +11,7 @@
 // GET https://agendapro.com/api/public/v1/services/{service_id}/available_hours?date=YYYY-MM-DD&(location_id=X | provider_id=Y)
 
 import servicesMap from "./_services-map.json";
+import { CATALOGO_TURNOS } from "../../src/turnos/catalogo";
 
 interface Env {
   AGENDAPRO_USER: string;
@@ -20,13 +21,14 @@ interface Env {
 const AGENDAPRO_BASE = "https://agendapro.com/api/public/v1/services";
 const CACHE_TTL_SECONDS = 900; // 15 min — con la búsqueda de hasta 7 días, cuida mejor la cuota diaria
 const MAX_DAYS_AHEAD = 7;
+const DIAS_PANEL = 14; // "Ver otros días": dos semanas, en paralelo
 
 const WEEKDAYS_ES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
+// Fecha en Argentina (UTC-3, sin horario de verano). Sin esto, después de las
+// 21 h el servidor (UTC) ya cree que es "mañana" y muestra "hoy" mal.
 function dateAt(offsetDays: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() + offsetDays);
-  return d;
+  return new Date(Date.now() - 3 * 3600_000 + offsetDays * 86400_000);
 }
 
 function toISODate(d: Date): string {
@@ -37,7 +39,8 @@ async function fetchSlots(
   authHeader: string,
   serviceId: number,
   date: string,
-  scope: { locationId?: number; providerId?: number }
+  scope: { locationId?: number; providerId?: number },
+  maxTimes = 6
 ): Promise<{ count: number; firstTimes: string[] } | null> {
   try {
     const scopeParam = scope.providerId
@@ -53,7 +56,7 @@ async function fetchSlots(
     const firstTimes = json.available_hours
       .map((h) => h.start_block)
       .filter((t): t is string => typeof t === "string")
-      .slice(0, 3);
+      .slice(0, maxTimes);
     return { count: json.available_hours.length, firstTimes };
   } catch {
     return null;
@@ -78,7 +81,7 @@ async function findNextAvailable(
         status: offset === 0 ? "today" : offset === 1 ? "tomorrow" : "soon",
         count: result.count,
         firstTimes: result.firstTimes,
-        dayLabel: offset === 0 ? "hoy" : offset === 1 ? "mañana" : WEEKDAYS_ES[d.getDay()],
+        dayLabel: offset === 0 ? "hoy" : offset === 1 ? "mañana" : WEEKDAYS_ES[d.getUTCDay()],
         date: toISODate(d)
       };
     }
@@ -104,6 +107,44 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   const authHeader = "Basic " + btoa(`${user}:${password}`);
+
+  // Buscador de la home: un solo servicio del catálogo curado (?item=slug).
+  // Solo se aceptan ids del catálogo, nunca un service_id arbitrario.
+  const itemId = new URL(context.request.url).searchParams.get("item");
+  if (itemId !== null) {
+    const it = CATALOGO_TURNOS.find((c) => c.id === itemId);
+    if (!it) return new Response(JSON.stringify({ ok: false, reason: "unknown_item" }), { status: 404, headers: { "content-type": "application/json" } });
+    const scope = it.provider_id ? { providerId: it.provider_id } : { locationId };
+    // ?dias=1: los próximos días con turnos y todos sus horarios, para que el
+    // paciente elija otro día u horario desde el mismo panel.
+    let payload: Record<string, unknown>;
+    if (new URL(context.request.url).searchParams.get("dias") === "1") {
+      const offsets = Array.from({ length: DIAS_PANEL }, (_, i) => i);
+      const res = await Promise.all(offsets.map(async (o) => {
+        const d = dateAt(o);
+        const r = await fetchSlots(authHeader, it.service_id, toISODate(d), scope, 60);
+        return { o, d, r };
+      }));
+      const dias = res
+        .filter((x) => x.r && x.r.count > 0)
+        .slice(0, 7)
+        .map(({ o, d, r }) => ({
+          date: toISODate(d),
+          label: o === 0 ? "hoy" : o === 1 ? "mañana" : WEEKDAYS_ES[d.getUTCDay()],
+          times: r!.firstTimes,
+        }));
+      payload = { ok: true, item: { name: it.nombre, service_id: it.service_id, dias, error: res.every((x) => x.r === null) } };
+    } else {
+      const next = await findNextAvailable(authHeader, it.service_id, scope);
+      payload = { ok: true, item: { name: it.nombre, service_id: it.service_id, ...next } };
+    }
+    const res = new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "content-type": "application/json", "cache-control": `public, max-age=${CACHE_TTL_SECONDS}` },
+    });
+    context.waitUntil(cache.put(cacheKey, res.clone()));
+    return res;
+  }
 
   const items = await Promise.all(
     servicesMap.specialties.map(async (s) => {

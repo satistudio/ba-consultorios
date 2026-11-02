@@ -5,7 +5,7 @@
 
 import type { ReactNode } from "react";
 import { BRAND_INFO, MedicalService } from "../data";
-import { ESPECIALIDADES, Especialidad, formatoPrecio, PRECIOS_VIGENTES } from "./especialidades";
+import { ESPECIALIDADES, Especialidad, formatoPrecio, PRECIOS_VIGENTES, slugify } from "./especialidades";
 import { GRUPOS_PRECIOS, gruposDeEspecialidad } from "./precios";
 import { DERIVADOS, GRUPOS_ESTUDIO, PREPARACIONES } from "./estudios";
 
@@ -271,9 +271,25 @@ export function EspecialidadesIndex() {
         </div>
       </section>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
+        <div>
+        <div className="mb-5 max-w-xl">
+          <label htmlFor="buscar-especialidad" className="block text-sm font-bold text-[#5C1A3D] mb-2">Buscá una especialidad o un estudio</label>
+          <input
+            id="buscar-especialidad"
+            type="search"
+            placeholder="Por ejemplo: piel, corazón, PAP, niños"
+            autoComplete="off"
+            className="w-full rounded-xl border border-[#E8D5C4] bg-white px-4 py-3 text-sm focus:outline-none focus:border-[#C2006B]"
+          />
+          <p id="sin-especialidad" hidden aria-live="polite" className="mt-3 text-sm text-gray-700">
+            No la encontramos con ese nombre. Mirá{" "}
+            <a href="/precios/" className="font-bold text-[#C2006B] underline underline-offset-4">todos los precios</a> o{" "}
+            <a href={BRAND_INFO.whatsappUrl} target="_blank" rel="noopener" data-track="whatsapp_click" data-origin="especialidades_sin_resultados" className="font-bold text-[#C2006B] underline underline-offset-4">consultanos por WhatsApp</a>.
+          </p>
+        </div>
         <ul className="grid sm:grid-cols-2 gap-3">
           {ESPECIALIDADES.map((e) => (
-            <li key={e.slug}>
+            <li key={e.slug} data-buscar={claveEspecialidad(e)}>
               <a href={`/especialidades/${e.slug}/`} className="flex items-center justify-between gap-3 rounded-xl bg-white border border-gray-100 px-4 py-3 hover:border-[#C2006B] transition-colors">
                 <span className="font-bold text-[#5C1A3D] text-sm">{e.nombre}</span>
                 {e.consulta && <span className="text-xs text-gray-500 whitespace-nowrap">desde {formatoPrecio(e.consulta.desde)}</span>}
@@ -281,6 +297,7 @@ export function EspecialidadesIndex() {
             </li>
           ))}
         </ul>
+        </div>
         <aside>
           <Beneficios />
         </aside>
@@ -288,6 +305,25 @@ export function EspecialidadesIndex() {
     </Shell>
   );
 }
+
+// Palabras con las que se encuentra cada especialidad: su nombre, lo que se
+// hace en BA y sinónimos de uso diario. Sin servicios "no usar" ni derivados.
+const SINONIMOS: Record<string, string> = {
+  cardiologia: "corazon presion", dermatologia: "piel lunares acne", pediatria: "chicos niños bebes",
+  ginecologia: "mujer pap papanicolau", traumatologia: "huesos rodilla fractura", oftalmologia: "ojos vista",
+  otorrinolaringologia: "oidos garganta nariz", nutricion: "dieta peso", urologia: "prostata", neurologia: "cabeza migraña",
+  gastroenterologia: "estomago digestivo", endocrinologia: "tiroides hormonas", nefrologia: "riñon riñones", podologia: "pies uñas",
+  neumonologia: "pulmones respiracion asma", alergista: "alergia alergias", alergia: "alergias", reumatologia: "articulaciones artritis",
+};
+const claveEspecialidad = (e: Especialidad) => {
+  const base = slugify(e.nombre).split("-")[0];
+  const servicios = e.servicios.filter((x) => x.type !== "Estudio derivado" && !/verrug|acrocord|hpv/i.test(x.name)).map((x) => x.name);
+  const infantil = /infantil|infanto|pediat/i.test(e.nombre) ? " niños chicos" : "";
+  return [e.nombre, SINONIMOS[base] ?? "", ...servicios].join(" ") + infantil;
+};
+
+// Buscador de /especialidades/: filtra la lista en el lugar, sin acentos.
+export const BUSCADOR_ESPECIALIDADES = `<script>(function(){var i=document.getElementById("buscar-especialidad");if(!i)return;var n=function(s){return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()};var vacio=document.getElementById("sin-especialidad");var items=[].map.call(document.querySelectorAll("[data-buscar]"),function(li){return{li:li,k:n(li.dataset.buscar).split(/[^a-z0-9]+/)}});i.addEventListener("input",function(){var q=n(i.value.trim()),t=q.split(/\s+/).filter(Boolean),c=0;items.forEach(function(x){var ok=q.length<2||t.every(function(w){return x.k.some(function(p){return p.indexOf(w)===0})});x.li.hidden=!ok;if(ok)c++});vacio.hidden=c>0})})();</script>`;
 
 // Buscador de /precios/: muestra los resultados en un bloque debajo del campo,
 // con los valores, sin mover la página ni tocar la lista completa. Arma el
