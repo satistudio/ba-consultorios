@@ -36,6 +36,9 @@ const reservaServicio = (serviceId?: number) =>
 const normalizar = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 const hora = (t: string) => (/^\d{2}:\d{2}/.test(t) ? t.slice(0, 5) : t);
+const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+const diaCorto = (label: string, iso: string) =>
+  label === "hoy" ? "Hoy" : label === "mañana" ? "Mañana" : `${label.charAt(0).toUpperCase()}${label.slice(1, 3)} ${ddmm(iso)}`;
 
 export default function App() {
   // Active FAQ state
@@ -47,6 +50,20 @@ export default function App() {
   const [elegido, setElegido] = useState<ServicioTurno | null>(null);
   const [elegidoData, setElegidoData] = useState<AvailabilityItem | null>(null);
   const [elegidoStatus, setElegidoStatus] = useState<"loading" | "ok" | "error">("loading");
+  // "Ver otros días": días con turnos y todos sus horarios, sin salir del panel.
+  type DiaTurnos = { date: string; label: string; times: string[] };
+  const [otrosDias, setOtrosDias] = useState<{ slug: string; status: "loading" | "ok" | "error"; dias: DiaTurnos[]; sel: number } | null>(null);
+  const verOtrosDias = (slug: string, nombre: string) => {
+    setOtrosDias({ slug, status: "loading", dias: [], sel: 0 });
+    pushEvent({ event: "turnos_otros_dias", origin: "home", service_name: nombre });
+    fetch(`/api/disponibilidad?item=${encodeURIComponent(slug)}&dias=1`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.ok && j.item && !j.item.error) setOtrosDias({ slug, status: "ok", dias: j.item.dias ?? [], sel: 0 });
+        else setOtrosDias({ slug, status: "error", dias: [], sel: 0 });
+      })
+      .catch(() => setOtrosDias({ slug, status: "error", dias: [], sel: 0 }));
+  };
   const sugerencias = useMemo(() => {
     const q = normalizar(busqueda).trim();
     if (q.length < 2) return [];
@@ -131,9 +148,13 @@ export default function App() {
   // Sin servicio abre la agenda completa; con servicio, la reserva de ese
   // servicio (misma ventana, sin salir de la web).
   const [bookingSrc, setBookingSrc] = useState<string | null>(null);
-  const openBookingModal = (origin: string, src?: string, serviceName?: string) => {
+  // Día y hora que el paciente eligió en el panel de la home: se le recuerda
+  // arriba de la agenda para que lo busque ahí y confirme.
+  const [horarioElegido, setHorarioElegido] = useState<string | null>(null);
+  const openBookingModal = (origin: string, src?: string, serviceName?: string, horario?: string) => {
     pushEvent({ event: "agendapro_booking_open", origin, service_name: serviceName || "" });
     setBookingSrc(src || null);
+    setHorarioElegido(horario && serviceName ? `${serviceName}: ${horario}` : null);
     setIsBookingModalOpen(true);
   };
 
@@ -523,6 +544,8 @@ export default function App() {
                   : availability![Math.min(Math.max(turnoSel, 0), availability!.length - 1)];
                 const nombre = elegido ? elegido.nombre : it!.name;
                 const serviceId = elegido ? elegido.service_id : it!.service_id;
+                const slug = elegido ? elegido.id : CATALOGO_TURNOS.find((c) => c.service_id === serviceId)?.id;
+                const abierto = !!slug && otrosDias?.slug === slug ? otrosDias : null;
                 const hay = !!it && (it.status === "today" || it.status === "tomorrow" || it.status === "soon");
                 const fecha = it?.date ? ` ${it.date.slice(8, 10)}/${it.date.slice(5, 7)}` : "";
                 const dia = it?.status === "today" ? "Hoy" : it?.status === "tomorrow" ? "Mañana" : `El ${it?.dayLabel ?? ""}${fecha}`;
@@ -551,7 +574,56 @@ export default function App() {
 
                     <div role="tabpanel" aria-live="polite" className="mt-3 rounded-xl bg-[#F8F6F4] border border-[#E8D5C4]/60 p-4">
                       {elegido && <p className="text-sm font-bold text-[#5C1A3D] mb-2">{nombre}</p>}
-                      {elegido && elegidoStatus === "loading" ? (
+                      {abierto ? (
+                        abierto.status === "loading" ? (
+                          <div className="h-28 rounded-lg bg-white/70 animate-pulse" aria-label="Buscando días y horarios" />
+                        ) : abierto.status === "error" || abierto.dias.length === 0 ? (
+                          <p className="text-sm text-gray-700">
+                            {abierto.status === "error" ? "No pudimos ver los días ahora." : "No vemos turnos online en las próximas dos semanas."}{" "}
+                            <a href={BRAND_INFO.whatsappUrl} onClick={() => trackWhatsApp("turnos_home_otros_dias", nombre)} target="_blank" rel="noopener noreferrer" className="font-bold text-[#C2006B] underline underline-offset-2">Escribinos</a>{" "}
+                            y te ayudamos.
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">Elegí el día</p>
+                            <div role="tablist" aria-label="Días con turnos" className="flex gap-2 overflow-x-auto pb-1 mt-2 -mx-1 px-1">
+                              {abierto.dias.map((d, i) => (
+                                <button
+                                  key={d.date}
+                                  type="button"
+                                  role="tab"
+                                  aria-selected={i === abierto.sel}
+                                  onClick={() => setOtrosDias({ ...abierto, sel: i })}
+                                  className={`shrink-0 px-3 py-2 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                                    i === abierto.sel ? "bg-[#5C1A3D] border-[#5C1A3D] text-white" : "bg-white border-[#E8D5C4] text-[#5C1A3D] hover:border-[#5C1A3D]"
+                                  }`}
+                                >
+                                  {diaCorto(d.label, d.date)}
+                                </button>
+                              ))}
+                            </div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-600 mt-3">Elegí el horario</p>
+                            <div className="flex flex-wrap gap-2 mt-2 max-h-40 overflow-y-auto">
+                              {abierto.dias[abierto.sel].times.map((t) => {
+                                const d = abierto.dias[abierto.sel];
+                                return (
+                                  <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => openBookingModal("turnos_home_otro_dia", reservaServicio(serviceId), nombre, `${diaCorto(d.label, d.date).toLowerCase()} a las ${hora(t)}`)}
+                                    className="px-3 py-2 rounded-lg bg-white border border-[#E8D5C4] text-sm font-bold text-[#C2006B] hover:border-[#C2006B] transition-colors cursor-pointer"
+                                  >
+                                    {hora(t)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <button type="button" onClick={() => setOtrosDias(null)} className="mt-3 text-xs font-bold text-[#5C1A3D] underline underline-offset-2 cursor-pointer">
+                              Volver al más cercano
+                            </button>
+                          </>
+                        )
+                      ) : elegido && elegidoStatus === "loading" ? (
                         <div className="h-20 rounded-lg bg-white/70 animate-pulse" aria-label="Buscando horarios" />
                       ) : elegido && elegidoStatus === "error" ? (
                         <p className="text-sm text-gray-700">No pudimos ver los horarios ahora. Abrí la reserva y elegí día y hora.</p>
@@ -565,7 +637,7 @@ export default function App() {
                                 <button
                                   key={t}
                                   type="button"
-                                  onClick={() => openBookingModal("turnos_home_horario", reservaServicio(serviceId), nombre)}
+                                  onClick={() => openBookingModal("turnos_home_horario", reservaServicio(serviceId), nombre, `${dia.toLowerCase()} a las ${hora(t)}`)}
                                   className="px-3 py-2 rounded-lg bg-white border border-[#E8D5C4] text-sm font-bold text-[#C2006B] hover:border-[#C2006B] transition-colors cursor-pointer"
                                 >
                                   {hora(t)}
@@ -577,6 +649,11 @@ export default function App() {
                             <p className="text-xs text-gray-600 mt-2">
                               Y {it.count - it.firstTimes.length} horario{it.count - it.firstTimes.length === 1 ? "" : "s"} más ese día.
                             </p>
+                          )}
+                          {slug && (
+                            <button type="button" onClick={() => verOtrosDias(slug, nombre)} className="mt-3 text-sm font-bold text-[#C2006B] underline underline-offset-2 cursor-pointer">
+                              Ver otros días y horarios
+                            </button>
                           )}
                         </>
                       ) : it?.status === "error" ? (
@@ -1045,6 +1122,11 @@ export default function App() {
                   <span className="text-white text-lg leading-none">✕</span>
                 </button>
               </div>
+              {horarioElegido && (
+                <p className="px-5 py-2.5 bg-[#FCE8F0] text-[#5C1A3D] text-sm flex-shrink-0">
+                  Elegiste <strong>{horarioElegido}</strong>. Buscalo en la agenda de abajo para confirmar.
+                </p>
+              )}
               <iframe
                 src={bookingSrc || BRAND_INFO.agendaProIframeSrc}
                 title="Reserva de turnos online - BA Consultorios Médicos"
