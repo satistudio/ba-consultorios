@@ -324,7 +324,7 @@ export const TEAM: TeamMember[] = [
     id: "francos",
     name: "Dr. Héctor Francos",
     specialty: "Cardiología Infantil y Adultos",
-    photoUrl: "/dr-francos-cardiologia.png",
+    photoUrl: "/dr-francos-cardiologia.webp",
     bioLine: "Atiende en BA desde hace años, con foco en el control y seguimiento cardiológico de la comunidad de Zona Oeste."
   }
 ];

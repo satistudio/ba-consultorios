@@ -1,10 +1,16 @@
 import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
+import {createRoot, hydrateRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-createRoot(document.getElementById('root')!).render(
+// En producción la home llega ya dibujada en el HTML (scripts/build-paginas.tsx):
+// React solo la "despierta" (hydrate) en vez de dibujarla de cero. Así el título
+// se ve antes de que cargue todo el JavaScript.
+const root = document.getElementById('root')!;
+const app = (
   <StrictMode>
     <App />
-  </StrictMode>,
+  </StrictMode>
 );
+if (root.hasChildNodes()) hydrateRoot(root, app);
+else createRoot(root).render(app);
