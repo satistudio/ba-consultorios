@@ -1,10 +1,8 @@
 // Diagnóstico temporal (se borra al terminar): qué prestador atiende cada servicio.
 // Sin nombres de profesionales: se tachan antes de devolver.
 interface Env { AGENDAPRO_USER: string; AGENDAPRO_PASSWORD: string }
-const RUTAS = [
-  "services/254779", "services/2690377", "services/502524", "services/244881",
-  "service_providers", "locations/9099/providers", "locations/9099", "providers?location_id=9099",
-];
+const d = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10);
+const RUTAS = [254779, 2690377, 502524, 218457].map((id) => `services/${id}/available_hours?date=${d}&location_id=9099`);
 const tachar = (t: string) => t.replace(/"(public_name|name|first_name|last_name|email|phone|lastname|full_name)":"[^"]*"/g, '"$1":"-"');
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { AGENDAPRO_USER: user, AGENDAPRO_PASSWORD: password } = context.env;
