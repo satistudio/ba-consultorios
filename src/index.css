@@ -1,9 +1,19 @@
 @import "tailwindcss";
 
+/* Mientras carga Barlow Condensed, los títulos usan Arial achicada al mismo
+   ancho (medido: 69%). Así el texto no cambia de largo al llegar la fuente y la
+   página no "salta" (CLS en Lighthouse). */
+@font-face {
+  font-family: "Barlow Condensed Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("Roboto Bold"), local("Arial");
+  font-weight: 800 900;
+  size-adjust: 69%;
+}
+
 @theme {
   --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "DM Serif Display", serif;
-  --font-titular: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-titular: "Barlow Condensed", "Barlow Condensed Fallback", "Arial Narrow", sans-serif;
   
   /* Custom colors matching the Brand Book */
   --color-brand-magenta: #C2006B;
