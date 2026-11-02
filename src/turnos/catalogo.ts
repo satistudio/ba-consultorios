@@ -10,7 +10,7 @@
 //  - duplicados: Neurología 2022987, Flebología 15', Ecodoppler cardíaco
 //    443521, Doppler 236656 y 924558, "+ lavaje de oídos (diferencia)".
 // Las prácticas que suele indicar el médico (biopsias, drenajes, yeso, etc.)
-// están en PRACTICAS_TURNOS y solo se muestran con MOSTRAR_PRACTICAS = true.
+// están en PRACTICAS_TURNOS y se muestran con MOSTRAR_PRACTICAS = true.
 // Los nombres son los de la web, no los de AgendaPro (que están en mayúsculas
 // y con abreviaturas).
 // Ecografías y Doppler: AgendaPro solo devuelve horarios pidiéndolos por el
@@ -102,8 +102,8 @@ export const CATALOGO_TURNOS: ServicioTurno[] = [
   { id: "rinofibrolaringoscopia", nombre: "Rinofibrolaringoscopía", claves: "fibrolaringo fibro nasal laringe otorrino nariz garganta", service_id: 235093 },
   { id: "fondo-de-ojo", nombre: "Fondo de ojo", claves: "ojos oftalmo", service_id: 441698 },
   { id: "tonometria", nombre: "Tonometría (presión ocular)", claves: "ojos oftalmo presion glaucoma", service_id: 3020505 },
-  // OBI: nombre provisorio hasta que BA confirme qué es (está en Oftalmología).
-  { id: "obi", nombre: "OBI (oftalmología)", claves: "ojos oftalmo", service_id: 235712 },
+  // OBI = test del reflejo rojo (lo confirmó BA el 2/11/2026).
+  { id: "obi", nombre: "Test del reflejo rojo (OBI) para bebés", claves: "obi reflejo rojo recien nacido bebe ojos oftalmo pediatria", service_id: 235712 },
   { id: "control-visual", nombre: "Control visual", claves: "ojos vista anteojos lentes optica", service_id: 1171937 },
   { id: "control-visual-infantil", nombre: "Control visual infantil", claves: "ojos vista anteojos lentes optica niños chicos", service_id: 1388306 },
   { id: "pedigrafia", nombre: "Pedigrafía (incluye plantillas)", claves: "pies plantillas ortopedia podologia pisada", service_id: 3036962 },
@@ -154,9 +154,9 @@ export const CATALOGO_TURNOS: ServicioTurno[] = [
   { id: "diu", nombre: "Colocación de DIU", claves: "gineco anticonceptivo", service_id: 235071 },
 ];
 
-// Prácticas que suele indicar el médico en consulta. Están cargadas pero NO se
-// muestran hasta que BA confirme que el paciente las puede reservar solo.
-export const MOSTRAR_PRACTICAS = false;
+// Prácticas que suele indicar el médico en consulta. BA pidió mostrarlas
+// (2/11/2026); con false se ocultan sin tocar nada más.
+export const MOSTRAR_PRACTICAS = true;
 
 export const PRACTICAS_TURNOS: ServicioTurno[] = [
   // Ginecología
