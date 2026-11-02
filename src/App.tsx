@@ -295,6 +295,41 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [menuOpen]);
 
+  // "Tengo una orden": ventana para subirla sin salir de la home.
+  // Mismo endpoint que /turnos/ (/api/enviar-orden); lo recibe BA por mail.
+  const [ordenAbierta, setOrdenAbierta] = useState(false);
+  const [ordenEstado, setOrdenEstado] = useState<"idle" | "sending" | "sent">("idle");
+  const [ordenError, setOrdenError] = useState("");
+  const [ordenArchivo, setOrdenArchivo] = useState("");
+  const abrirOrden = () => { setOrdenError(""); if (ordenEstado !== "sent") setOrdenEstado("idle"); setOrdenAbierta(true); };
+  const enviarOrden = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = e.currentTarget;
+    const d = new FormData(f);
+    const archivo = d.get("file") as File | null;
+    setOrdenError("");
+    if (!archivo || !archivo.size) return setOrdenError("Falta la foto o el PDF de la orden.");
+    if (archivo.size > 10485760) return setOrdenError("El archivo pesa demasiado (máximo 10 MB).");
+    if (!String(d.get("name") || "").trim() || !String(d.get("phone") || "").trim()) return setOrdenError("Completá tu nombre y tu celular.");
+    if (!d.get("consent")) return setOrdenError("Para enviarla, aceptá el uso de tus datos.");
+    d.set("consent", "true");
+    setOrdenEstado("sending");
+    fetch("/api/enviar-orden", { method: "POST", body: d })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.ok) throw new Error();
+        pushEvent({ event: "lead_form_submit", form_name: "orden_medica", origin: "home_ventana" });
+        setOrdenEstado("sent");
+      })
+      .catch(() => { setOrdenEstado("idle"); setOrdenError("No pudimos enviar la orden. Probá de nuevo o mandala por WhatsApp."); });
+  };
+  useEffect(() => {
+    if (!ordenAbierta) return;
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") setOrdenAbierta(false); };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [ordenAbierta]);
+
   // Close booking modal on Escape key
   useEffect(() => {
     if (!isBookingModalOpen) return;
@@ -748,7 +783,7 @@ export default function App() {
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {[
               { icon: Calendar, titulo: "Sacar un turno", texto: "Elegí día y horario online.", accion: () => openBookingModal("tarea_turno") },
-              { icon: FileText, titulo: "Tengo una orden", texto: "Subila y te escribimos con el turno.", href: "/turnos/#orden" },
+              { icon: FileText, titulo: "Tengo una orden", texto: "Subila y te escribimos con el turno.", accion: abrirOrden },
               { icon: Stethoscope, titulo: "Especialidades", texto: "Más de 30, con el valor de cada consulta.", href: "/especialidades/" },
               { icon: Tag, titulo: "Precios", texto: "Consultas, ecografías y estudios.", href: "/precios/" },
               { icon: ClipboardList, titulo: "Cómo prepararme", texto: "Ayunos y preparación de estudios.", href: "/estudios/#preparacion" },
@@ -1091,6 +1126,95 @@ export default function App() {
         </div>
       </footer>
 
+      {/* TENGO UNA ORDEN — ventana para subirla */}
+      <AnimatePresence>
+        {ordenAbierta && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/50 flex items-end sm:items-center justify-center sm:p-4"
+            onClick={() => setOrdenAbierta(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="orden-titulo"
+              className="bg-white w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl"
+            >
+              <div className="flex items-start justify-between gap-4 px-5 pt-5">
+                <div>
+                  <h3 id="orden-titulo" className="font-extrabold text-xl text-[#5C1A3D]">Subí tu orden</h3>
+                  <p className="text-sm text-gray-600 mt-1">La revisamos y te escribimos con el turno, el valor y la preparación si hace falta.</p>
+                </div>
+                <button type="button" onClick={() => setOrdenAbierta(false)} aria-label="Cerrar" className="w-9 h-9 shrink-0 rounded-full bg-[#F8F6F4] hover:bg-[#E8D5C4] flex items-center justify-center cursor-pointer">
+                  <X className="w-4 h-4 text-[#5C1A3D]" />
+                </button>
+              </div>
+              <div className="px-5 pb-5 pt-4">
+                {ordenEstado === "sent" ? (
+                  <div role="status" className="rounded-xl bg-[#F2C4D0]/30 border border-[#F2C4D0] p-5">
+                    <p className="font-extrabold text-[#5C1A3D]">¡Recibimos tu orden!</p>
+                    <p className="mt-1 text-sm text-gray-700">Te contactamos en el horario de atención para darte el turno.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={enviarOrden} noValidate className="space-y-4">
+                    <div>
+                      <span className="block text-xs font-bold text-gray-600 mb-1.5">Foto o PDF de la orden</span>
+                      <label htmlFor="orden-archivo-home" className="flex items-center gap-3 rounded-xl border border-dashed border-[#C2006B]/50 bg-[#F8F6F4] px-4 py-3 cursor-pointer hover:border-[#C2006B]">
+                        <span className="shrink-0 px-3 py-1.5 rounded-full bg-[#5C1A3D] text-white text-xs font-bold">Elegir archivo</span>
+                        <span className="text-sm text-gray-600 truncate">{ordenArchivo || "Ningún archivo elegido"}</span>
+                      </label>
+                      <input id="orden-archivo-home" name="file" type="file" accept="image/*,application/pdf" className="sr-only" onChange={(e) => { setOrdenArchivo(e.target.files?.[0]?.name || ""); setOrdenError(""); }} />
+                      <span className="block mt-1 text-[11px] text-gray-500">Podés sacarle una foto con el celular. Hasta 10 MB.</span>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="orden-nombre-home" className="block text-xs font-bold text-gray-600 mb-1.5">Nombre y apellido</label>
+                        <input id="orden-nombre-home" name="name" type="text" autoComplete="name" className="w-full rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] px-4 py-3 text-sm focus:outline-none focus:border-[#C2006B]" />
+                      </div>
+                      <div>
+                        <label htmlFor="orden-celular-home" className="block text-xs font-bold text-gray-600 mb-1.5">Celular</label>
+                        <input id="orden-celular-home" name="phone" type="tel" autoComplete="tel" className="w-full rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] px-4 py-3 text-sm focus:outline-none focus:border-[#C2006B]" />
+                      </div>
+                    </div>
+                      <div>
+                        <label htmlFor="orden-email-home" className="block text-xs font-bold text-gray-600 mb-1.5">Email (opcional)</label>
+                        <input id="orden-email-home" name="email" type="email" autoComplete="email" className="w-full rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] px-4 py-3 text-sm focus:outline-none focus:border-[#C2006B]" />
+                      </div>
+                    <label className="flex items-start gap-2 text-xs text-gray-600">
+                      <input type="checkbox" name="consent" className="mt-0.5" />
+                      <span>Acepto que BA Consultorios Médicos use estos datos y la orden solo para contactarme por este turno, conforme a la Ley de Protección de Datos Personales N.º 25.326.</span>
+                    </label>
+                    {ordenError && <p role="alert" className="text-sm text-[#C2006B] font-bold">{ordenError}</p>}
+                    <button type="submit" disabled={ordenEstado === "sending"} className="w-full px-6 py-3 rounded-full bg-[#5C1A3D] text-white font-bold hover:bg-[#C2006B] transition-colors disabled:opacity-60 cursor-pointer">
+                      {ordenEstado === "sending" ? "Enviando..." : "Enviar orden"}
+                    </button>
+                  </form>
+                )}
+                <div className="mt-5 pt-4 border-t border-[#E8D5C4]/60 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+                  <a href="/turnos/#orden" className="font-bold text-[#5C1A3D] underline underline-offset-2">¿Dudas? Mirá cómo funciona</a>
+                  <a
+                    href={BRAND_INFO.whatsappUrl}
+                    onClick={() => trackWhatsApp("orden_ventana", "", "Orden médica")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-[#C2006B] underline underline-offset-2"
+                  >
+                    Prefiero mandarla por WhatsApp
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* AGENDAPRO SELF-SERVICE BOOKING MODAL */}
       <AnimatePresence>
         {isBookingModalOpen && (
@@ -1152,7 +1276,7 @@ export default function App() {
 
       {/* NEWSLETTER SUBSCRIBE — modal en desktop, banner inferior en móvil */}
       <AnimatePresence>
-        {showSubscribe && !isBookingModalOpen && (
+        {showSubscribe && !isBookingModalOpen && !ordenAbierta && (
           <>
             {/* Overlay solo desktop */}
             <motion.div
