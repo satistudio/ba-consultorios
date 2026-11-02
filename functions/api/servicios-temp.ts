@@ -1,7 +1,7 @@
 // TEMPORAL (se borra antes de mergear): prueba qué servicios de AgendaPro
 // devuelven horarios por sucursal o por el prestador ECOGRAFIAS. Solo en vistas previas.
 interface Env { AGENDAPRO_USER: string; AGENDAPRO_PASSWORD: string }
-const IDS = [];
+const IDS = [, 244881, 244883];
 export const onRequestGet: PagesFunction<Env> = async (ctx) => {
   const host = new URL(ctx.request.url).hostname;
   if (!host.endsWith(".ba-consultorios-3da.pages.dev")) return new Response("no", { status: 404 });
