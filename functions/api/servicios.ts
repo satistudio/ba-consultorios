@@ -26,7 +26,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const texto = await res.text();
   // Diagnóstico temporal: forma real de la respuesta (se quita al terminar el buscador).
   const body = url.searchParams.has("crudo")
-    ? JSON.stringify({ ok: res.ok, status: res.status, muestra: texto.slice(0, 3000) })
+    ? (() => {
+        try {
+          const lista = JSON.parse(texto) as { id: number; name: string; category?: string }[];
+          return JSON.stringify({ ok: res.ok, total: lista.length, lista: lista.map((x) => `${x.id}|${x.name}|${x.category ?? ""}`) });
+        } catch {
+          return JSON.stringify({ ok: res.ok, status: res.status, muestra: texto.slice(0, 3000) });
+        }
+      })()
     : JSON.stringify({ ok: false, reason: "en_construccion" });
   const response = new Response(body, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
   return response;
