@@ -18,6 +18,10 @@ interface Env {
 
 const CACHE_TTL_SECONDS = 60 * 60 * 24; // 24hs — las reseñas no cambian tan seguido, y así cuida la cuota/costo de la API
 
+// Si Google rechaza la búsqueda, se guarda el motivo (sin datos sensibles)
+// para devolverlo en la respuesta y poder diagnosticar sin entrar a Cloudflare.
+let ultimoError = "";
+
 async function resolvePlaceId(apiKey: string): Promise<string | null> {
   if (config.place_id) return config.place_id;
   try {
@@ -30,8 +34,13 @@ async function resolvePlaceId(apiKey: string): Promise<string | null> {
       },
       body: JSON.stringify({ textQuery: config.search_query })
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const err = (await res.json().catch(() => null)) as { error?: { status?: string; message?: string } } | null;
+      ultimoError = `${res.status} ${err?.error?.status ?? ""} ${(err?.error?.message ?? "").slice(0, 160)}`.trim();
+      return null;
+    }
     const json = (await res.json()) as { places?: { id: string }[] };
+    if (!json?.places?.length) ultimoError = "sin_resultados";
     return json?.places?.[0]?.id ?? null;
   } catch {
     return null;
@@ -83,7 +92,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const placeId = await resolvePlaceId(apiKey);
   if (!placeId) {
-    return new Response(JSON.stringify({ ok: false, reason: "place_not_found" }), {
+    return new Response(JSON.stringify({ ok: false, reason: "place_not_found", detalle: ultimoError }), {
       status: 200,
       headers: { "content-type": "application/json" }
     });

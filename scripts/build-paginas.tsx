@@ -9,7 +9,7 @@ import { StrictMode } from "react";
 import { renderToStaticMarkup, renderToString } from "react-dom/server";
 import App from "../src/App";
 import { ESPECIALIDADES, formatoPrecio } from "../src/paginas/especialidades";
-import { EspecialidadPage, EspecialidadesIndex, BUSCADOR_ESPECIALIDADES, PreciosPage, BUSCADOR_PRECIOS, TurnosPage, FORMULARIO_ORDEN, EstudiosPage, ContactoPage } from "../src/paginas/Paginas";
+import { EspecialidadPage, EspecialidadesIndex, BUSCADOR_ESPECIALIDADES, PreciosPage, BUSCADOR_PRECIOS, TurnosPage, FORMULARIO_ORDEN, EstudiosPage, ContactoPage, NoEncontrada } from "../src/paginas/Paginas";
 
 const SITE = "https://baconsultoriosmedicos.com.ar";
 const DIST = "dist";
@@ -27,12 +27,11 @@ function reemplazar(html: string, patron: RegExp, valor: string) {
   return html.replace(patron, valor);
 }
 
-function pagina(opts: { path: string; titulo: string; descripcion: string; ld: unknown[]; body: string; script?: string }) {
+function pagina(opts: { path: string; titulo: string; descripcion: string; ld: unknown[]; body: string; script?: string; archivo?: string }) {
   const url = SITE + opts.path;
   let html = base;
   html = reemplazar(html, /<title>[^<]*<\/title>/, `<title>${esc(opts.titulo)}</title>`);
   html = reemplazar(html, /<meta name="description" content="[^"]*" \/>/, `<meta name="description" content="${esc(opts.descripcion)}" />`);
-  html = reemplazar(html, /<meta name="keywords" content="[^"]*" \/>\s*/, "");
   html = reemplazar(html, /<link rel="canonical" href="[^"]*" \/>/, `<link rel="canonical" href="${url}" />`);
   html = reemplazar(html, /<meta property="og:url" content="[^"]*" \/>/, `<meta property="og:url" content="${url}" />`);
   html = reemplazar(html, /<meta property="og:title" content="[^"]*" \/>/, `<meta property="og:title" content="${esc(opts.titulo)}" />`);
@@ -47,6 +46,14 @@ function pagina(opts: { path: string; titulo: string; descripcion: string; ld: u
   html = reemplazar(html, /<div id="root"><\/div>/, `<div id="root">${opts.body}</div>\n    ${TRACKING}${opts.script ?? ""}`);
   if (!html.includes("GTM-MG27TQ4T")) throw new Error("La página perdió GTM");
 
+  // 404.html: Cloudflare la sirve con estado 404 para cualquier ruta que no
+  // existe (sin ella, devolvía la home con 200 y Google la veía duplicada).
+  if (opts.archivo) {
+    html = reemplazar(html, /<meta name="robots" content="[^"]*" \/>/, `<meta name="robots" content="noindex, follow" />`);
+    html = html.replace(/\s*<link rel="canonical" href="[^"]*" \/>/, "");
+    writeFileSync(`${DIST}/${opts.archivo}`, html);
+    return;
+  }
   const dir = `${DIST}${opts.path}`;
   mkdirSync(dir, { recursive: true });
   writeFileSync(`${dir}index.html`, html);
@@ -123,7 +130,7 @@ const CLINICA = {
   image: `${SITE}/ba-isotipo.png`,
   telephone: "+54 11 3970-1945",
   address: { "@type": "PostalAddress", streetAddress: "Almafuerte 3558", addressLocality: "San Justo", addressRegion: "La Matanza, Buenos Aires", postalCode: "1754", addressCountry: "AR" },
-  geo: { "@type": "GeoCoordinates", latitude: -34.680077, longitude: -58.560411 },
+  geo: { "@type": "GeoCoordinates", latitude: -34.6814237, longitude: -58.5548983 },
   openingHoursSpecification: [
     { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "08:00", closes: "20:00" },
     { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "08:00", closes: "14:00" },
@@ -137,6 +144,15 @@ pagina({
   descripcion: "BA Consultorios Médicos en Almafuerte 3558, San Justo, a metros del shopping y de la plaza de San Justo. Horarios, mapa, cómo llegar, WhatsApp y teléfono. Atención particular.",
   ld: [migas([{ name: "Inicio", path: "/" }, { name: "Contacto", path: "/contacto/" }]), CLINICA],
   body: renderToStaticMarkup(<ContactoPage />),
+});
+
+pagina({
+  path: "/",
+  archivo: "404.html",
+  titulo: "Página no encontrada | BA Consultorios Médicos",
+  descripcion: "Esta página no existe o cambió de lugar. Elegí a dónde ir en BA Consultorios Médicos, San Justo.",
+  ld: [],
+  body: renderToStaticMarkup(<NoEncontrada />),
 });
 
 // Sitemap: home + índice + estudios + precios + turnos + una URL por especialidad.

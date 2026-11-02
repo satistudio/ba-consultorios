@@ -330,6 +330,16 @@ export default function App() {
     return () => window.removeEventListener("keydown", k);
   }, [ordenAbierta]);
 
+  // Burbuja de WhatsApp: aparece después del inicio, donde ya hay un botón
+  // de WhatsApp. Así no tapa los botones principales en el celular.
+  const [mostrarFlotante, setMostrarFlotante] = useState(false);
+  useEffect(() => {
+    const ver = () => setMostrarFlotante(window.scrollY > 480);
+    ver();
+    window.addEventListener("scroll", ver, { passive: true });
+    return () => window.removeEventListener("scroll", ver);
+  }, []);
+
   // Close booking modal on Escape key
   useEffect(() => {
     if (!isBookingModalOpen) return;
@@ -345,9 +355,9 @@ export default function App() {
     <div className="min-h-screen font-sans bg-[#F8F6F4] text-[#1e1b1d] antialiased selection:bg-[#F2C4D0] selection:text-[#5C1A3D]">
       
       {/* TOP ANNOUNCEMENT BAR */}
-      <div id="top-bar" className="bg-[#5C1A3D] text-white py-2 px-4 text-center text-xs md:text-sm font-semibold tracking-wide border-b border-[#C2006B]/20">
+      <div id="top-bar" className="hidden sm:block bg-[#5C1A3D] text-white py-2 px-4 text-center text-xs md:text-sm font-semibold tracking-wide border-b border-[#C2006B]/20">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-center items-center gap-1 md:gap-4">
-          <span>📅 Turnos esta semana — rapidez real, sin esperas.</span>
+          <span>📅 Turnos esta semana: mirá los horarios y reservá online.</span>
           <span className="hidden md:inline-block text-[#F2C4D0]">|</span>
           <button
             type="button"
@@ -399,7 +409,7 @@ export default function App() {
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
               aria-expanded={menuOpen}
-              aria-controls="menu-movil"
+              aria-controls={menuOpen ? "menu-movil" : undefined}
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
               className="lg:hidden w-11 h-11 rounded-full border border-[#E8D5C4] bg-white text-[#5C1A3D] flex items-center justify-center cursor-pointer"
             >
@@ -459,7 +469,7 @@ export default function App() {
       </header>
 
       {/* HERO SECTION */}
-      <section id="hero-section" className="relative bg-[#5C1A3D] text-white py-16 md:py-24 overflow-hidden">
+      <section id="hero-section" className="relative bg-[#5C1A3D] text-white py-10 sm:py-16 md:py-24 overflow-hidden">
         {/* Abstract background graphics (Brand Compliance: Realist aesthetics, no messy tape or polaroids) */}
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#C2006B_1px,transparent_1px)] [background-size:16px_16px]"></div>
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[#C2006B] blur-[150px] opacity-20 pointer-events-none"></div>
@@ -479,7 +489,7 @@ export default function App() {
               <em className="acento">Rapidez real.</em>
             </h1>
             
-            <p className="text-lg md:text-xl text-[#F8F6F4]/90 font-light leading-relaxed max-w-2xl mb-8">
+            <p className="hidden sm:block text-lg md:text-xl text-[#F8F6F4]/90 font-light leading-relaxed max-w-2xl mb-8">
               En <strong className="font-semibold text-white">BA Consultorios Médicos</strong> resolvemos tu salud de forma directa y profesional. Sin las esperas eternas del sistema tradicional. ¿Lo necesitás antes? Escribinos y evaluamos un sobreturno.
             </p>
 
@@ -503,7 +513,7 @@ export default function App() {
             </div>
 
             {/* Quality badge (Brand compliance: No larp indicators, just friendly check points) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-12 border-t border-white/10 pt-8 text-xs md:text-sm text-[#F8F6F4]/80">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-8 sm:mt-12 border-t border-white/10 pt-6 sm:pt-8 text-xs md:text-sm text-[#F8F6F4]/80">
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-[#C2006B] flex-shrink-0" />
                 <span>Resultados rápidos</span>
@@ -540,7 +550,7 @@ export default function App() {
                   placeholder="Buscá especialidad o estudio"
                   aria-label="Buscar especialidad o estudio para ver turnos"
                   aria-autocomplete="list"
-                  aria-controls="sugerencias-turnos"
+                  aria-controls={sugerencias.length > 0 && !elegido ? "sugerencias-turnos" : undefined}
                   className="w-full pl-4 pr-4 py-3 rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] text-sm focus:outline-none focus:border-[#C2006B] focus:bg-white"
                 />
                 {sugerencias.length > 0 && !elegido && (
@@ -850,13 +860,35 @@ export default function App() {
               .ba-marquee-track:hover {
                 animation-play-state: paused;
               }
+              /* Quien pidió menos movimiento ve las fotos quietas y las desliza a mano. */
+              @media (prefers-reduced-motion: reduce) {
+                .ba-marquee-wrap { overflow-x: auto; }
+                .ba-marquee-track { animation: none; }
+                .ba-marquee-copia { display: none; }
+              }
             `}</style>
+            <div className="ba-marquee-wrap px-4">
             <div className="flex ba-marquee-track w-max gap-4">
-              {[...INSTALLATION_PHOTOS, ...INSTALLATION_PHOTOS].map((photo, idx) => (
-                <div key={idx} className="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden border border-[#E8D5C4]/40 flex-shrink-0">
-                  <img src={photo.src} alt={photo.alt} className="w-full h-full object-cover" loading="lazy" />
-                </div>
-              ))}
+              {[...INSTALLATION_PHOTOS, ...INSTALLATION_PHOTOS].map((photo, idx) => {
+                const copia = idx >= INSTALLATION_PHOTOS.length;
+                const base = photo.src.replace(/\.jpg$/, "");
+                return (
+                  <div key={idx} aria-hidden={copia || undefined} className={`w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden border border-[#E8D5C4]/40 flex-shrink-0${copia ? " ba-marquee-copia" : ""}`}>
+                    <img
+                      src={`${base}-800.webp`}
+                      srcSet={`${base}-480.webp 480w, ${base}-800.webp 800w`}
+                      sizes="(min-width: 768px) 320px, 256px"
+                      alt={copia ? "" : photo.alt}
+                      width={320}
+                      height={320}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                );
+              })}
+            </div>
             </div>
           </div>
         </section>
@@ -939,16 +971,16 @@ export default function App() {
           )}
 
           {reviewsStatus === "unavailable" && (
-            <div className="text-center py-10">
-              <p className="text-sm text-gray-500 font-light mb-3">Todavía no pudimos cargar las reseñas automáticamente.</p>
+            <div className="text-center -mt-8">
               <a
                 href="https://www.google.com/search?q=BA+Consultorios+Medicos+San+Justo+reseñas"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackSocial("google_reviews_fallback")}
-                className="text-sm font-bold text-[#C2006B] hover:underline"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#5C1A3D] text-[#5C1A3D] text-sm font-bold hover:bg-[#5C1A3D] hover:text-white transition-colors"
               >
-                Ver reseñas reales en Google →
+                Leé las reseñas de nuestros pacientes en Google
+                <ArrowRight className="w-4 h-4" />
               </a>
             </div>
           )}
@@ -1114,11 +1146,11 @@ export default function App() {
             <div>
               &copy; {new Date().getFullYear()} BA Consultorios Médicos. Todos los derechos reservados. San Justo, Buenos Aires, Argentina.
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center">
               <span>Dirección: Almafuerte 3558, San Justo</span>
-              <span>·</span>
+              <span className="hidden sm:inline" aria-hidden="true">·</span>
               <span>WhatsApp: +54 9 11 6434-4822</span>
-              <span>·</span>
+              <span className="hidden sm:inline" aria-hidden="true">·</span>
               <span>Tel: 3970-1945</span>
             </div>
           </div>
@@ -1380,10 +1412,10 @@ export default function App() {
       </AnimatePresence>
 
       {/* FLOATING WHATSAPP BUTTON WITH BADGE */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 group">
-        <span className="bg-white text-[#5C1A3D] text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg border border-green-200 opacity-90 group-hover:opacity-100 transition-opacity whitespace-nowrap animate-pulse flex items-center gap-1.5">
+      <div className={`fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 group transition-all duration-200 ${mostrarFlotante ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
+        <span className="hidden sm:flex bg-white text-[#5C1A3D] text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg border border-green-200 opacity-90 group-hover:opacity-100 transition-opacity whitespace-nowrap items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-          Reservá tu turno
+          Escribinos
         </span>
         <a 
           href={BRAND_INFO.whatsappUrl}
@@ -1392,6 +1424,8 @@ export default function App() {
           rel="noopener noreferrer"
           className="bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 duration-200 focus:outline-none"
           title="Contactar por WhatsApp"
+          aria-label="Escribinos por WhatsApp"
+          tabIndex={mostrarFlotante ? undefined : -1}
         >
           {/* Custom vector SVG representation of WhatsApp icon */}
           <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
