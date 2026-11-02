@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { BRAND_INFO, INSTALLATION_PHOTOS } from "./data";
+import { CATALOGO_TURNOS, ServicioTurno } from "./turnos/catalogo";
 
 // Páginas propias: la home ya no repite su contenido, lleva a cada una.
 const NAV = [
@@ -32,6 +33,8 @@ const NAV = [
 const reservaServicio = (serviceId?: number) =>
   serviceId ? `https://baconsultorios.site.agendapro.com/ar/sucursal/9099?services_id=${serviceId}` : BRAND_INFO.agendaProUrl;
 
+const normalizar = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
 const hora = (t: string) => (/^\d{2}:\d{2}/.test(t) ? t.slice(0, 5) : t);
 
 export default function App() {
@@ -40,6 +43,35 @@ export default function App() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [turnoSel, setTurnoSel] = useState(0);
+  const [busqueda, setBusqueda] = useState("");
+  const [elegido, setElegido] = useState<ServicioTurno | null>(null);
+  const [elegidoData, setElegidoData] = useState<AvailabilityItem | null>(null);
+  const [elegidoStatus, setElegidoStatus] = useState<"loading" | "ok" | "error">("loading");
+  const sugerencias = useMemo(() => {
+    const q = normalizar(busqueda).trim();
+    if (q.length < 2) return [];
+    const palabras = q.split(/\s+/);
+    return CATALOGO_TURNOS.filter((c) => {
+      // Cada palabra buscada tiene que ser el comienzo de alguna palabra
+      // ("eco ri" → ecografía renal, no ecografía mamaria).
+      const texto = normalizar(`${c.nombre} ${c.claves}`).split(/[^a-z0-9]+/);
+      return palabras.every((w) => texto.some((x) => x.startsWith(w)));
+    }).slice(0, 6);
+  }, [busqueda]);
+  const elegirServicio = (c: ServicioTurno) => {
+    setElegido(c);
+    setBusqueda(c.nombre);
+    setElegidoData(null);
+    setElegidoStatus("loading");
+    pushEvent({ event: "turnos_search", origin: "home", service_name: c.nombre });
+    fetch(`/api/disponibilidad?item=${encodeURIComponent(c.id)}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.ok && j.item) { setElegidoData(j.item); setElegidoStatus("ok"); }
+        else setElegidoStatus("error");
+      })
+      .catch(() => setElegidoStatus("error"));
+  };
 
   // ==========================================================================
   //  MEDICIÓN — único punto de salida de datos del sitio
@@ -444,6 +476,40 @@ export default function App() {
 
               <p className="font-bold text-lg text-[#5C1A3D] mb-3">¿Qué turno buscás?</p>
 
+              <div className="relative mb-3">
+                <input
+                  type="search"
+                  value={busqueda}
+                  onChange={(e) => { setBusqueda(e.target.value); setElegido(null); }}
+                  placeholder="Buscá especialidad o estudio"
+                  aria-label="Buscar especialidad o estudio para ver turnos"
+                  aria-autocomplete="list"
+                  aria-controls="sugerencias-turnos"
+                  className="w-full pl-4 pr-4 py-3 rounded-xl border border-[#E8D5C4] bg-[#F8F6F4] text-sm focus:outline-none focus:border-[#C2006B] focus:bg-white"
+                />
+                {sugerencias.length > 0 && !elegido && (
+                  <ul id="sugerencias-turnos" className="mt-2 rounded-xl border border-[#E8D5C4] bg-white divide-y divide-[#E8D5C4]/60 overflow-hidden">
+                    {sugerencias.map((c) => (
+                      <li key={c.id}>
+                        <button
+                          type="button"
+                          onClick={() => elegirServicio(c)}
+                          className="w-full text-left px-4 py-3 text-sm font-semibold text-[#5C1A3D] hover:bg-[#F2C4D0]/30 cursor-pointer"
+                        >
+                          {c.nombre}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {busqueda.trim().length >= 2 && sugerencias.length === 0 && !elegido && (
+                  <p className="mt-2 text-xs text-gray-600">
+                    No lo encontramos con ese nombre. Probá con otra palabra o{" "}
+                    <button type="button" onClick={() => openBookingModal("buscador_sin_resultado")} className="font-bold text-[#C2006B] underline underline-offset-2 cursor-pointer">mirá toda la agenda</button>.
+                  </p>
+                )}
+              </div>
+
               {availabilityStatus === "loading" && (
                 <div className="space-y-3" aria-hidden="true">
                   <div className="flex gap-2">{[0, 1, 2].map((i) => <div key={i} className="h-9 w-28 rounded-full bg-[#F8F6F4] animate-pulse" />)}</div>
@@ -451,34 +517,45 @@ export default function App() {
                 </div>
               )}
 
-              {availabilityStatus === "ok" && availability && availability.length > 0 && (() => {
-                const it = availability[Math.min(turnoSel, availability.length - 1)];
-                const hay = it.status === "today" || it.status === "tomorrow" || it.status === "soon";
-                const fecha = it.date ? ` ${it.date.slice(8, 10)}/${it.date.slice(5, 7)}` : "";
-                const dia = it.status === "today" ? "Hoy" : it.status === "tomorrow" ? "Mañana" : `El ${it.dayLabel ?? ""}${fecha}`;
+              {(elegido || (availabilityStatus === "ok" && availability && availability.length > 0)) && (() => {
+                const it: AvailabilityItem | null = elegido
+                  ? elegidoData
+                  : availability![Math.min(Math.max(turnoSel, 0), availability!.length - 1)];
+                const nombre = elegido ? elegido.nombre : it!.name;
+                const serviceId = elegido ? elegido.service_id : it!.service_id;
+                const hay = !!it && (it.status === "today" || it.status === "tomorrow" || it.status === "soon");
+                const fecha = it?.date ? ` ${it.date.slice(8, 10)}/${it.date.slice(5, 7)}` : "";
+                const dia = it?.status === "today" ? "Hoy" : it?.status === "tomorrow" ? "Mañana" : `El ${it?.dayLabel ?? ""}${fecha}`;
                 return (
                   <>
-                    <div role="tablist" aria-label="Especialidades con agenda online" className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-                      {availability.map((a, i) => (
-                        <button
-                          key={a.name}
-                          type="button"
-                          role="tab"
-                          aria-selected={i === turnoSel}
-                          onClick={() => setTurnoSel(i)}
-                          className={`shrink-0 whitespace-nowrap px-3.5 py-2 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
-                            i === turnoSel
-                              ? "bg-[#C2006B] border-[#C2006B] text-white"
-                              : "bg-white border-[#E8D5C4] text-[#5C1A3D] hover:border-[#C2006B]"
-                          }`}
-                        >
-                          {a.name}
-                        </button>
-                      ))}
-                    </div>
+                    {availabilityStatus === "ok" && availability && availability.length > 0 && (
+                      <div role="tablist" aria-label="Turnos más buscados" className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+                        {availability.map((a, i) => (
+                          <button
+                            key={a.name}
+                            type="button"
+                            role="tab"
+                            aria-selected={!elegido && i === turnoSel}
+                            onClick={() => { setTurnoSel(i); setElegido(null); setBusqueda(""); }}
+                            className={`shrink-0 whitespace-nowrap px-3.5 py-2 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
+                              !elegido && i === turnoSel
+                                ? "bg-[#C2006B] border-[#C2006B] text-white"
+                                : "bg-white border-[#E8D5C4] text-[#5C1A3D] hover:border-[#C2006B]"
+                            }`}
+                          >
+                            {a.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     <div role="tabpanel" aria-live="polite" className="mt-3 rounded-xl bg-[#F8F6F4] border border-[#E8D5C4]/60 p-4">
-                      {hay ? (
+                      {elegido && <p className="text-sm font-bold text-[#5C1A3D] mb-2">{nombre}</p>}
+                      {elegido && elegidoStatus === "loading" ? (
+                        <div className="h-20 rounded-lg bg-white/70 animate-pulse" aria-label="Buscando horarios" />
+                      ) : elegido && elegidoStatus === "error" ? (
+                        <p className="text-sm text-gray-700">No pudimos ver los horarios ahora. Abrí la reserva y elegí día y hora.</p>
+                      ) : hay && it ? (
                         <>
                           <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">Próximo día con turnos</p>
                           <p className="text-2xl font-extrabold text-[#5C1A3D] mt-0.5">{dia}</p>
@@ -488,7 +565,7 @@ export default function App() {
                                 <button
                                   key={t}
                                   type="button"
-                                  onClick={() => openBookingModal("turnos_home_horario", reservaServicio(it.service_id), it.name)}
+                                  onClick={() => openBookingModal("turnos_home_horario", reservaServicio(serviceId), nombre)}
                                   className="px-3 py-2 rounded-lg bg-white border border-[#E8D5C4] text-sm font-bold text-[#C2006B] hover:border-[#C2006B] transition-colors cursor-pointer"
                                 >
                                   {hora(t)}
@@ -502,12 +579,14 @@ export default function App() {
                             </p>
                           )}
                         </>
+                      ) : it?.status === "error" ? (
+                        <p className="text-sm text-gray-700">Este servicio no muestra horarios acá. Abrí la reserva y elegí día y hora.</p>
                       ) : (
                         <p className="text-sm text-gray-700">
-                          No vemos turnos online en los próximos 7 días para {it.name}.{" "}
+                          No vemos turnos online en los próximos 7 días.{" "}
                           <a
                             href={BRAND_INFO.whatsappUrl}
-                            onClick={() => trackWhatsApp("turnos_home_sin_fecha", it.name)}
+                            onClick={() => trackWhatsApp("turnos_home_sin_fecha", nombre)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-bold text-[#C2006B] underline underline-offset-2"
@@ -521,10 +600,10 @@ export default function App() {
 
                     <button
                       type="button"
-                      onClick={() => openBookingModal("turnos_home_boton", reservaServicio(it.service_id), it.name)}
+                      onClick={() => openBookingModal(elegido ? "buscador_turnos" : "turnos_home_boton", reservaServicio(serviceId), nombre)}
                       className="mt-4 flex items-center justify-center gap-2 w-full bg-[#5C1A3D] hover:bg-[#44122d] text-white py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
                     >
-                      Reservar {it.name}
+                      Reservar {elegido ? "este turno" : nombre}
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </>

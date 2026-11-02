@@ -26,10 +26,12 @@ jobs:
           done
           echo "== ¿AgendaPro deja embeber la reserva por servicio?"
           curl -sS -I -L "https://baconsultorios.site.agendapro.com/ar/sucursal/9099?services_id=682555" | grep -i -E "^(HTTP|x-frame|content-security|location)" || true
-          echo "== $BASE/api/servicios?crudo"
-          curl -sS "$BASE/api/servicios?crudo" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('total')); print(chr(10).join(d.get('lista', [str(d)])))"
           echo "== $BASE/api/disponibilidad"
           curl -sS "$BASE/api/disponibilidad" | head -c 900; echo
+          for it in ginecologia eco-renal mamografia traumatologia; do
+            echo "== $BASE/api/disponibilidad?item=$it"
+            curl -sS "$BASE/api/disponibilidad?item=$it"; echo
+          done
 
       - name: Comprobar redirección del pages.dev viejo
         run: |
