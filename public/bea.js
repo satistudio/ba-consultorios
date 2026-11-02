@@ -1,5 +1,7 @@
 /* BEA, asistente virtual de la web de BA.
- * Botón con avatar abajo a la izquierda (abajo a la derecha está WhatsApp).
+ * Ícono con avatar abajo a la derecha, arriba de la burbuja de WhatsApp de la
+ * home. Al pasar el mouse (o con foco) se despliega el cartel; el chat se abre
+ * con click, para que no se abra solo al ir hacia WhatsApp.
  * La charla vive solo en esta página: no se guarda en el navegador ni en el
  * servidor, y se borra al cerrar o cambiar de página (regla aprobada).
  * Medición: solo dataLayer (nunca gtag/fbq). bea_open al abrir; whatsapp_click
@@ -31,13 +33,15 @@
   }
 
   var css = "" +
-    "#bea-boton{position:fixed;left:16px;bottom:16px;z-index:45;display:flex;align-items:center;gap:8px;padding:4px 14px 4px 4px;border:0;border-radius:999px;background:#fff;color:#5C1A3D;font:700 13px/1.2 Montserrat,system-ui,sans-serif;box-shadow:0 8px 24px rgba(92,26,61,.22);cursor:pointer}" +
-    "#bea-boton img{width:48px;height:48px;border-radius:50%;display:block}" +
-    "#bea-boton:hover{box-shadow:0 10px 28px rgba(92,26,61,.32)}" +
+    "#bea-boton{position:fixed;right:26px;bottom:var(--bea-abajo,24px);z-index:45;width:52px;height:52px;padding:0;border:3px solid #fff;border-radius:50%;background:#F2C4D0;box-shadow:0 8px 24px rgba(92,26,61,.28);cursor:pointer;font:700 13px/1.2 Montserrat,system-ui,sans-serif}" +
+    "#bea-boton img{width:100%;height:100%;border-radius:50%;display:block}" +
+    ".bea-etq{position:absolute;right:calc(100% + 10px);top:50%;transform:translate(8px,-50%);white-space:nowrap;padding:8px 14px;border-radius:999px;background:#fff;color:#5C1A3D;box-shadow:0 6px 18px rgba(92,26,61,.2);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease}" +
+    "#bea-boton:hover .bea-etq,#bea-boton:focus-visible .bea-etq,#bea-boton.bea-peek .bea-etq{opacity:1;transform:translate(0,-50%);pointer-events:auto}" +
+    "#bea-boton:hover{box-shadow:0 10px 28px rgba(92,26,61,.38)}" +
     "#bea-boton:focus-visible,#bea-panel :focus-visible{outline:3px solid #C2006B;outline-offset:2px}" +
-    "@media (max-width:379px){#bea-boton .bea-etq{display:none}#bea-boton{padding:4px}}" +
-    "#bea-panel{position:fixed;z-index:46;left:8px;right:8px;bottom:8px;max-height:calc(100dvh - 24px);height:600px;display:flex;flex-direction:column;background:#F8F6F4;border-radius:20px;box-shadow:0 20px 50px rgba(44,44,44,.3);overflow:hidden;font:400 14px/1.45 Montserrat,system-ui,sans-serif;color:#2C2C2C}" +
-    "@media (min-width:640px){#bea-panel{left:16px;right:auto;bottom:16px;width:380px;max-height:calc(100dvh - 32px)}}" +
+    "@media (prefers-reduced-motion:reduce){.bea-etq{transition:none}}" +
+    "#bea-panel{position:fixed;z-index:51;left:8px;right:8px;bottom:8px;max-height:calc(100dvh - 24px);height:600px;display:flex;flex-direction:column;background:#F8F6F4;border-radius:20px;box-shadow:0 20px 50px rgba(44,44,44,.3);overflow:hidden;font:400 14px/1.45 Montserrat,system-ui,sans-serif;color:#2C2C2C}" +
+    "@media (min-width:640px){#bea-panel{left:auto;right:16px;bottom:16px;width:380px;max-height:calc(100dvh - 32px)}}" +
     "#bea-panel[hidden]{display:none}" +
     ".bea-cab{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;background:#5C1A3D;color:#fff}" +
     ".bea-cab img{width:38px;height:38px;border-radius:50%;background:#F2C4D0}" +
@@ -68,9 +72,9 @@
     "@keyframes bea-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}";
   document.head.appendChild(el("style", { text: css }));
 
-  var boton = el("button", { id: "bea-boton", type: "button", "aria-expanded": "false", "aria-controls": "bea-panel", onclick: function () { abierto ? cerrar() : abrir(); } }, [
-    el("img", { src: "/bea-avatar.svg", alt: "", width: "48", height: "48" }),
-    el("span", { class: "bea-etq", text: "¿Dudas? Preguntale a BEA" }),
+  var boton = el("button", { id: "bea-boton", type: "button", "aria-label": "Preguntale a BEA, el asistente virtual", "aria-expanded": "false", "aria-controls": "bea-panel", onclick: function () { abierto ? cerrar() : abrir(); } }, [
+    el("img", { src: "/bea-avatar.svg", alt: "", width: "52", height: "52" }),
+    el("span", { class: "bea-etq", "aria-hidden": "true", text: "¿Dudas? Preguntale a BEA" }),
   ]);
   var log = el("div", { class: "bea-log", role: "log", "aria-live": "polite", "aria-label": "Conversación con BEA" });
   var entrada = el("textarea", { rows: "1", maxlength: "800", placeholder: "Escribí tu consulta", "aria-label": "Tu consulta para BEA" });
@@ -201,6 +205,20 @@
       });
   }
 
-  function montar() { document.body.appendChild(boton); document.body.appendChild(panel); }
+  // En la home hay burbuja de WhatsApp (abajo a la derecha, con el cartel
+  // "Reservá tu turno"): BEA va justo arriba. En el resto de las páginas no hay
+  // burbuja y BEA ocupa ese lugar.
+  if (pagina === "home") boton.style.setProperty("--bea-abajo", "132px");
+
+  function montar() {
+    document.body.appendChild(boton);
+    document.body.appendChild(panel);
+    // Un solo aviso a los 3 s para que se vea qué es (en celular no hay "pasar el mouse").
+    setTimeout(function () {
+      if (abrioUnaVez) return;
+      boton.classList.add("bea-peek");
+      setTimeout(function () { boton.classList.remove("bea-peek"); }, 4000);
+    }, 3000);
+  }
   if (document.body) montar(); else document.addEventListener("DOMContentLoaded", montar);
 })();
