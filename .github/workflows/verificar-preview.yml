@@ -29,6 +29,7 @@ jobs:
           curl -sS -I -L "https://baconsultorios.site.agendapro.com/ar/sucursal/9099?services_id=682555" | grep -i -E "^(HTTP|x-frame|content-security|location)" || true
           echo "== $BASE/api/disponibilidad"
           curl -sS "$BASE/api/disponibilidad" | head -c 900; echo
+          echo "PRESTADORES $(curl -sS "$BASE/api/prestadores" | head -c 20000)"
           for it in $(grep -o 'id: "[a-z0-9-]*"' src/turnos/catalogo.ts | cut -d'"' -f2); do
             echo "ITEM $it $(curl -sS "$BASE/api/disponibilidad?item=$it" | jq -c '[.item.status,.item.dayLabel,.item.count]')"
           done
