@@ -31,6 +31,11 @@ jobs:
           curl -sS "$BASE/api/disponibilidad" | head -c 900; echo
           echo "DIAS $(curl -sS "$BASE/api/disponibilidad?item=ginecologia&dias=1" | jq -c '[.item.error, (.item.dias[] | [.date,.label,(.times|length),.times[0]])]')"
           echo "DIAS $(curl -sS "$BASE/api/disponibilidad?item=eco-renal&dias=1" | jq -c '[.item.error, (.item.dias[] | [.date,.label,(.times|length),.times[0]])]')"
+          echo "== Servicios AgendaPro (temporal)"
+          curl -sS "$BASE/api/servicios-temp" > servicios.json || true
+          jq -c '.pages' servicios.json || head -c 500 servicios.json
+          jq -c '.services[0]' servicios.json || true
+          jq -r '.services[] | [.id, .name, (del(.id,.name,.description,.price) | tostring)] | join(" | ")' servicios.json || true
           echo "== 404 y cabeceras"
           curl -sS -o /dev/null -w "ruta-inexistente status=%{http_code}\n" "$BASE/no-existe-esta-pagina/"
           curl -sSI "$BASE/" | grep -iE "^(x-frame|x-content|referrer|permissions)" || true
