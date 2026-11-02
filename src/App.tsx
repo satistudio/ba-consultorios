@@ -96,8 +96,12 @@ export default function App() {
   };
 
   // CONVERSIÓN. Apertura del modal de reserva online (canal autogestión).
-  const openBookingModal = (origin: string) => {
-    pushEvent({ event: "agendapro_booking_open", origin });
+  // Sin servicio abre la agenda completa; con servicio, la reserva de ese
+  // servicio (misma ventana, sin salir de la web).
+  const [bookingSrc, setBookingSrc] = useState<string | null>(null);
+  const openBookingModal = (origin: string, src?: string, serviceName?: string) => {
+    pushEvent({ event: "agendapro_booking_open", origin, service_name: serviceName || "" });
+    setBookingSrc(src || null);
     setIsBookingModalOpen(true);
   };
 
@@ -481,16 +485,14 @@ export default function App() {
                           {it.firstTimes.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-3">
                               {it.firstTimes.map((t) => (
-                                <a
+                                <button
                                   key={t}
-                                  href={reservaServicio(it.service_id)}
-                                  onClick={() => trackAgendaProDirect("turnos_home_horario", it.name)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-3 py-2 rounded-lg bg-white border border-[#E8D5C4] text-sm font-bold text-[#C2006B] hover:border-[#C2006B] transition-colors"
+                                  type="button"
+                                  onClick={() => openBookingModal("turnos_home_horario", reservaServicio(it.service_id), it.name)}
+                                  className="px-3 py-2 rounded-lg bg-white border border-[#E8D5C4] text-sm font-bold text-[#C2006B] hover:border-[#C2006B] transition-colors cursor-pointer"
                                 >
                                   {hora(t)}
-                                </a>
+                                </button>
                               ))}
                             </div>
                           )}
@@ -517,16 +519,14 @@ export default function App() {
                       )}
                     </div>
 
-                    <a
-                      href={reservaServicio(it.service_id)}
-                      onClick={() => trackAgendaProDirect("turnos_home_boton", it.name)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 flex items-center justify-center gap-2 w-full bg-[#5C1A3D] hover:bg-[#44122d] text-white py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => openBookingModal("turnos_home_boton", reservaServicio(it.service_id), it.name)}
+                      className="mt-4 flex items-center justify-center gap-2 w-full bg-[#5C1A3D] hover:bg-[#44122d] text-white py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
                     >
                       Reservar {it.name}
                       <ArrowRight className="w-4 h-4" />
-                    </a>
+                    </button>
                   </>
                 );
               })()}
@@ -955,7 +955,7 @@ export default function App() {
                 </button>
               </div>
               <iframe
-                src={BRAND_INFO.agendaProIframeSrc}
+                src={bookingSrc || BRAND_INFO.agendaProIframeSrc}
                 title="Reserva de turnos online - BA Consultorios Médicos"
                 className="w-full flex-1"
                 style={{ border: "0" }}
