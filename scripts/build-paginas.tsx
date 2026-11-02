@@ -130,7 +130,7 @@ const CLINICA = {
   image: `${SITE}/ba-isotipo.png`,
   telephone: "+54 11 3970-1945",
   address: { "@type": "PostalAddress", streetAddress: "Almafuerte 3558", addressLocality: "San Justo", addressRegion: "La Matanza, Buenos Aires", postalCode: "1754", addressCountry: "AR" },
-  geo: { "@type": "GeoCoordinates", latitude: -34.680077, longitude: -58.560411 },
+  geo: { "@type": "GeoCoordinates", latitude: -34.6814237, longitude: -58.5548983 },
   openingHoursSpecification: [
     { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "08:00", closes: "20:00" },
     { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "08:00", closes: "14:00" },
