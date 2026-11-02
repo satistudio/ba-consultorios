@@ -971,16 +971,16 @@ export default function App() {
           )}
 
           {reviewsStatus === "unavailable" && (
-            <div className="text-center py-10">
-              <p className="text-sm text-gray-600 font-light mb-3">Todavía no pudimos cargar las reseñas automáticamente.</p>
+            <div className="text-center -mt-8">
               <a
                 href="https://www.google.com/search?q=BA+Consultorios+Medicos+San+Justo+reseñas"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackSocial("google_reviews_fallback")}
-                className="text-sm font-bold text-[#C2006B] hover:underline"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#5C1A3D] text-[#5C1A3D] text-sm font-bold hover:bg-[#5C1A3D] hover:text-white transition-colors"
               >
-                Ver reseñas reales en Google →
+                Leé las reseñas de nuestros pacientes en Google
+                <ArrowRight className="w-4 h-4" />
               </a>
             </div>
           )}
