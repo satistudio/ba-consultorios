@@ -11,7 +11,7 @@
 // GET https://agendapro.com/api/public/v1/services/{service_id}/available_hours?date=YYYY-MM-DD&(location_id=X | provider_id=Y)
 
 import servicesMap from "./_services-map.json";
-import { CATALOGO_TURNOS } from "../../src/turnos/catalogo";
+import { BUSCABLES } from "../../src/turnos/catalogo";
 
 interface Env {
   AGENDAPRO_USER: string;
@@ -112,7 +112,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   // Solo se aceptan ids del catálogo, nunca un service_id arbitrario.
   const itemId = new URL(context.request.url).searchParams.get("item");
   if (itemId !== null) {
-    const it = CATALOGO_TURNOS.find((c) => c.id === itemId);
+    const it = BUSCABLES.find((c) => c.id === itemId);
     if (!it) return new Response(JSON.stringify({ ok: false, reason: "unknown_item" }), { status: 404, headers: { "content-type": "application/json" } });
     const scope = it.provider_id ? { providerId: it.provider_id } : { locationId };
     // ?dias=1: los próximos días con turnos y todos sus horarios, para que el

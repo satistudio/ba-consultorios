@@ -31,10 +31,6 @@ jobs:
           curl -sS "$BASE/api/disponibilidad" | head -c 900; echo
           echo "DIAS $(curl -sS "$BASE/api/disponibilidad?item=ginecologia&dias=1" | jq -c '[.item.error, (.item.dias[] | [.date,.label,(.times|length),.times[0]])]')"
           echo "DIAS $(curl -sS "$BASE/api/disponibilidad?item=eco-renal&dias=1" | jq -c '[.item.error, (.item.dias[] | [.date,.label,(.times|length),.times[0]])]')"
-          echo "== Prueba de servicios AgendaPro (temporal)"
-          for id in $(cat scripts/probar-ids.txt); do
-            curl -sS --max-time 60 "$BASE/api/servicios-temp?id=$id" | jq -r '"PROBE \(.id) | \(.loc) | \(.eco)"' || echo "PROBE $id fallo"
-          done
           echo "== 404 y cabeceras"
           curl -sS -o /dev/null -w "ruta-inexistente status=%{http_code}\n" "$BASE/no-existe-esta-pagina/"
           curl -sSI "$BASE/" | grep -iE "^(x-frame|x-content|referrer|permissions)" || true
