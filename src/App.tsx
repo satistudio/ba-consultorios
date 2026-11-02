@@ -580,7 +580,19 @@ export default function App() {
                           )}
                         </>
                       ) : it?.status === "error" ? (
-                        <p className="text-sm text-gray-700">Este servicio no muestra horarios acá. Abrí la reserva y elegí día y hora.</p>
+                        <p className="text-sm text-gray-700">
+                          Este turno no muestra horarios online.{" "}
+                          <a
+                            href={BRAND_INFO.whatsappUrl}
+                            onClick={() => trackWhatsApp("turnos_home_sin_horarios", nombre)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-[#C2006B] underline underline-offset-2"
+                          >
+                            Escribinos por WhatsApp
+                          </a>{" "}
+                          y te damos el próximo turno.
+                        </p>
                       ) : (
                         <p className="text-sm text-gray-700">
                           No vemos turnos online en los próximos 7 días.{" "}
