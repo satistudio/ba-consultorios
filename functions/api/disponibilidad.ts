@@ -53,7 +53,7 @@ async function fetchSlots(
     const firstTimes = json.available_hours
       .map((h) => h.start_block)
       .filter((t): t is string => typeof t === "string")
-      .slice(0, 3);
+      .slice(0, 6);
     return { count: json.available_hours.length, firstTimes };
   } catch {
     return null;

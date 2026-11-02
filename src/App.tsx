@@ -1,128 +1,45 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { 
-  Search, 
-  MapPin, 
-  Phone, 
-  Calendar, 
-  Check, 
-  Instagram, 
-  Share2, 
-  Sparkles, 
-  HelpCircle,
-  Clock,
+import {
+  Phone,
+  Calendar,
+  Check,
+  Instagram,
   ArrowRight,
-  ExternalLink,
+  Sparkles,
+  UserRound,
+  Menu,
+  X,
+  FileText,
+  Stethoscope,
+  Tag,
+  ClipboardList,
+  MapPin,
   ChevronDown,
-  Info,
-  Heart,
-  Flower2,
-  Waves,
-  Footprints,
-  Baby,
-  UserRound
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { BRAND_INFO, SPECIALTIES, SERVICES_DATA, TEAM, INSTALLATION_PHOTOS, DERIVED_STUDIES, MedicalService } from "./data";
+import { BRAND_INFO, INSTALLATION_PHOTOS } from "./data";
 
-const normalizeText = (text: string): string => {
-  if (!text) return "";
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove accents/diacritics
-    .toLowerCase()
-    .trim();
-};
+// Páginas propias: la home ya no repite su contenido, lleva a cada una.
+const NAV = [
+  { href: "/especialidades/", label: "Especialidades" },
+  { href: "/estudios/", label: "Estudios y preparación" },
+  { href: "/precios/", label: "Precios" },
+  { href: "/turnos/", label: "Turnos y órdenes" },
+  { href: "/contacto/", label: "Cómo llegar" },
+];
 
-const SYNONYMS: { [key: string]: string[] } = {
-  "ped": ["pediatria", "pediatra", "pediatrico", "pediatrica", "infantil"],
-  "pedi": ["pediatria", "pediatra", "pediatrico", "pediatrica", "infantil"],
-  "pediatra": ["pediatria", "pediatrico", "pediatrica", "infantil"],
-  "pediatria": ["pediatra", "pediatrico", "pediatrica", "infantil"],
-  "infantil": ["pediatria", "pediatrico", "pediatrica", "pediatra"],
-  "niño": ["pediatria", "pediatrico", "pediatrica", "pediatra", "infantil"],
-  "niños": ["pediatria", "pediatrico", "pediatrica", "pediatra", "infantil"],
-  
-  "gineco": ["ginecologia", "ginecologica", "ginecologo", "ginecologa", "obstetricia", "pap", "colposcopia"],
-  "ginecologia": ["gineco", "ginecologica", "ginecologo", "ginecologa", "obstetricia", "pap", "colposcopia"],
-  "obs": ["obstetricia", "obstetra", "ginecologia", "embarazo"],
-  "obstetricia": ["obs", "obstetra", "embarazo"],
-  "embarazo": ["obstetricia", "obstetra", "ginecologia"],
-  
-  "cardio": ["cardiologia", "cardiologo", "electro", "electrocardiograma", "ergometria", "holter", "mapa"],
-  "cardiologia": ["cardio", "cardiologo", "electro", "electrocardiograma", "ergometria", "holter", "mapa"],
-  "electro": ["electrocardiograma", "ecg"],
-  "ecg": ["electrocardiograma", "electro"],
-  
-  "eco": ["ecografia", "ecodoppler", "doppler", "ultrasonido"],
-  "ecografia": ["eco", "ecodoppler", "doppler"],
-  "doppler": ["eco", "ecodoppler", "ecografia"],
-  
-  "traumato": ["traumatologia", "traumatologo", "yeso", "infiltracion", "bloqueo"],
-  "traumatologia": ["traumato", "traumatologo", "yeso", "infiltracion", "bloqueo"],
-  
-  "dermato": ["dermatologia", "dermatologo", "piel", "cutaneo", "verruga"],
-  "dermatologia": ["dermato", "dermatologo", "piel", "cutaneo", "verruga"],
-  
-  "kine": ["kinesiologia", "kinesiologo", "sesion", "rehabilitacion"],
-  "kinesiologia": ["kine", "kinesiologo", "sesion", "rehabilitacion"],
-  
-  "podo": ["podologia", "podologo", "pie", "pies", "uñas", "uñero"],
-  "podologia": ["podo", "podologo", "pie", "pies", "uñas", "uñero"],
-  "pie": ["podologia", "podologo"],
-  "uñas": ["podologia", "podologo", "quiropodia"],
-  
-  "nutri": ["nutricion", "nutricionista", "dieta", "peso", "antropometria"],
-  "nutricion": ["nutri", "nutricionista", "dieta", "peso", "antropometria"],
+// Reserva directa de un servicio en AgendaPro (sucursal 9099).
+const reservaServicio = (serviceId?: number) =>
+  serviceId ? `https://baconsultorios.site.agendapro.com/ar/sucursal/9099?services_id=${serviceId}` : BRAND_INFO.agendaProUrl;
 
-  "audiometria": ["audiologia", "oido", "lavado", "auditivo", "timpanometria", "impedanciometria", "logoaudiometria"],
-  "audio": ["audiometria", "audiologia", "oido", "auditivo"]
-};
-
-const matchesSearchQuery = (serviceName: string, serviceSpecialty: string, query: string): boolean => {
-  if (!query.trim()) return true;
-  
-  const normalizedName = normalizeText(serviceName);
-  const normalizedSpecialty = normalizeText(serviceSpecialty);
-  const queryTerms = normalizeText(query).split(/\s+/).filter(Boolean);
-  
-  return queryTerms.every(term => {
-    // 1. Direct match
-    if (normalizedName.includes(term) || normalizedSpecialty.includes(term)) {
-      return true;
-    }
-    
-    // 2. Synonym check for query term
-    const synonyms = SYNONYMS[term] || [];
-    for (const syn of synonyms) {
-      if (normalizedName.includes(syn) || normalizedSpecialty.includes(syn)) {
-        return true;
-      }
-    }
-    
-    // 3. Reverse synonym check: if any word in the target has a synonym matching the term
-    const targetWords = [...normalizedName.split(/\s+/), ...normalizedSpecialty.split(/\s+/)].filter(Boolean);
-    for (const word of targetWords) {
-      const wordSynonyms = SYNONYMS[word] || [];
-      if (wordSynonyms.some(syn => syn.includes(term) || term.includes(syn))) {
-        return true;
-      }
-    }
-    
-    return false;
-  });
-};
+const hora = (t: string) => (/^\d{2}:\d{2}/.test(t) ? t.slice(0, 5) : t);
 
 export default function App() {
-  // Search and Filter States
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSpecialty, setSelectedSpecialty] = useState("Todas");
-  const [selectedType, setSelectedType] = useState<string>("Todos");
-  const [showAllByDefault, setShowAllByDefault] = useState(false);
-  
-
   // Active FAQ state
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [turnoSel, setTurnoSel] = useState(0);
 
   // ==========================================================================
   //  MEDICIÓN — único punto de salida de datos del sitio
@@ -238,86 +155,8 @@ export default function App() {
     }
   };
 
-  // Derived studies quick search (broad matching: every word must appear, ignoring accents/case)
-  const [derivedQuery, setDerivedQuery] = useState("");
-  const derivedResults = useMemo(() => {
-    const q = normalizeText(derivedQuery.trim());
-    if (q.length < 3) return [];
-    const words = q.split(/\s+/);
-    return DERIVED_STUDIES.filter((s) => {
-      const haystack = normalizeText(`${s.category} ${s.name}`);
-      return words.every((w) => haystack.includes(w));
-    }).slice(0, 12);
-  }, [derivedQuery]);
-
-  // Orden médica: form state
-  const [orderForm, setOrderForm] = useState({ name: "", email: "", phone: "", consent: false });
-  const [orderFile, setOrderFile] = useState<File | null>(null);
-  const [orderStatus, setOrderStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [orderErrorMsg, setOrderErrorMsg] = useState<string>("");
-
-  const ORDER_MAX_BYTES = 10 * 1024 * 1024;
-  const ORDER_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
-
-  const handleOrderFileChange = (file: File | null) => {
-    setOrderErrorMsg("");
-    if (!file) {
-      setOrderFile(null);
-      return;
-    }
-    if (!ORDER_ALLOWED_TYPES.includes(file.type)) {
-      setOrderErrorMsg("Formato no admitido. Subí una foto (JPG, PNG) o un PDF.");
-      setOrderFile(null);
-      return;
-    }
-    if (file.size > ORDER_MAX_BYTES) {
-      setOrderErrorMsg("El archivo pesa demasiado (máximo 10MB).");
-      setOrderFile(null);
-      return;
-    }
-    setOrderFile(file);
-  };
-
-  const handleOrderSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!orderFile || !orderForm.name.trim() || !orderForm.phone.trim() || !orderForm.consent) {
-      setOrderErrorMsg("Completá todos los campos, adjuntá la orden y aceptá el consentimiento.");
-      return;
-    }
-    setOrderStatus("sending");
-    setOrderErrorMsg("");
-    try {
-      const fd = new FormData();
-      fd.append("name", orderForm.name.trim());
-      fd.append("email", orderForm.email.trim());
-      fd.append("phone", orderForm.phone.trim());
-      fd.append("consent", "true");
-      fd.append("file", orderFile);
-
-      const res = await fetch("/api/enviar-orden", { method: "POST", body: fd });
-      const json = await res.json();
-
-      if (json.ok) {
-        setOrderStatus("sent");
-        trackFormSubmit("orden_medica");
-        setOrderForm({ name: "", email: "", phone: "", consent: false });
-        setOrderFile(null);
-      } else {
-        setOrderStatus("error");
-        setOrderErrorMsg(
-          json.detail
-            ? `No pudimos enviar la orden (${json.detail}). Probá de nuevo o escribinos por WhatsApp.`
-            : "No pudimos enviar la orden. Probá de nuevo o escribinos por WhatsApp."
-        );
-      }
-    } catch {
-      setOrderStatus("error");
-      setOrderErrorMsg("No pudimos enviar la orden. Probá de nuevo o escribinos por WhatsApp.");
-    }
-  };
-
   // Real availability data (fetched from our own serverless proxy — never calls AgendaPro directly from the browser)
-  type AvailabilityItem = { name: string; icon: string; service_id?: number; status: "today" | "tomorrow" | "soon" | "none" | "error"; count: number; firstTimes: string[]; dayLabel: string | null };
+  type AvailabilityItem = { name: string; icon: string; service_id?: number; status: "today" | "tomorrow" | "soon" | "none" | "error"; count: number; firstTimes: string[]; dayLabel: string | null; date?: string | null };
   const [availability, setAvailability] = useState<AvailabilityItem[] | null>(null);
   const [availabilityStatus, setAvailabilityStatus] = useState<"loading" | "ok" | "not_configured" | "error">("loading");
 
@@ -375,6 +214,30 @@ export default function App() {
   // inyectarlo acá: cargar el contenedor dos veces duplica page views y eventos
   // en GA4 y Meta Pixel. GA4 y Pixel se configuran DENTRO de GTM.
 
+  // Links viejos a secciones que ahora tienen página propia (pueden estar en
+  // la bio de Instagram, anuncios o mensajes guardados): se redirigen.
+  useEffect(() => {
+    const destinos: Record<string, string> = {
+      "#directorio": "/especialidades/",
+      "#subir-orden": "/turnos/#orden",
+      "#contacto": "/contacto/",
+      "#equipo": "/especialidades/",
+    };
+    if (destinos[location.hash]) location.replace(destinos[location.hash]);
+    else if (location.hash === "#reserva-online") openBookingModal("link_viejo_reserva");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cerrar el menú móvil con Escape
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [menuOpen]);
+
   // Close booking modal on Escape key
   useEffect(() => {
     if (!isBookingModalOpen) return;
@@ -385,79 +248,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [isBookingModalOpen]);
 
-  // Filter & Search Logic
-  const filteredServices = useMemo(() => {
-    return SERVICES_DATA.filter((service) => {
-      // Search query match with smart loose concordances (accents-insensitive and synonyms/abbreviations support)
-      const matchesSearch = matchesSearchQuery(service.name, service.specialty, searchQuery);
-
-      // Specialty match
-      const matchesSpecialty = 
-        selectedSpecialty === "Todas" || 
-        service.specialty === selectedSpecialty;
-
-      // Type tag match
-      const matchesType = 
-        selectedType === "Todos" || 
-        service.type === selectedType;
-
-      return matchesSearch && matchesSpecialty && matchesType;
-    });
-  }, [searchQuery, selectedSpecialty, selectedType]);
-
-  // Curated list of 6 main specialties/studies for preview in requested order
-  const previewServices = useMemo(() => {
-    const targets = [
-      { spec: "Ginecología", nameContains: "consulta" },
-      { spec: "Cardiología", id: "c-2" },
-      { spec: "Pediatría", nameContains: "consulta" },
-      { spec: "Ecografía", id: "e-1" },
-      { spec: "Dermatología", nameContains: "consulta" },
-      { spec: "Traumatología", nameContains: "consulta" }
-    ];
-
-    const results: MedicalService[] = [];
-    for (const target of targets) {
-      let found: MedicalService | undefined;
-      if (target.id) {
-        found = SERVICES_DATA.find(s => s.id === target.id);
-      } else {
-        found = SERVICES_DATA.find(s => 
-          s.specialty.toLowerCase() === target.spec.toLowerCase() && 
-          s.name.toLowerCase().includes(target.nameContains || "")
-        );
-      }
-      
-      if (found) {
-        results.push(found);
-      } else {
-        // Fallback: search by specialty or name contains
-        const fallback = SERVICES_DATA.find(s => 
-          s.specialty.toLowerCase() === target.spec.toLowerCase() ||
-          s.name.toLowerCase().includes(target.spec.toLowerCase())
-        );
-        if (fallback) results.push(fallback);
-      }
-    }
-    return results;
-  }, []);
-
-  const displayedServices = useMemo(() => {
-    const isSearchingOrFiltering = searchQuery !== "" || selectedSpecialty !== "Todas" || selectedType !== "Todos";
-    if (isSearchingOrFiltering) {
-      return filteredServices;
-    }
-    if (showAllByDefault) {
-      return SERVICES_DATA;
-    }
-    return previewServices;
-  }, [filteredServices, previewServices, showAllByDefault, searchQuery, selectedSpecialty, selectedType]);
-
-  // Group specialties available in service list for selector
-  const availableSpecialties = useMemo(() => {
-    const list = Array.from(new Set(SERVICES_DATA.map(s => s.specialty)));
-    return ["Todas", ...list.sort()];
-  }, []);
 
   return (
     <div className="min-h-screen font-sans bg-[#F8F6F4] text-[#1e1b1d] antialiased selection:bg-[#F2C4D0] selection:text-[#5C1A3D]">
@@ -480,36 +270,22 @@ export default function App() {
       {/* HEADER / NAVIGATION */}
       <header
         id="main-header"
-        className="sticky top-0 z-40 backdrop-blur-xl bg-gradient-to-b from-white via-white to-[#F8F6F4]/90 border-b border-[#E8D5C4]/60 shadow-[0_4px_24px_-8px_rgba(92,26,61,0.12)]"
+        className="sticky top-0 z-40 backdrop-blur-xl bg-white/95 border-b border-[#E8D5C4]/60 shadow-[0_4px_24px_-8px_rgba(92,26,61,0.12)]"
       >
-        {/* Hairline de marca */}
         <div className="h-[3px] w-full bg-gradient-to-r from-[#5C1A3D] via-[#C2006B] to-[#F2C4D0]" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center gap-4">
-          {/* Logo */}
-          <a href="/" className="flex items-center group flex-shrink-0">
-            <img 
-              src="/ba-isotipo-192.webp" 
-              alt="BA Consultorios Médicos" 
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex justify-between items-center gap-3">
+          <a href="/" aria-label="BA Consultorios Médicos, inicio" className="flex items-center flex-shrink-0">
+            <img
+              src="/ba-isotipo-192.webp"
+              alt=""
               width={192}
               height={131}
-              className="h-12 md:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-              referrerPolicy="no-referrer"
+              className="h-10 md:h-14 w-auto object-contain"
             />
           </a>
 
-          {/* Nav Menu */}
-          <nav className="hidden lg:flex items-center gap-1 text-[13px] font-medium">
-            {[
-              { href: "#propuesta", label: "Propuesta" },
-              { href: "#directorio", label: "Especialidades" },
-              { href: "#equipo", label: "Equipo" },
-              { href: "#reserva-online", label: "Reservar online" },
-              { href: "#subir-orden", label: "Subir orden" },
-              { href: "#sumate", label: "Sumate a BA" },
-              { href: "#testimonios", label: "Opiniones" },
-              { href: "#contacto", label: "Contacto" }
-            ].map((link) => (
+          <nav aria-label="Principal" className="hidden lg:flex items-center gap-1 text-[13px] font-medium">
+            {NAV.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -520,17 +296,58 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Social + CTA */}
-          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-            {/* Redes */}
-            <div className="hidden sm:flex items-center gap-1.5">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => openBookingModal("header")}
+              className="bg-gradient-to-br from-[#C2006B] to-[#a10058] hover:from-[#a10058] hover:to-[#8a0049] text-white px-4 md:px-6 py-2.5 rounded-full text-[11px] md:text-xs font-bold tracking-wider uppercase transition-all duration-300 shadow-lg shadow-[#C2006B]/25 cursor-pointer whitespace-nowrap"
+            >
+              Reservá tu turno
+            </button>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-expanded={menuOpen}
+              aria-controls="menu-movil"
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              className="lg:hidden w-11 h-11 rounded-full border border-[#E8D5C4] bg-white text-[#5C1A3D] flex items-center justify-center cursor-pointer"
+            >
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {menuOpen && (
+          <nav id="menu-movil" aria-label="Menú" className="lg:hidden border-t border-[#E8D5C4]/60 bg-white">
+            <ul className="max-w-7xl mx-auto px-4 pt-2 pb-3">
+              {NAV.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    className="flex items-center justify-between px-3 py-3.5 rounded-xl text-[#5C1A3D] font-semibold hover:bg-[#F2C4D0]/30"
+                  >
+                    {link.label}
+                    <ArrowRight className="w-4 h-4 text-[#C2006B]" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <div className="max-w-7xl mx-auto px-4 pb-4 flex items-center gap-2">
+              <a
+                href={BRAND_INFO.whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackWhatsApp("menu")}
+                className="flex-1 text-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-full text-sm font-bold"
+              >
+                Escribinos por WhatsApp
+              </a>
               <a
                 href={BRAND_INFO.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram de BA Consultorios Médicos"
-                onClick={() => trackSocial("instagram_header")}
-                className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-[#C2006B] hover:border-[#C2006B] text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm"
+                onClick={() => trackSocial("instagram_menu")}
+                className="w-11 h-11 rounded-full border border-[#E8D5C4] text-[#5C1A3D] flex items-center justify-center"
               >
                 <Instagram className="w-4 h-4" />
               </a>
@@ -539,31 +356,14 @@ export default function App() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook de BA Consultorios Médicos"
-                onClick={() => trackSocial("facebook_header")}
-                className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-[#C2006B] hover:border-[#C2006B] text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm font-black text-sm leading-none"
+                onClick={() => trackSocial("facebook_menu")}
+                className="w-11 h-11 rounded-full border border-[#E8D5C4] text-[#5C1A3D] flex items-center justify-center font-black text-sm"
               >
                 f
               </a>
-              <a
-                href={BRAND_INFO.whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp de BA Consultorios Médicos"
-                onClick={() => trackWhatsApp("header_icono")}
-                className="w-9 h-9 rounded-full border border-[#E8D5C4] bg-white hover:bg-green-500 hover:border-green-500 text-[#5C1A3D] hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm"
-              >
-                <Phone className="w-4 h-4" />
-              </a>
             </div>
-
-            <button
-              onClick={() => openBookingModal("header")}
-              className="relative bg-gradient-to-br from-[#C2006B] to-[#a10058] hover:from-[#a10058] hover:to-[#8a0049] text-white px-4 md:px-6 py-2.5 rounded-full text-[11px] md:text-xs font-bold tracking-wider uppercase transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-[#C2006B]/25 hover:shadow-xl hover:shadow-[#C2006B]/35 cursor-pointer whitespace-nowrap"
-            >
-              Reservá tu turno
-            </button>
-          </div>
-        </div>
+          </nav>
+        )}
       </header>
 
       {/* HERO SECTION */}
@@ -599,11 +399,14 @@ export default function App() {
                 Reservá tu turno
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <a 
-                href="#directorio" 
+              <a
+                href={BRAND_INFO.whatsappUrl}
+                onClick={() => trackWhatsApp("hero")}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="border-2 border-white/20 hover:border-white/60 text-white hover:bg-white/5 px-8 py-4 rounded-full text-sm md:text-base font-bold tracking-wider uppercase text-center transition-colors flex items-center justify-center gap-2"
               >
-                Ver estudios y especialidades
+                Escribinos por WhatsApp
               </a>
             </div>
 
@@ -624,597 +427,202 @@ export default function App() {
             </div>
           </div>
 
-          {/* Hero Right: Live Interactive Scheduling Simulator */}
+          {/* Hero Right: próximos turnos reales (AgendaPro vía /api/disponibilidad) */}
           <div className="lg:col-span-5">
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="bg-white text-[#1e1b1d] rounded-2xl p-6 shadow-2xl border border-[#E8D5C4]/30 relative"
-            >
+            <div className="bg-white text-[#1e1b1d] rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#E8D5C4]/30">
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Disponibilidad de Turnos</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-600">Próximos turnos</span>
                 </div>
-                <span className="text-xs font-medium text-[#5C1A3D] bg-[#F2C4D0] px-2 py-1 rounded">Esta semana</span>
+                <span className="text-[11px] text-gray-500">Agenda real, se actualiza sola</span>
               </div>
 
-              <p className="font-bold text-lg text-[#5C1A3D] mb-4">Especialidades con turnos esta semana:</p>
-              
-              <div className="space-y-2.5 mb-6">
-                {availabilityStatus === "loading" && (
+              <p className="font-bold text-lg text-[#5C1A3D] mb-3">¿Qué turno buscás?</p>
+
+              {availabilityStatus === "loading" && (
+                <div className="space-y-3" aria-hidden="true">
+                  <div className="flex gap-2">{[0, 1, 2].map((i) => <div key={i} className="h-9 w-28 rounded-full bg-[#F8F6F4] animate-pulse" />)}</div>
+                  <div className="h-36 rounded-xl bg-[#F8F6F4] animate-pulse" />
+                </div>
+              )}
+
+              {availabilityStatus === "ok" && availability && availability.length > 0 && (() => {
+                const it = availability[Math.min(turnoSel, availability.length - 1)];
+                const hay = it.status === "today" || it.status === "tomorrow" || it.status === "soon";
+                const fecha = it.date ? ` ${it.date.slice(8, 10)}/${it.date.slice(5, 7)}` : "";
+                const dia = it.status === "today" ? "Hoy" : it.status === "tomorrow" ? "Mañana" : `El ${it.dayLabel ?? ""}${fecha}`;
+                return (
                   <>
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-14 rounded-xl bg-[#F8F6F4] border border-gray-100 animate-pulse" />
-                    ))}
-                  </>
-                )}
+                    <div role="tablist" aria-label="Especialidades con agenda online" className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+                      {availability.map((a, i) => (
+                        <button
+                          key={a.name}
+                          type="button"
+                          role="tab"
+                          aria-selected={i === turnoSel}
+                          onClick={() => setTurnoSel(i)}
+                          className={`shrink-0 whitespace-nowrap px-3.5 py-2 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
+                            i === turnoSel
+                              ? "bg-[#C2006B] border-[#C2006B] text-white"
+                              : "bg-white border-[#E8D5C4] text-[#5C1A3D] hover:border-[#C2006B]"
+                          }`}
+                        >
+                          {a.name}
+                        </button>
+                      ))}
+                    </div>
 
-                {availabilityStatus === "ok" && availability?.map((item, idx) => {
-                  const nameLower = item.name.toLowerCase();
-                  const Icon = nameLower.includes("cardio")
-                    ? Heart
-                    : nameLower.includes("pap") || nameLower.includes("colpo")
-                    ? Flower2
-                    : nameLower.includes("ecograf")
-                    ? Waves
-                    : nameLower.includes("podo")
-                    ? Footprints
-                    : nameLower.includes("pediatr")
-                    ? Baby
-                    : Sparkles;
+                    <div role="tabpanel" aria-live="polite" className="mt-3 rounded-xl bg-[#F8F6F4] border border-[#E8D5C4]/60 p-4">
+                      {hay ? (
+                        <>
+                          <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">Próximo día con turnos</p>
+                          <p className="text-2xl font-extrabold text-[#5C1A3D] mt-0.5">{dia}</p>
+                          {it.firstTimes.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {it.firstTimes.map((t) => (
+                                <a
+                                  key={t}
+                                  href={reservaServicio(it.service_id)}
+                                  onClick={() => trackAgendaProDirect("turnos_home_horario", it.name)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3 py-2 rounded-lg bg-white border border-[#E8D5C4] text-sm font-bold text-[#C2006B] hover:border-[#C2006B] transition-colors"
+                                >
+                                  {hora(t)}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                          {it.count > it.firstTimes.length && (
+                            <p className="text-xs text-gray-600 mt-2">
+                              Y {it.count - it.firstTimes.length} horario{it.count - it.firstTimes.length === 1 ? "" : "s"} más ese día.
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-700">
+                          No vemos turnos online en los próximos 7 días para {it.name}.{" "}
+                          <a
+                            href={BRAND_INFO.whatsappUrl}
+                            onClick={() => trackWhatsApp("turnos_home_sin_fecha", it.name)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-[#C2006B] underline underline-offset-2"
+                          >
+                            Escribinos
+                          </a>{" "}
+                          y te decimos la próxima fecha.
+                        </p>
+                      )}
+                    </div>
 
-                  const statusConfig: Record<AvailabilityItem["status"], { label: string; dot: string; text: string; bg: string }> = {
-                    today: item.count <= 2
-                      ? { label: `¡Último${item.count === 1 ? "" : "s"} ${item.count} turno${item.count === 1 ? "" : "s"} hoy!`, dot: "bg-[#C2006B]", text: "text-[#C2006B]", bg: "bg-[#C2006B]/10" }
-                      : { label: `${item.count} turnos hoy`, dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
-                    tomorrow: { label: "Turnos mañana", dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
-                    soon: { label: item.dayLabel ? `Turnos el ${item.dayLabel}` : "Turnos esta semana", dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50" },
-                    none: { label: "Consultar próxima fecha", dot: "bg-gray-300", text: "text-gray-500", bg: "bg-gray-50" },
-                    error: { label: "Consultar disponibilidad", dot: "bg-gray-300", text: "text-gray-500", bg: "bg-gray-50" }
-                  };
-                  const cfg = statusConfig[item.status];
-
-                  return (
                     <a
-                      key={idx}
-                      href={item.service_id
-                        ? `https://baconsultorios.site.agendapro.com/ar/sucursal/9099?services_id=${item.service_id}`
-                        : BRAND_INFO.agendaProUrl}
-                      onClick={() => trackAgendaProDirect("card_disponibilidad", item.name)}
+                      href={reservaServicio(it.service_id)}
+                      onClick={() => trackAgendaProDirect("turnos_home_boton", it.name)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center justify-between gap-3 bg-white p-2.5 pr-3 rounded-xl border border-gray-100 hover:border-[#C2006B]/25 hover:shadow-[0_2px_12px_-4px_rgba(194,0,107,0.15)] transition-all duration-200 cursor-pointer"
+                      className="mt-4 flex items-center justify-center gap-2 w-full bg-[#5C1A3D] hover:bg-[#44122d] text-white py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-[#F2C4D0]/40 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F2C4D0]/70 transition-colors">
-                          <Icon className="w-4 h-4 text-[#5C1A3D]" strokeWidth={2.25} />
-                        </div>
-                        <div className="min-w-0">
-                          <span className="block text-sm font-semibold text-gray-800 truncate">{item.name}</span>
-                          {item.firstTimes?.length > 0 && (item.status === "today" || item.status === "tomorrow" || item.status === "soon") ? (
-                            <span className="block text-[10px] text-gray-500 font-medium truncate">
-                              🕐 {item.firstTimes.join(" · ")}{item.count > item.firstTimes.length ? " y más" : ""}
-                            </span>
-                          ) : (
-                            <span className="block text-[10px] text-[#C2006B]/70 font-medium truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                              Reservar este servicio →
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span className={`flex items-center gap-1.5 text-[11px] font-bold ${cfg.text} ${cfg.bg} pl-2 pr-2.5 py-1.5 rounded-full flex-shrink-0`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                        {cfg.label}
-                      </span>
+                      Reservar {it.name}
+                      <ArrowRight className="w-4 h-4" />
                     </a>
-                  );
-                })}
+                  </>
+                );
+              })()}
 
-                {(availabilityStatus === "not_configured" || availabilityStatus === "error") && (
-                  <div className="bg-[#F8F6F4] p-4 rounded-lg border border-gray-100 text-center">
+              {(availabilityStatus === "not_configured" || availabilityStatus === "error" || (availabilityStatus === "ok" && !availability?.length)) && (
+                <>
+                  <div className="bg-[#F8F6F4] p-4 rounded-xl border border-gray-100 text-center">
                     <p className="text-sm font-semibold text-gray-700">Turnos esta semana en la mayoría de las especialidades.</p>
-                    <p className="text-xs text-gray-500 font-light mt-1">Consultá la agenda actualizada al reservar.</p>
+                    <p className="text-xs text-gray-600 mt-1">Mirá días y horarios en la agenda online.</p>
                   </div>
-                )}
-              </div>
+                  <button
+                    onClick={() => openBookingModal("simulador")}
+                    className="mt-4 block w-full bg-[#5C1A3D] hover:bg-[#44122d] text-white text-center py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
+                  >
+                    Ver la agenda
+                  </button>
+                </>
+              )}
 
-              <button
-                onClick={() => openBookingModal("simulador")}
-                className="block w-full bg-[#5C1A3D] hover:bg-[#44122d] text-white text-center py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
-              >
-                📅 Reservar Turno al Instante
-              </button>
-
-              <p className="text-center text-[11px] text-gray-500 mt-3">
-                Elegí día y horario vos mismo. ¿Preferís coordinar por WhatsApp?{" "}
+              <p className="text-center text-xs text-gray-600 mt-3">
+                ¿Buscás otra especialidad?{" "}
+                <button
+                  type="button"
+                  onClick={() => openBookingModal("simulador_todas")}
+                  className="font-bold text-[#C2006B] underline underline-offset-2 cursor-pointer"
+                >
+                  Ver toda la agenda
+                </button>{" "}
+                o{" "}
                 <a
                   href={BRAND_INFO.whatsappUrl}
                   onClick={() => trackWhatsApp("simulador_link")}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#C2006B] font-semibold hover:underline"
+                  className="font-bold text-[#C2006B] underline underline-offset-2"
                 >
-                  Escribinos
+                  escribinos
                 </a>
                 .
               </p>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* PROPUESTA DE VALOR / ESENCIA */}
-      <section id="propuesta" className="py-20 bg-[#F8F6F4] border-b border-[#E8D5C4]/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Brand Propósito Callout in DM Serif Italic */}
-          <div className="text-center max-w-4xl mx-auto mb-16">
-            <span className="text-sm font-bold uppercase tracking-widest text-[#C2006B] mb-2 block">NUESTRO PROPÓSITO</span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif italic text-[#5C1A3D] leading-snug">
-              "Acercar una atención médica de calidad, rápida y accesible a San Justo y alrededores."
-            </h2>
-          </div>
-
-          {/* Pillars Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[
-              {
-                title: "Turnos esta semana",
-                desc: "Rapidez real, no prometida. Reservás online con la agenda a la vista. ¿Lo necesitás antes? Escribinos y evaluamos un sobreturno.",
-                color: "border-l-4 border-[#C2006B] bg-white",
-                badge: "Rapidez"
-              },
-              {
-                title: "+30 Especialidades",
-                desc: "Todo tu cuidado médico en un mismo lugar. Desde clínica y cardiología hasta podología y pediatría.",
-                color: "border-l-4 border-[#5C1A3D] bg-white",
-                badge: "Integral"
-              },
-              {
-                title: "Atención Particular",
-                desc: "Aranceles particulares accesibles. Excelente opción de salud privada de calidad sin necesidad de contar con obra social.",
-                color: "border-l-4 border-[#E8D5C4] bg-white",
-                badge: "Accesible"
-              },
-              {
-                title: "Escribinos por WhatsApp",
-                desc: "Chateá directamente con el equipo de BA para coordinar tu visita. Respondemos en el horario de atención.",
-                color: "border-l-4 border-[#F2C4D0] bg-white",
-                badge: "Directo"
-              }
-            ].map((pillar, idx) => (
-              <div 
-                key={idx} 
-                className={`p-6 rounded-xl shadow-sm border border-gray-100 ${pillar.color} hover:shadow-md transition-shadow flex flex-col justify-between`}
-              >
-                <div>
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
-                    {pillar.badge}
-                  </span>
-                  <h3 className="font-extrabold text-lg text-[#5C1A3D] mt-4 mb-3">{pillar.title}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed font-light">{pillar.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Brand golden rule banner */}
-          <div className="bg-[#E8D5C4]/30 border border-[#E8D5C4] rounded-2xl p-6 mt-16 max-w-4xl mx-auto flex flex-col sm:flex-row gap-6 items-center justify-between">
-            <div className="flex gap-4 items-start text-left">
-              <span className="text-3xl">🤝</span>
-              <div>
-                <h4 className="font-bold text-[#5C1A3D]">El trato que te merecés</h4>
-                <p className="text-xs md:text-sm text-gray-600 leading-relaxed font-light mt-1">
-                  En BA Consultorios Médicos, demostramos la calidez y el respeto humano en cada turno, en cada respuesta por WhatsApp y en cada consulta profesional. Sin vueltas.
-                </p>
-              </div>
-            </div>
-            <a 
-              href={BRAND_INFO.whatsappUrl}
-              onClick={() => trackWhatsApp("banner_propuesta")}
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="bg-[#5C1A3D] hover:bg-[#44122d] text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors"
-            >
-              Comprobar el servicio
-            </a>
-          </div>
-
-        </div>
-      </section>
-
-      {/* SEARCHABLE DIRECTORY: ESPECIALIDADES Y ESTUDIOS (Core Directory) */}
-      <section id="directorio" className="py-20 bg-white scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B] bg-[#C2006B]/5 px-3 py-1 rounded-full border border-[#C2006B]/10">
-              Listado Comercial de Servicios
-            </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#5C1A3D] mt-4 mb-3">
-              Especialidades, Estudios y Prácticas
-            </h2>
-            <p className="text-sm md:text-base text-gray-600 font-light">
-              Buscá tu estudio o especialidad, verificá la etiqueta comercial de realización y consultá el turno directamente por WhatsApp con un solo clic.
-            </p>
-            <a href="/especialidades/" className="inline-block mt-3 text-sm font-bold text-[#C2006B] hover:text-[#5C1A3D] underline underline-offset-4">
-              Ver el valor de la consulta de cada especialidad
-            </a>
-            <span className="mx-2 text-gray-300">·</span>
-            <a href="/precios/" className="inline-block mt-3 text-sm font-bold text-[#C2006B] hover:text-[#5C1A3D] underline underline-offset-4">
-              Ver precios de estudios y prácticas
-            </a>
-          </div>
-
-          {/* SEARCH & FILTER CONTROLS */}
-          <div className="bg-[#F8F6F4] rounded-2xl p-6 mb-8 border border-[#E8D5C4]/40 shadow-sm max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              
-              {/* Search input */}
-              <div className="md:col-span-5 relative">
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                  Buscar por Estudio o Especialidad
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
-                  <input aria-label="Buscar por estudio o especialidad"
-                    type="text"
-                    placeholder="Ej. Electrocardiograma, Ecografía, PAP, Podología..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white pl-11 pr-4 py-3 rounded-xl text-sm border border-gray-200 focus:outline-none focus:border-[#C2006B] focus:ring-1 focus:ring-[#C2006B] transition-all font-medium placeholder-gray-400"
-                  />
-                </div>
-              </div>
-
-              {/* Specialty dropdown */}
-              <div className="md:col-span-4">
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                  Filtrar por Área Médica
-                </label>
-                <div className="relative">
-                  <select aria-label="Filtrar por área médica"
-                    value={selectedSpecialty}
-                    onChange={(e) => setSelectedSpecialty(e.target.value)}
-                    className="w-full bg-white px-4 py-3 rounded-xl text-sm border border-gray-200 focus:outline-none focus:border-[#C2006B] focus:ring-1 focus:ring-[#C2006B] transition-all font-medium appearance-none cursor-pointer"
-                  >
-                    <option value="Todas">Todas las áreas ({SPECIALTIES.length})</option>
-                    {availableSpecialties.filter(s => s !== "Todas").map((spec, idx) => (
-                      <option key={idx} value={spec}>{spec}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Tag/Type filter */}
-              <div className="md:col-span-3">
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                  Etiqueta Comercial
-                </label>
-                <div className="relative">
-                  <select aria-label="Filtrar por etiqueta"
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                    className="w-full bg-white px-4 py-3 rounded-xl text-sm border border-gray-200 focus:outline-none focus:border-[#C2006B] focus:ring-1 focus:ring-[#C2006B] transition-all font-medium appearance-none cursor-pointer"
-                  >
-                    <option value="Todos">Todas las etiquetas</option>
-                    <option value="Consulta">Consulta médica</option>
-                    <option value="Estudio realizado en BA">Estudio realizado en BA</option>
-                    <option value="Práctica o procedimiento">Práctica o procedimiento</option>
-                    <option value="Estudio derivado">Estudio derivado (externo)</option>
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 pointer-events-none" />
-                </div>
-              </div>
-
-            </div>
-
-            {/* Quick buttons filter */}
-            <div className="flex flex-wrap items-center gap-2 mt-6 pt-6 border-t border-gray-200/60">
-              <span className="text-xs font-bold uppercase text-gray-500 mr-2">Filtros rápidos:</span>
-              {[
-                { label: "Ver Todos", val: "Todos" },
-                { label: "Consultas", val: "Consulta" },
-                { label: "Estudios en BA", val: "Estudio realizado en BA" },
-                { label: "Prácticas o Procedimientos", val: "Práctica o procedimiento" },
-                { label: "Estudios Derivados", val: "Estudio derivado" }
-              ].map((btn, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedType(btn.val)}
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all cursor-pointer ${
-                    selectedType === btn.val
-                      ? "bg-[#5C1A3D] text-white"
-                      : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
-                  }`}
-                >
-                  {btn.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ACTIVE FILTER DISPLAY INFO */}
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 text-xs text-gray-500 font-medium px-2">
-            <div>
-              {searchQuery || selectedSpecialty !== "Todas" || selectedType !== "Todos" ? (
-                <>
-                  Encontrados <span className="text-[#5C1A3D] font-bold">{displayedServices.length}</span> servicios 
-                  {selectedSpecialty !== "Todas" && ` en ${selectedSpecialty}`}
-                  {selectedType !== "Todos" && ` con etiqueta "${selectedType}"`}
-                </>
-              ) : showAllByDefault ? (
-                <>
-                  Mostrando la cartilla completa de <span className="text-[#5C1A3D] font-bold">{displayedServices.length}</span> servicios
-                </>
-              ) : (
-                <div className="flex items-center gap-2 flex-wrap text-left">
-                  <span className="bg-[#5C1A3D]/10 text-[#5C1A3D] font-bold px-2.5 py-0.5 rounded-full text-[10px] uppercase">Previsualización</span>
-                  <span>Mostrando las 6 especialidades y estudios principales. Buscá o filtrá para ver la lista completa.</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-4">
-              {!(searchQuery || selectedSpecialty !== "Todas" || selectedType !== "Todos") && (
-                <button
-                  onClick={() => setShowAllByDefault(!showAllByDefault)}
-                  className="text-[#C2006B] hover:text-[#a10058] font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-[#C2006B]/20 bg-[#C2006B]/5 hover:bg-[#C2006B]/10 px-3 py-1.5 rounded-lg active:scale-95"
-                >
-                  {showAllByDefault ? "Ver solo previsualización" : "Ver cartilla completa (+100)"}
-                </button>
-              )}
-
-              {(searchQuery || selectedSpecialty !== "Todas" || selectedType !== "Todos") && (
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedSpecialty("Todas");
-                    setSelectedType("Todos");
-                    setShowAllByDefault(false);
-                  }}
-                  className="text-[#C2006B] hover:underline cursor-pointer font-bold"
-                >
-                  Limpiar filtros
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* DIRECTORY LISTING */}
-          <div className="max-w-6xl mx-auto">
-            {displayedServices.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnimatePresence mode="popLayout">
-                  {displayedServices.map((service) => {
-                    // Tag color styling helper
-                    let tagStyle = "";
-                    let tagLabel = service.type;
-                    
-                    if (service.type === "Consulta") {
-                      tagStyle = "bg-[#E8D5C4]/40 text-[#5C1A3D] border border-[#E8D5C4]";
-                    } else if (service.type === "Estudio realizado en BA") {
-                      tagStyle = "bg-[#C2006B]/10 text-[#C2006B] border border-[#C2006B]/20";
-                    } else if (service.type === "Práctica o procedimiento") {
-                      tagStyle = "bg-[#F2C4D0]/40 text-[#5C1A3D] border border-[#F2C4D0]";
-                    } else if (service.type === "Estudio derivado") {
-                      tagStyle = "bg-gray-100 text-gray-500 border border-gray-300/60";
-                    }
-
-                    // Build dynamic WhatsApp text
-                    const waText = encodeURIComponent(
-                      `Hola BA Consultorios Médicos. Quisiera solicitar un turno para la práctica o consulta: "${service.name}" (Especialidad: ${service.specialty}). (Vengo de la web)`
-                    );
-                    const serviceWaUrl = `https://wa.me/5491164344822?text=${waText}`;
-
-                    return (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        key={service.id}
-                        className="bg-white rounded-xl p-5 border border-[#E8D5C4]/30 hover:border-[#C2006B]/30 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-                      >
-                        <div>
-                          {/* Card tags */}
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            <span className="text-[10px] font-bold uppercase text-gray-600 bg-gray-50 px-2.5 py-0.5 rounded">
-                              {service.specialty}
-                            </span>
-                            <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${tagStyle}`}>
-                              {tagLabel}
-                            </span>
-                          </div>
-
-                          {/* Card name */}
-                          <h3 className="font-bold text-base text-[#5C1A3D] mb-2 leading-snug">
-                            {service.name}
-                          </h3>
-
-                          {service.details && (
-                            <p className="text-xs text-gray-500 leading-relaxed font-light mb-4 flex gap-1.5 bg-[#F8F6F4] p-2.5 rounded-lg border border-gray-100">
-                              <Info className="w-3.5 h-3.5 text-[#5C1A3D] flex-shrink-0 mt-0.5" />
-                              <span>{service.details}</span>
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Card CTA */}
-                        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                          <span className="text-xs text-gray-500">Atención particular</span>
-                          <a
-                            href={serviceWaUrl}
-                            onClick={() => trackWhatsApp("card_servicio", service.name, service.type)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-[#5C1A3D] hover:bg-[#C2006B] text-white text-xs font-bold uppercase tracking-wider px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 group cursor-pointer"
-                          >
-                            Pedir Turno
-                            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                          </a>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <div className="text-center py-16 bg-[#F8F6F4] rounded-2xl border border-dashed border-gray-200">
-                <p className="text-gray-500 font-medium text-lg">No encontramos estudios o consultas con ese nombre.</p>
-                <p className="text-gray-500 text-sm font-light mt-1">Intentá escribir otras palabras clave o elegí otra área médica.</p>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedSpecialty("Todas");
-                    setSelectedType("Todos");
-                  }}
-                  className="mt-4 bg-[#5C1A3D] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg cursor-pointer"
-                >
-                  Restablecer búsqueda
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Externally managed studies notice + quick search */}
-          <div className="bg-[#5C1A3D] text-white rounded-2xl p-8 mt-12 max-w-4xl mx-auto shadow-xl relative overflow-hidden">
-            <div className="absolute right-0 top-0 w-32 h-32 bg-[#C2006B]/15 rounded-full blur-2xl pointer-events-none"></div>
-            <div className="flex flex-col md:flex-row gap-6 items-center">
-              <div className="text-4xl">🔬</div>
-              <div className="text-left flex-1">
-                <h3 className="font-bold text-lg mb-1 text-[#F2C4D0]">Estudios Externos de Alta Complejidad</h3>
-                <p className="text-sm font-light leading-relaxed text-[#F8F6F4]/90">
-                  En BA Consultorios gestionamos las derivaciones para estudios complejos como <strong>Resonancia magnética, Tomografía computada y Densitometría ósea</strong> en centros de diagnóstico de confianza, con aranceles preferenciales para nuestros pacientes.
-                </p>
-              </div>
-              <a
-                href="https://wa.me/5491164344822?text=Hola!%20Quiero%20consultar%20por%20un%20estudio%20derivado%20(resonancia,%20tomografía,%20densitometría).%20(Vengo%20de%20la%20web)"
-                onClick={() => trackWhatsApp("estudios_externos")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white hover:bg-[#F2C4D0] text-[#5C1A3D] px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors shadow-lg"
-              >
-                Consultar derivación
-              </a>
-            </div>
-
-            {/* Quick derived-studies search */}
-            <div className="mt-6 pt-6 border-t border-white/10">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#F2C4D0] mb-2">
-                ¿Tenés una orden para un estudio? Fijate si lo gestionamos:
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5C1A3D]/50" />
-                <input aria-label="Buscar un estudio de tu orden"
-                  type="text"
-                  value={derivedQuery}
-                  onChange={(e) => setDerivedQuery(e.target.value)}
-                  placeholder="Ej: resonancia rodilla, tomografía tórax, densitometría..."
-                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-[#2C2C2C] bg-white focus:outline-none focus:ring-2 focus:ring-[#C2006B]"
-                />
-              </div>
-
-              {derivedQuery.trim().length >= 3 && (
-                <div className="mt-3">
-                  {derivedResults.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {derivedResults.map((s, idx) => (
-                          <a
-                            key={idx}
-                            href={`https://wa.me/5491164344822?text=${encodeURIComponent(`Hola BA! Quiero consultar por la derivación del estudio: "${s.name}" (${s.category}). (Vengo de la web)`)}`}
-                            onClick={() => trackWhatsApp("buscador_derivados", s.name, "Estudio derivado")}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-between gap-2 bg-white/10 hover:bg-white/20 rounded-lg px-3.5 py-2.5 transition-colors group"
-                          >
-                            <div className="min-w-0">
-                              <span className="block text-sm font-semibold truncate">{s.name}</span>
-                              <span className="block text-[10px] text-[#F2C4D0] uppercase tracking-wider">{s.category}</span>
-                            </div>
-                            <ArrowRight className="w-4 h-4 flex-shrink-0 text-[#F2C4D0] group-hover:translate-x-0.5 transition-transform" />
-                          </a>
-                        ))}
-                      </div>
-                      <p className="text-[11px] text-[#F8F6F4]/60 font-light mt-2">Tocá el estudio para consultar disponibilidad y arancel por WhatsApp.</p>
-                    </>
-                  ) : (
-                    <div className="bg-white/10 rounded-lg px-4 py-3 text-sm font-light">
-                      No lo encontramos con ese nombre — igual consultanos por{" "}
-                      <a
-                        href={`https://wa.me/5491164344822?text=${encodeURIComponent(`Hola BA! Tengo una orden para "${derivedQuery.trim()}" y quiero saber si gestionan la derivación. (Vengo de la web)`)}`}
-                        onClick={() => trackWhatsApp("buscador_derivados_sin_resultado")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-bold text-[#F2C4D0] underline"
-                      >
-                        WhatsApp
-                      </a>{" "}
-                      que lo verificamos al instante.
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* OUR TEAM */}
-      <section id="equipo" className="py-20 bg-white scroll-mt-20 border-t border-[#E8D5C4]/30">
+      {/* ¿QUÉ NECESITÁS? — accesos por tarea a las páginas propias */}
+      <section id="que-necesitas" className="py-14 md:py-20 bg-[#F8F6F4]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">NUESTRO EQUIPO</span>
-            <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2 mb-3">Las personas detrás de BA</h2>
-            <p className="text-sm text-gray-500 font-light max-w-xl mx-auto">
-              Vamos sumando a los profesionales de nuestro equipo, uno por uno.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {TEAM.map((member) => (
-              <div 
-                key={member.id} 
-                className="bg-[#F8F6F4] rounded-2xl overflow-hidden border border-[#E8D5C4]/40 hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="aspect-[4/5] overflow-hidden bg-[#F2C4D0]/30">
-                  <img 
-                    src={member.photoUrl} 
-                    alt={member.name} 
-                    width={520}
-                    height={707}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-5">
-                  <h3 className="font-bold text-sm text-[#5C1A3D]">{member.name}</h3>
-                  <span className="inline-block text-[10px] font-bold text-[#C2006B] bg-[#C2006B]/5 border border-[#C2006B]/10 rounded-full px-2 py-0.5 mt-1.5 mb-3">
-                    {member.specialty}
+          <h2 className="text-3xl md:text-4xl font-extrabold text-[#5C1A3D]">¿Qué necesitás?</h2>
+          <p className="text-gray-600 mt-2 mb-8">Elegí y te llevamos directo.</p>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {[
+              { icon: Calendar, titulo: "Sacar un turno", texto: "Elegí día y horario online.", accion: () => openBookingModal("tarea_turno") },
+              { icon: FileText, titulo: "Tengo una orden", texto: "Subila y te escribimos con el turno.", href: "/turnos/#orden" },
+              { icon: Stethoscope, titulo: "Especialidades", texto: "Más de 30, con el valor de cada consulta.", href: "/especialidades/" },
+              { icon: Tag, titulo: "Precios", texto: "Consultas, ecografías y estudios.", href: "/precios/" },
+              { icon: ClipboardList, titulo: "Cómo prepararme", texto: "Ayunos y preparación de estudios.", href: "/estudios/#preparacion" },
+              { icon: MapPin, titulo: "Cómo llegar", texto: "A metros del shopping de San Justo.", href: "/contacto/" },
+            ].map(({ icon: Icon, titulo, texto, href, accion }) => {
+              const contenido = (
+                <>
+                  <span className="w-11 h-11 rounded-xl bg-[#F2C4D0]/50 flex items-center justify-center mb-3 group-hover:bg-[#C2006B] transition-colors">
+                    <Icon className="w-5 h-5 text-[#5C1A3D] group-hover:text-white transition-colors" strokeWidth={2.25} />
                   </span>
-                  <p className="text-xs text-gray-500 font-light leading-relaxed">{member.bioLine}</p>
-                </div>
-              </div>
-            ))}
-
-            {Array.from({ length: Math.max(0, 4 - TEAM.length) }).map((_, i) => (
-              <div 
-                key={`soon-${i}`} 
-                className="rounded-2xl border-2 border-dashed border-[#E8D5C4] flex flex-col items-center justify-center text-center p-6 min-h-[280px]"
-              >
-                <div className="w-12 h-12 rounded-full bg-[#F2C4D0]/30 flex items-center justify-center mb-3">
-                  <UserRound className="w-5 h-5 text-[#C2006B]/60" strokeWidth={1.75} />
-                </div>
-                <p className="text-xs text-gray-500 font-medium">Sumando más profesionales del equipo</p>
-              </div>
-            ))}
+                  <span className="block font-extrabold text-[#5C1A3D] text-base sm:text-lg leading-tight">{titulo}</span>
+                  <span className="block text-xs sm:text-sm text-gray-600 mt-1">{texto}</span>
+                </>
+              );
+              const clase = "group text-left bg-white rounded-2xl border border-[#E8D5C4]/70 p-4 sm:p-6 hover:border-[#C2006B]/40 hover:shadow-md transition-all cursor-pointer";
+              return href ? (
+                <a key={titulo} href={href} className={clase}>{contenido}</a>
+              ) : (
+                <button key={titulo} type="button" onClick={accion} className={clase}>{contenido}</button>
+              );
+            })}
           </div>
+        </div>
+      </section>
+
+      {/* POR QUÉ BA */}
+      <section aria-label="Por qué BA" className="bg-white border-y border-[#E8D5C4]/40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[
+            { titulo: "Atención particular", texto: "Sin obra social ni prepaga." },
+            { titulo: "Beneficios al pagar", texto: "Efectivo hasta 10% y LinkMed $2.000 menos. Se suman." },
+            { titulo: "Más de 30 especialidades", texto: "Consultas, ecografías y estudios en un mismo lugar." },
+            { titulo: "En San Justo", texto: "Almafuerte 3558, a metros del shopping." },
+          ].map((b) => (
+            <div key={b.titulo} className="flex gap-3">
+              <Check className="w-5 h-5 text-[#C2006B] flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-extrabold text-sm text-[#5C1A3D]">{b.titulo}</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-0.5">{b.texto}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -1409,325 +817,32 @@ export default function App() {
         </div>
       </section>
 
-      {/* ONLINE SELF-SERVICE BOOKING (AgendaPro embed) */}
-      <section id="reserva-online" className="py-20 bg-white scroll-mt-20 border-t border-[#E8D5C4]/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">RESERVÁ ONLINE</span>
-            <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2 mb-3">Elegí tu turno vos mismo</h2>
-            <p className="text-sm text-gray-500 font-light max-w-xl mx-auto">
-              Buscá especialidad, día y horario disponible y confirmá al instante. Si tu consulta es sobre un estudio puntual o tenés dudas antes de reservar, seguimos disponibles por WhatsApp.
-            </p>
+      {/* JOIN BA — professionals & health providers */}
+      <section id="sumate" className="py-10 bg-[#F8F6F4] border-t border-[#E8D5C4]/30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
+          <div>
+            <p className="font-extrabold text-lg text-[#5C1A3D]">¿Sos profesional de la salud o tenés un comercio del rubro?</p>
+            <p className="text-sm text-gray-600 mt-1">Sumate al staff de BA o adherite a la red de beneficios para pacientes.</p>
           </div>
-
-          <div className="bg-[#F8F6F4] rounded-2xl p-3 md:p-4 border border-[#E8D5C4]/40 shadow-sm">
-            <iframe
-              src={BRAND_INFO.agendaProIframeSrc}
-              loading="lazy"
-              title="Reserva de turnos online - BA Consultorios Médicos"
-              className="w-full h-[650px] md:h-[780px] rounded-xl bg-white"
-              style={{ border: "0" }}
-              scrolling="yes"
-            />
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 text-sm">
-            <span className="text-gray-500 font-light">¿No ves lo que buscás acá?</span>
+          <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
             <a
-              href={BRAND_INFO.whatsappUrl}
-              onClick={() => trackWhatsApp("reserva_online_fallback")}
+              href={`https://wa.me/5491164344822?text=${encodeURIComponent("Hola BA! Soy profesional de la salud y me interesa sumarme al staff / atender en sus consultorios. (Vengo de la web)")}`}
+              onClick={() => trackWhatsApp("sumate_profesional")}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#C2006B] font-bold hover:underline"
+              className="inline-flex items-center justify-center gap-2 bg-[#5C1A3D] hover:bg-[#44122d] text-white px-5 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
             >
-              Coordinalo por WhatsApp
+              <UserRound className="w-4 h-4" /> Quiero sumarme
             </a>
-          </div>
-        </div>
-      </section>
-
-      {/* UPLOAD MEDICAL ORDER */}
-      <section id="subir-orden" className="py-20 bg-[#F8F6F4] scroll-mt-20 border-t border-[#E8D5C4]/30">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">¿NO ENTENDÉS TU ORDEN MÉDICA?</span>
-            <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2 mb-3">Subila y nosotros te ayudamos</h2>
-            <p className="text-sm text-gray-500 font-light max-w-lg mx-auto">
-              Si tenés una orden y no sabés qué estudio o especialidad buscar, mandanosla junto con tus datos. El equipo de BA se contacta con vos para orientarte.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E8D5C4]/40 shadow-sm">
-            {orderStatus === "sent" ? (
-              <div className="text-center py-8">
-                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-7 h-7 text-emerald-600" />
-                </div>
-                <h3 className="font-bold text-lg text-[#5C1A3D] mb-1">¡Listo, la recibimos!</h3>
-                <p className="text-sm text-gray-500 font-light">El equipo de BA se va a contactar con vos a la brevedad.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleOrderSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Nombre y apellido</label>
-                    <input aria-label="Nombre y apellido"
-                      type="text"
-                      required
-                      value={orderForm.name}
-                      onChange={(e) => setOrderForm({ ...orderForm, name: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Celular</label>
-                    <input aria-label="Celular"
-                      type="tel"
-                      required
-                      value={orderForm.phone}
-                      onChange={(e) => setOrderForm({ ...orderForm, phone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Email (opcional)</label>
-                  <input aria-label="Email (opcional)"
-                    type="email"
-                    value={orderForm.email}
-                    onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1.5">Foto o PDF de la orden</label>
-                  <label className="flex items-center justify-center gap-2 border-2 border-dashed border-[#E8D5C4] hover:border-[#C2006B]/40 rounded-lg py-6 cursor-pointer transition-colors text-center">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
-                      className="hidden"
-                      onChange={(e) => handleOrderFileChange(e.target.files?.[0] ?? null)}
-                    />
-                    {orderFile ? (
-                      <span className="text-sm font-semibold text-[#5C1A3D]">📎 {orderFile.name}</span>
-                    ) : (
-                      <span className="text-xs text-gray-500 font-medium">Tocá para elegir una foto o PDF (máx. 10MB)</span>
-                    )}
-                  </label>
-                </div>
-
-                <label className="flex items-start gap-2.5 pt-1">
-                  <input
-                    type="checkbox"
-                    checked={orderForm.consent}
-                    onChange={(e) => setOrderForm({ ...orderForm, consent: e.target.checked })}
-                    className="mt-0.5 w-4 h-4 accent-[#C2006B] flex-shrink-0"
-                  />
-                  <span className="text-[11px] text-gray-500 font-light leading-relaxed">
-                    Acepto que BA Consultorios Médicos utilice los datos y el documento que envío exclusivamente para contactarme respecto a este estudio, conforme a la Ley de Protección de Datos Personales N.º 25.326.
-                  </span>
-                </label>
-
-                {orderErrorMsg && <p className="text-xs text-red-500 font-medium">{orderErrorMsg}</p>}
-
-                <button
-                  type="submit"
-                  disabled={orderStatus === "sending"}
-                  className="w-full bg-[#C2006B] hover:bg-[#a10058] disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
-                >
-                  {orderStatus === "sending" ? "Enviando..." : "Enviar orden médica"}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* CONTACT, TIMETABLE & MAP */}
-      <section id="contacto" className="py-20 bg-[#F8F6F4] scroll-mt-20 border-t border-[#E8D5C4]/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            
-            {/* Contact info */}
-            <div className="lg:col-span-5 text-left flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">UBICACIÓN Y ATENCIÓN</span>
-                <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2 mb-6">¿Dónde encontrarnos?</h2>
-                
-                <div className="space-y-6">
-                  {/* Address */}
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#5C1A3D]/10 text-[#5C1A3D] flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-sm text-[#5C1A3D]">Dirección</h3>
-                      <a
-                        href="https://maps.google.com/?q=BA+Consultorios+Médicos,+Almafuerte+3558,+San+Justo,+La+Matanza"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => trackSocial("google_maps")}
-                        className="block text-sm text-gray-600 font-light py-1 hover:text-[#C2006B] hover:underline transition-colors"
-                      >
-                        {BRAND_INFO.address}
-                      </a>
-                      <p className="text-xs text-[#C2006B] font-semibold mt-1">San Justo, Provincia de Buenos Aires (La Matanza)</p>
-                    </div>
-                  </div>
-
-                  {/* Timetable */}
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#5C1A3D]/10 text-[#5C1A3D] flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-sm text-[#5C1A3D]">Horarios de Atención</h3>
-                      <p className="text-sm text-gray-600 font-light mt-0.5">{BRAND_INFO.schedule}</p>
-                      <p className="text-xs text-gray-500 font-light mt-1">Turnos online en cualquier momento. Por WhatsApp respondemos en el horario de atención.</p>
-                    </div>
-                  </div>
-
-                  {/* Phone & Contacts */}
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#5C1A3D]/10 text-[#5C1A3D] flex items-center justify-center flex-shrink-0">
-                      <Phone className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-sm text-[#5C1A3D]">Teléfono Directo</h3>
-                      <a
-                        href="tel:+541139701945"
-                        className="block text-sm text-gray-600 font-bold py-1 hover:text-[#C2006B] transition-colors"
-                      >
-                        Tel: {BRAND_INFO.phone}
-                      </a>
-                      <a
-                        href={BRAND_INFO.whatsappUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => trackWhatsApp("contacto")}
-                        className="block text-sm text-green-700 font-bold py-1 hover:underline"
-                      >
-                        WhatsApp: {BRAND_INFO.whatsapp}
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Social links */}
-              <div className="mt-8 pt-8 border-t border-[#E8D5C4]/60">
-                <h4 className="font-bold text-sm text-[#5C1A3D] mb-3">Seguinos en redes</h4>
-                <div className="flex flex-wrap gap-2">
-                  <a 
-                    href={BRAND_INFO.instagramUrl}
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    onClick={() => trackSocial("instagram_contacto")}
-                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F2C4D0]/40 text-[#5C1A3D] border border-gray-200 hover:border-[#5C1A3D]/40 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
-                  >
-                    <Instagram className="w-4 h-4 text-[#C2006B]" />
-                    <span>{BRAND_INFO.instagramHandle}</span>
-                  </a>
-                  <a 
-                    href={BRAND_INFO.facebookUrl}
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    onClick={() => trackSocial("facebook_contacto")}
-                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F2C4D0]/40 text-[#5C1A3D] border border-gray-200 hover:border-[#5C1A3D]/40 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
-                  >
-                    <span className="w-4 h-4 rounded-full bg-[#C2006B] text-white flex items-center justify-center text-[10px] font-black leading-none">f</span>
-                    <span>BA Consultorios Médicos</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Simulated Interactive Google Maps Frame */}
-            <div className="lg:col-span-7">
-              <div className="bg-white rounded-2xl p-4 border border-[#E8D5C4]/40 shadow-sm relative overflow-hidden h-96 flex flex-col">
-                <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <span>📍 MAPA DE ACCESO (Almafuerte 3558, San Justo)</span>
-                  <a 
-                    href="https://maps.google.com/?q=Almafuerte+3558,+San+Justo,+La+Matanza"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => trackSocial("google_maps_header")}
-                    className="text-[#C2006B] hover:underline flex items-center gap-1"
-                  >
-                    Abrir en Google Maps <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-
-                <div className="flex-1 rounded-xl overflow-hidden border border-gray-200">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.9430887002068!2d-58.5548508!3d-34.6813858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcc7e7a188c227%3A0x2b693e1d88229b3!2sBA%20Consultorios%20M%C3%A9dicos%20-%20Cl%C3%ADnica%20de%20Especialidades%20en%20San%20Justo!5e0!3m2!1ses-419!2sar!4v1784852093873!5m2!1ses-419!2sar"
-                    title="Ubicación de BA Consultorios Médicos en San Justo"
-                    className="w-full h-full"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* JOIN BA — professionals & health providers */}
-      <section id="sumate" className="py-20 bg-white scroll-mt-20 border-t border-[#E8D5C4]/30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="text-xs font-bold tracking-widest uppercase text-[#C2006B]">SUMATE A BA</span>
-            <h2 className="text-3xl font-extrabold text-[#5C1A3D] mt-2 mb-3">¿Trabajamos juntos?</h2>
-            <p className="text-sm text-gray-500 font-light max-w-xl mx-auto">
-              BA crece con profesionales y aliados que comparten nuestra forma de atender: rapidez real y calidad para la comunidad de Zona Oeste.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Professionals card */}
-            <div className="bg-[#F8F6F4] rounded-2xl p-8 border border-[#E8D5C4]/40 flex flex-col">
-              <div className="w-12 h-12 rounded-xl bg-[#5C1A3D] flex items-center justify-center mb-5">
-                <UserRound className="w-6 h-6 text-[#F2C4D0]" strokeWidth={2} />
-              </div>
-              <h3 className="font-extrabold text-lg text-[#5C1A3D] mb-2">Soy profesional de la salud</h3>
-              <p className="text-sm text-gray-600 font-light leading-relaxed flex-1">
-                ¿Buscás un lugar de atención en Zona Oeste preparado para recibir a tus pacientes como corresponde? Sumate al staff de BA: consultorios equipados, gestión de turnos resuelta y una comunidad de +20.000 pacientes.
-              </p>
-              <a
-                href={`https://wa.me/5491164344822?text=${encodeURIComponent("Hola BA! Soy profesional de la salud y me interesa sumarme al staff / atender en sus consultorios. (Vengo de la web)")}`}
-                onClick={() => trackWhatsApp("sumate_profesional")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 bg-[#5C1A3D] hover:bg-[#44122d] text-white text-center py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
-              >
-                Quiero sumarme
-              </a>
-            </div>
-
-            {/* Providers card */}
-            <div className="bg-[#F8F6F4] rounded-2xl p-8 border border-[#E8D5C4]/40 flex flex-col">
-              <div className="w-12 h-12 rounded-xl bg-[#C2006B] flex items-center justify-center mb-5">
-                <Sparkles className="w-6 h-6 text-white" strokeWidth={2} />
-              </div>
-              <h3 className="font-extrabold text-lg text-[#5C1A3D] mb-2">Tengo un comercio o servicio de salud</h3>
-              <p className="text-sm text-gray-600 font-light leading-relaxed flex-1">
-                Laboratorios, farmacias, ópticas, ortopedias y otros servicios de salud: adherite a la red de beneficios de BA y ofrecé descuentos a nuestros pacientes, ganando visibilidad en la comunidad.
-              </p>
-              <a
-                href={`https://wa.me/5491164344822?text=${encodeURIComponent("Hola BA! Tengo un comercio/servicio de salud y me interesa adherirme a su red de beneficios para pacientes. (Vengo de la web)")}`}
-                onClick={() => trackWhatsApp("sumate_proveedor")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 bg-[#C2006B] hover:bg-[#a10058] text-white text-center py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
-              >
-                Quiero adherirme
-              </a>
-            </div>
+            <a
+              href={`https://wa.me/5491164344822?text=${encodeURIComponent("Hola BA! Tengo un comercio/servicio de salud y me interesa adherirme a su red de beneficios para pacientes. (Vengo de la web)")}`}
+              onClick={() => trackWhatsApp("sumate_proveedor")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 bg-white border border-[#E8D5C4] hover:border-[#C2006B] text-[#5C1A3D] px-5 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
+            >
+              <Sparkles className="w-4 h-4" /> Adherir mi comercio
+            </a>
           </div>
         </div>
       </section>
@@ -1758,13 +873,9 @@ export default function App() {
 
             {/* Right side: quick actions */}
             <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold">
-              <a href="#propuesta" className="hover:text-white transition-colors">Propuesta</a>
-              <a href="/especialidades/" className="hover:text-white transition-colors">Especialidades</a>
-              <a href="/estudios/" className="hover:text-white transition-colors">Estudios</a>
-              <a href="/precios/" className="hover:text-white transition-colors">Precios</a>
-              <a href="#reserva-online" className="hover:text-white transition-colors">Reservar online</a>
-              <a href="#testimonios" className="hover:text-white transition-colors">Opiniones</a>
-              <a href="#contacto" className="hover:text-white transition-colors">Ubicación</a>
+              {NAV.map((link) => (
+                <a key={link.href} href={link.href} className="hover:text-white transition-colors">{link.label}</a>
+              ))}
               <a 
                 href={BRAND_INFO.instagramUrl}
                 target="_blank" 
