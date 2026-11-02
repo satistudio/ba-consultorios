@@ -489,8 +489,10 @@ export default function App() {
           {/* Logo */}
           <a href="/" className="flex items-center group flex-shrink-0">
             <img 
-              src="/ba-isotipo.png" 
+              src="/ba-isotipo-192.webp" 
               alt="BA Consultorios Médicos" 
+              width={192}
+              height={131}
               className="h-12 md:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               referrerPolicy="no-referrer"
             />
@@ -638,7 +640,7 @@ export default function App() {
                 <span className="text-xs font-medium text-[#5C1A3D] bg-[#F2C4D0] px-2 py-1 rounded">Esta semana</span>
               </div>
 
-              <h3 className="font-bold text-lg text-[#5C1A3D] mb-4">Especialidades con turnos esta semana:</h3>
+              <p className="font-bold text-lg text-[#5C1A3D] mb-4">Especialidades con turnos esta semana:</p>
               
               <div className="space-y-2.5 mb-6">
                 {availabilityStatus === "loading" && (
@@ -692,7 +694,7 @@ export default function App() {
                         <div className="min-w-0">
                           <span className="block text-sm font-semibold text-gray-800 truncate">{item.name}</span>
                           {item.firstTimes?.length > 0 && (item.status === "today" || item.status === "tomorrow" || item.status === "soon") ? (
-                            <span className="block text-[10px] text-gray-400 font-medium truncate">
+                            <span className="block text-[10px] text-gray-500 font-medium truncate">
                               🕐 {item.firstTimes.join(" · ")}{item.count > item.firstTimes.length ? " y más" : ""}
                             </span>
                           ) : (
@@ -713,7 +715,7 @@ export default function App() {
                 {(availabilityStatus === "not_configured" || availabilityStatus === "error") && (
                   <div className="bg-[#F8F6F4] p-4 rounded-lg border border-gray-100 text-center">
                     <p className="text-sm font-semibold text-gray-700">Turnos esta semana en la mayoría de las especialidades.</p>
-                    <p className="text-xs text-gray-400 font-light mt-1">Consultá la agenda actualizada al reservar.</p>
+                    <p className="text-xs text-gray-500 font-light mt-1">Consultá la agenda actualizada al reservar.</p>
                   </div>
                 )}
               </div>
@@ -725,7 +727,7 @@ export default function App() {
                 📅 Reservar Turno al Instante
               </button>
 
-              <p className="text-center text-[11px] text-gray-400 mt-3">
+              <p className="text-center text-[11px] text-gray-500 mt-3">
                 Elegí día y horario vos mismo. ¿Preferís coordinar por WhatsApp?{" "}
                 <a
                   href={BRAND_INFO.whatsappUrl}
@@ -788,7 +790,7 @@ export default function App() {
                 className={`p-6 rounded-xl shadow-sm border border-gray-100 ${pillar.color} hover:shadow-md transition-shadow flex flex-col justify-between`}
               >
                 <div>
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
                     {pillar.badge}
                   </span>
                   <h3 className="font-extrabold text-lg text-[#5C1A3D] mt-4 mb-3">{pillar.title}</h3>
@@ -856,8 +858,8 @@ export default function App() {
                   Buscar por Estudio o Especialidad
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                  <input aria-label="Buscar por estudio o especialidad"
                     type="text"
                     placeholder="Ej. Electrocardiograma, Ecografía, PAP, Podología..."
                     value={searchQuery}
@@ -873,7 +875,7 @@ export default function App() {
                   Filtrar por Área Médica
                 </label>
                 <div className="relative">
-                  <select
+                  <select aria-label="Filtrar por área médica"
                     value={selectedSpecialty}
                     onChange={(e) => setSelectedSpecialty(e.target.value)}
                     className="w-full bg-white px-4 py-3 rounded-xl text-sm border border-gray-200 focus:outline-none focus:border-[#C2006B] focus:ring-1 focus:ring-[#C2006B] transition-all font-medium appearance-none cursor-pointer"
@@ -883,7 +885,7 @@ export default function App() {
                       <option key={idx} value={spec}>{spec}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 pointer-events-none" />
                 </div>
               </div>
 
@@ -893,7 +895,7 @@ export default function App() {
                   Etiqueta Comercial
                 </label>
                 <div className="relative">
-                  <select
+                  <select aria-label="Filtrar por etiqueta"
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value)}
                     className="w-full bg-white px-4 py-3 rounded-xl text-sm border border-gray-200 focus:outline-none focus:border-[#C2006B] focus:ring-1 focus:ring-[#C2006B] transition-all font-medium appearance-none cursor-pointer"
@@ -904,7 +906,7 @@ export default function App() {
                     <option value="Práctica o procedimiento">Práctica o procedimiento</option>
                     <option value="Estudio derivado">Estudio derivado (externo)</option>
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 pointer-events-none" />
                 </div>
               </div>
 
@@ -912,7 +914,7 @@ export default function App() {
 
             {/* Quick buttons filter */}
             <div className="flex flex-wrap items-center gap-2 mt-6 pt-6 border-t border-gray-200/60">
-              <span className="text-xs font-bold uppercase text-gray-400 mr-2">Filtros rápidos:</span>
+              <span className="text-xs font-bold uppercase text-gray-500 mr-2">Filtros rápidos:</span>
               {[
                 { label: "Ver Todos", val: "Todos" },
                 { label: "Consultas", val: "Consulta" },
@@ -1021,7 +1023,7 @@ export default function App() {
                         <div>
                           {/* Card tags */}
                           <div className="flex flex-wrap gap-2 mb-3">
-                            <span className="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2.5 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase text-gray-600 bg-gray-50 px-2.5 py-0.5 rounded">
                               {service.specialty}
                             </span>
                             <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${tagStyle}`}>
@@ -1044,7 +1046,7 @@ export default function App() {
 
                         {/* Card CTA */}
                         <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                          <span className="text-xs text-gray-400">Atención particular</span>
+                          <span className="text-xs text-gray-500">Atención particular</span>
                           <a
                             href={serviceWaUrl}
                             onClick={() => trackWhatsApp("card_servicio", service.name, service.type)}
@@ -1064,7 +1066,7 @@ export default function App() {
             ) : (
               <div className="text-center py-16 bg-[#F8F6F4] rounded-2xl border border-dashed border-gray-200">
                 <p className="text-gray-500 font-medium text-lg">No encontramos estudios o consultas con ese nombre.</p>
-                <p className="text-gray-400 text-sm font-light mt-1">Intentá escribir otras palabras clave o elegí otra área médica.</p>
+                <p className="text-gray-500 text-sm font-light mt-1">Intentá escribir otras palabras clave o elegí otra área médica.</p>
                 <button
                   onClick={() => {
                     setSearchQuery("");
@@ -1108,7 +1110,7 @@ export default function App() {
               </label>
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5C1A3D]/50" />
-                <input
+                <input aria-label="Buscar un estudio de tu orden"
                   type="text"
                   value={derivedQuery}
                   onChange={(e) => setDerivedQuery(e.target.value)}
@@ -1185,6 +1187,9 @@ export default function App() {
                   <img 
                     src={member.photoUrl} 
                     alt={member.name} 
+                    width={520}
+                    height={707}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -1206,7 +1211,7 @@ export default function App() {
                 <div className="w-12 h-12 rounded-full bg-[#F2C4D0]/30 flex items-center justify-center mb-3">
                   <UserRound className="w-5 h-5 text-[#C2006B]/60" strokeWidth={1.75} />
                 </div>
-                <p className="text-xs text-gray-400 font-medium">Sumando más profesionales del equipo</p>
+                <p className="text-xs text-gray-500 font-medium">Sumando más profesionales del equipo</p>
               </div>
             ))}
           </div>
@@ -1297,7 +1302,7 @@ export default function App() {
                       )}
                       <div className="text-left">
                         <h4 className="font-bold text-xs text-[#5C1A3D]">{r.author}</h4>
-                        <p className="text-[10px] text-gray-400 font-medium">
+                        <p className="text-[10px] text-gray-500 font-medium">
                           {r.relativeTime} · Reseña de Google
                         </p>
                       </div>
@@ -1312,7 +1317,7 @@ export default function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackSocial("google_reviews")}
-                  className="text-xs text-gray-400 hover:text-[#C2006B] font-medium transition-colors"
+                  className="text-xs text-gray-500 hover:text-[#C2006B] font-medium transition-colors"
                 >
                   {reviewsMeta.rating && reviewsMeta.count
                     ? `★ ${reviewsMeta.rating} · ${reviewsMeta.count} reseñas en Google — ver todas`
@@ -1426,7 +1431,7 @@ export default function App() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 text-sm">
-            <span className="text-gray-400 font-light">¿No ves lo que buscás acá?</span>
+            <span className="text-gray-500 font-light">¿No ves lo que buscás acá?</span>
             <a
               href={BRAND_INFO.whatsappUrl}
               onClick={() => trackWhatsApp("reserva_online_fallback")}
@@ -1465,7 +1470,7 @@ export default function App() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-600 mb-1.5">Nombre y apellido</label>
-                    <input
+                    <input aria-label="Nombre y apellido"
                       type="text"
                       required
                       value={orderForm.name}
@@ -1475,7 +1480,7 @@ export default function App() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-600 mb-1.5">Celular</label>
-                    <input
+                    <input aria-label="Celular"
                       type="tel"
                       required
                       value={orderForm.phone}
@@ -1487,7 +1492,7 @@ export default function App() {
 
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1.5">Email (opcional)</label>
-                  <input
+                  <input aria-label="Email (opcional)"
                     type="email"
                     value={orderForm.email}
                     onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
@@ -1507,7 +1512,7 @@ export default function App() {
                     {orderFile ? (
                       <span className="text-sm font-semibold text-[#5C1A3D]">📎 {orderFile.name}</span>
                     ) : (
-                      <span className="text-xs text-gray-400 font-medium">Tocá para elegir una foto o PDF (máx. 10MB)</span>
+                      <span className="text-xs text-gray-500 font-medium">Tocá para elegir una foto o PDF (máx. 10MB)</span>
                     )}
                   </label>
                 </div>
@@ -1557,13 +1562,13 @@ export default function App() {
                       <MapPin className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-sm text-[#5C1A3D]">Dirección</h4>
+                      <h3 className="font-extrabold text-sm text-[#5C1A3D]">Dirección</h3>
                       <a
                         href="https://maps.google.com/?q=BA+Consultorios+Médicos,+Almafuerte+3558,+San+Justo,+La+Matanza"
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => trackSocial("google_maps")}
-                        className="block text-sm text-gray-600 font-light mt-0.5 hover:text-[#C2006B] hover:underline transition-colors"
+                        className="block text-sm text-gray-600 font-light py-1 hover:text-[#C2006B] hover:underline transition-colors"
                       >
                         {BRAND_INFO.address}
                       </a>
@@ -1577,9 +1582,9 @@ export default function App() {
                       <Clock className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-sm text-[#5C1A3D]">Horarios de Atención</h4>
+                      <h3 className="font-extrabold text-sm text-[#5C1A3D]">Horarios de Atención</h3>
                       <p className="text-sm text-gray-600 font-light mt-0.5">{BRAND_INFO.schedule}</p>
-                      <p className="text-xs text-gray-400 font-light mt-1">Turnos online en cualquier momento. Por WhatsApp respondemos en el horario de atención.</p>
+                      <p className="text-xs text-gray-500 font-light mt-1">Turnos online en cualquier momento. Por WhatsApp respondemos en el horario de atención.</p>
                     </div>
                   </div>
 
@@ -1589,10 +1594,10 @@ export default function App() {
                       <Phone className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-sm text-[#5C1A3D]">Teléfono Directo</h4>
+                      <h3 className="font-extrabold text-sm text-[#5C1A3D]">Teléfono Directo</h3>
                       <a
                         href="tel:+541139701945"
-                        className="block text-sm text-gray-600 font-bold mt-0.5 hover:text-[#C2006B] transition-colors"
+                        className="block text-sm text-gray-600 font-bold py-1 hover:text-[#C2006B] transition-colors"
                       >
                         Tel: {BRAND_INFO.phone}
                       </a>
@@ -1601,7 +1606,7 @@ export default function App() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => trackWhatsApp("contacto")}
-                        className="block text-sm text-green-600 font-bold mt-0.5 hover:underline"
+                        className="block text-sm text-green-700 font-bold py-1 hover:underline"
                       >
                         WhatsApp: {BRAND_INFO.whatsapp}
                       </a>
@@ -1734,8 +1739,11 @@ export default function App() {
             {/* Left side: branding */}
             <div className="flex flex-col items-center md:items-start">
               <img 
-                src="/ba-isotipo-vino.png" 
+                src="/ba-isotipo-192.webp" 
                 alt="BA Consultorios Médicos" 
+                width={192}
+                height={131}
+                loading="lazy"
                 className="h-12 w-auto mb-3"
                 referrerPolicy="no-referrer"
               />
@@ -1883,7 +1891,7 @@ export default function App() {
                 <button
                   onClick={dismissSubscribe}
                   aria-label="Cerrar"
-                  className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-colors cursor-pointer"
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-colors cursor-pointer"
                 >
                   ✕
                 </button>
@@ -1907,7 +1915,7 @@ export default function App() {
                     </p>
 
                     <form onSubmit={handleSubscribe} className="space-y-3">
-                      <input
+                      <input aria-label="Tu nombre"
                         type="text"
                         required
                         placeholder="Tu nombre"
@@ -1915,7 +1923,7 @@ export default function App() {
                         onChange={(e) => setSubForm({ ...subForm, name: e.target.value })}
                         className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#C2006B] transition-colors"
                       />
-                      <input
+                      <input aria-label="Tu email"
                         type="email"
                         required
                         placeholder="Tu email"
@@ -1949,7 +1957,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={dismissSubscribe}
-                        className="w-full text-[11px] text-gray-400 hover:text-gray-600 font-medium py-1 transition-colors cursor-pointer"
+                        className="w-full text-[11px] text-gray-500 hover:text-gray-600 font-medium py-1 transition-colors cursor-pointer"
                       >
                         Ahora no
                       </button>

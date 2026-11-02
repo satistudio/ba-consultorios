@@ -19,8 +19,8 @@ function Header() {
   return (
     <header className="bg-white/95 border-b border-[#E8D5C4]/60 sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        <a href="/" className="flex items-center gap-2 flex-shrink-0">
-          <img src="/ba-isotipo-vino.png" alt="" width={36} height={36} className="w-9 h-9 object-contain" />
+        <a href="/" aria-label="BA Consultorios Médicos, inicio" className="flex items-center gap-2 flex-shrink-0">
+          <img src="/ba-isotipo-192.webp" alt="" width={36} height={36} className="w-9 h-9 object-contain" />
           <span className="hidden min-[420px]:inline md:hidden lg:inline font-extrabold text-[#5C1A3D] text-sm sm:text-base leading-tight">BA Consultorios Médicos</span>
         </a>
         <nav className="flex items-center gap-1 sm:gap-3 text-[13px] font-medium">
@@ -169,7 +169,7 @@ export function EspecialidadPage({ esp }: { esp: Especialidad }) {
                   Con beneficios, desde <strong className="font-extrabold text-[#C2006B]">{formatoPrecio(esp.consulta.desde)}</strong>
                 </p>
                 {esp.consulta.nota && <p className="mt-2 text-xs text-gray-500">{esp.consulta.nota}</p>}
-                <p className="mt-4 text-[11px] text-gray-400">Valores de referencia. Pueden cambiar: confirmalos al reservar.</p>
+                <p className="mt-4 text-[11px] text-gray-500">Valores de referencia. Pueden cambiar: confirmalos al reservar.</p>
               </>
             ) : (
               <p className="mt-3 text-sm text-gray-700">Consultá el valor por WhatsApp.</p>
@@ -341,6 +341,7 @@ export function PreciosPage() {
                 key={g.id}
                 href={`#${g.id}`}
                 data-chip={g.titulo}
+                role="button"
                 aria-pressed="false"
                 className="shrink-0 whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white border border-[#E8D5C4] text-[#5C1A3D] hover:border-[#C2006B] transition-colors"
               >
@@ -433,7 +434,7 @@ export function PreciosPage() {
               Escribinos por WhatsApp
             </a>
           </section>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-gray-500">
             Valores de referencia. Pueden cambiar: confirmalos al reservar.
           </p>
         </aside>
@@ -476,16 +477,16 @@ function FilaPrecio({ nombre, href, lista, desde, nota }: { key?: string; nombre
         {nota && <span className="block text-xs text-gray-500">{nota}</span>}
       </div>
       <span className="sm:text-right text-gray-600">
-        <span className="sm:hidden text-xs text-gray-400">Lista </span>
+        <span className="sm:hidden text-xs text-gray-500">Lista </span>
         {formatoPrecio(lista)}
       </span>
       {desde ? (
         <span className="text-right font-bold text-[#C2006B]">
-          <span className="sm:hidden text-xs font-normal text-gray-400">Desde </span>
+          <span className="sm:hidden text-xs font-normal text-gray-500">Desde </span>
           {formatoPrecio(desde)}
         </span>
       ) : (
-        <span className="text-right text-gray-400">—</span>
+        <span className="text-right text-gray-500">—</span>
       )}
     </li>
   );
@@ -559,7 +560,7 @@ export function TurnosPage() {
                   <span id="orden-archivo-nombre" className="text-sm text-gray-500 truncate">Ningún archivo elegido</span>
                 </label>
                 <input id="orden-archivo" name="file" type="file" accept="image/*,application/pdf" className="sr-only" />
-                <span className="block mt-1 text-[11px] text-gray-400">Podés sacarle una foto con el celular. Hasta 10 MB.</span>
+                <span className="block mt-1 text-[11px] text-gray-500">Podés sacarle una foto con el celular. Hasta 10 MB.</span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <CampoOrden id="orden-nombre" name="name" label="Nombre y apellido" type="text" autoComplete="name" />
