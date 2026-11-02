@@ -31,6 +31,13 @@ jobs:
           curl -sS "$BASE/api/disponibilidad" | head -c 900; echo
           echo "DIAS $(curl -sS "$BASE/api/disponibilidad?item=ginecologia&dias=1" | jq -c '[.item.error, (.item.dias[] | [.date,.label,(.times|length),.times[0]])]')"
           echo "DIAS $(curl -sS "$BASE/api/disponibilidad?item=eco-renal&dias=1" | jq -c '[.item.error, (.item.dias[] | [.date,.label,(.times|length),.times[0]])]')"
+          echo "== 404 y cabeceras"
+          curl -sS -o /dev/null -w "ruta-inexistente status=%{http_code}\n" "$BASE/no-existe-esta-pagina/"
+          curl -sSI "$BASE/" | grep -iE "^(x-frame|x-content|referrer|permissions)" || true
+          curl -sSI "$BASE/fonts/montserrat-latin-wght-normal.woff2" | grep -iE "^(http|cache-control|content-type)" || true
+          curl -sSI "$BASE/og-ba.jpg" | grep -iE "^http" || true
+          echo "RESENAS $(curl -sS "$BASE/api/resenas" | head -c 300)"
+          echo "GEO $(curl -sS -A 'BA-auditoria/1.0' 'https://nominatim.openstreetmap.org/search?format=json&limit=3&q=Almafuerte+3558,+San+Justo,+Buenos+Aires,+Argentina' | jq -c '[.[] | [.lat,.lon,.display_name]]')"
           for it in $(grep -o 'id: "[a-z0-9-]*"' src/turnos/catalogo.ts | cut -d'"' -f2); do
             echo "ITEM $it $(curl -sS "$BASE/api/disponibilidad?item=$it" | jq -c '[.item.status,.item.dayLabel,.item.count]')"
           done

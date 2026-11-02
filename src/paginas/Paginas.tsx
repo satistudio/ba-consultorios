@@ -169,7 +169,7 @@ export function EspecialidadPage({ esp }: { esp: Especialidad }) {
                   Con beneficios, desde <strong className="font-extrabold text-[#C2006B]">{formatoPrecio(esp.consulta.desde)}</strong>
                 </p>
                 {esp.consulta.nota && <p className="mt-2 text-xs text-gray-500">{esp.consulta.nota}</p>}
-                <p className="mt-4 text-[11px] text-gray-500">Valores de referencia. Pueden cambiar: confirmalos al reservar.</p>
+                <p className="mt-4 text-[11px] text-gray-600">Valores de referencia. Pueden cambiar: confirmalos al reservar.</p>
               </>
             ) : (
               <p className="mt-3 text-sm text-gray-700">Consultá el valor por WhatsApp.</p>
@@ -1002,6 +1002,36 @@ export function ContactoPage() {
           </aside>
         </div>
       </div>
+    </Shell>
+  );
+}
+
+// 404: nadie debería quedar sin salida. Los mismos accesos que la home.
+export function NoEncontrada() {
+  const accesos = [
+    { href: "/turnos/", label: "Sacar un turno o mandar una orden" },
+    { href: "/especialidades/", label: "Especialidades" },
+    { href: "/precios/", label: "Precios" },
+    { href: "/estudios/", label: "Estudios y preparación" },
+    { href: "/contacto/", label: "Cómo llegar" },
+  ];
+  return (
+    <Shell>
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-[#5C1A3D] leading-tight">No encontramos esta página</h1>
+        <p className="mt-4 text-gray-600 font-light leading-relaxed">Puede que haya cambiado de lugar. Elegí a dónde querés ir:</p>
+        <ul className="mt-8 grid sm:grid-cols-2 gap-3">
+          {accesos.map((a) => (
+            <li key={a.href}>
+              <a href={a.href} className="block rounded-xl bg-white border border-gray-100 px-4 py-3 font-bold text-[#5C1A3D] text-sm hover:border-[#C2006B] transition-colors">{a.label}</a>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-8 text-sm text-gray-600">
+          ¿Preferís preguntar?{" "}
+          <a href={BRAND_INFO.whatsappUrl} target="_blank" rel="noopener" data-track="whatsapp_click" data-origin="pagina_404" className="font-bold text-[#C2006B] underline underline-offset-4">Escribinos por WhatsApp</a>.
+        </p>
+      </section>
     </Shell>
   );
 }
