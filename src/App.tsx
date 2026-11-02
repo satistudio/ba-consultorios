@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { BRAND_INFO, INSTALLATION_PHOTOS } from "./data";
-import { CATALOGO_TURNOS, ServicioTurno } from "./turnos/catalogo";
+import { BUSCABLES, ServicioTurno } from "./turnos/catalogo";
 
 // Páginas propias: la home ya no repite su contenido, lleva a cada una.
 const NAV = [
@@ -68,12 +68,22 @@ export default function App() {
     const q = normalizar(busqueda).trim();
     if (q.length < 2) return [];
     const palabras = q.split(/\s+/);
-    return CATALOGO_TURNOS.filter((c) => {
-      // Cada palabra buscada tiene que ser el comienzo de alguna palabra
-      // ("eco ri" → ecografía renal, no ecografía mamaria).
-      const texto = normalizar(`${c.nombre} ${c.claves}`).split(/[^a-z0-9]+/);
-      return palabras.every((w) => texto.some((x) => x.startsWith(w)));
-    }).slice(0, 6);
+    // Cada palabra buscada tiene que ser el comienzo de alguna palabra
+    // ("eco ri" → ecografía renal, no ecografía mamaria). Primero los que
+    // coinciden en el nombre (y los más cortos), después los que coinciden
+    // solo por sinónimos: "gastro" muestra Gastroenterología y la infantil.
+    const puntaje = (c: ServicioTurno) => {
+      const nombre = normalizar(c.nombre).split(/[^a-z0-9]+/);
+      const texto = nombre.concat(normalizar(c.claves).split(/[^a-z0-9]+/));
+      if (!palabras.every((w) => texto.some((x) => x.startsWith(w)))) return -1;
+      const enNombre = palabras.filter((w) => nombre.some((x) => x.startsWith(w))).length;
+      return 1000 + enNombre * 100 - c.nombre.length;
+    };
+    return BUSCABLES.map((c) => ({ c, p: puntaje(c) }))
+      .filter((x) => x.p >= 0)
+      .sort((a, b) => b.p - a.p)
+      .slice(0, 8)
+      .map((x) => x.c);
   }, [busqueda]);
   const elegirServicio = (c: ServicioTurno) => {
     setElegido(c);
@@ -589,7 +599,7 @@ export default function App() {
                   : availability![Math.min(Math.max(turnoSel, 0), availability!.length - 1)];
                 const nombre = elegido ? elegido.nombre : it!.name;
                 const serviceId = elegido ? elegido.service_id : it!.service_id;
-                const slug = elegido ? elegido.id : CATALOGO_TURNOS.find((c) => c.service_id === serviceId)?.id;
+                const slug = elegido ? elegido.id : BUSCABLES.find((c) => c.service_id === serviceId)?.id;
                 const abierto = !!slug && otrosDias?.slug === slug ? otrosDias : null;
                 const hay = !!it && (it.status === "today" || it.status === "tomorrow" || it.status === "soon");
                 const fecha = it?.date ? ` ${it.date.slice(8, 10)}/${it.date.slice(5, 7)}` : "";
