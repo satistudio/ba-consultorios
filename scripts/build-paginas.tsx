@@ -5,7 +5,9 @@
 // Las páginas no cargan el bundle de React: son HTML puro, rápidas e indexables.
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { renderToStaticMarkup } from "react-dom/server";
+import { StrictMode } from "react";
+import { renderToStaticMarkup, renderToString } from "react-dom/server";
+import App from "../src/App";
 import { ESPECIALIDADES, formatoPrecio } from "../src/paginas/especialidades";
 import { EspecialidadPage, EspecialidadesIndex, PreciosPage, BUSCADOR_PRECIOS, TurnosPage, FORMULARIO_ORDEN, EstudiosPage, ContactoPage } from "../src/paginas/Paginas";
 
@@ -145,5 +147,11 @@ writeFileSync(
     urls.map((u) => `  <url>\n    <loc>${SITE}${u}</loc>\n    <lastmod>${hoy}</lastmod>\n  </url>`).join("\n") +
     `\n</urlset>\n`,
 );
+
+// Home: se escribe ya dibujada (renderToString) para que el navegador muestre el
+// título sin esperar al JavaScript; main.tsx la hidrata. Va al final porque las
+// demás páginas parten de dist/index.html con el root vacío.
+const home = renderToString(<StrictMode><App /></StrictMode>);
+writeFileSync(`${DIST}/index.html`, reemplazar(base, /<div id="root"><\/div>/, `<div id="root">${home}</div>`));
 
 console.log(`Páginas generadas: ${ESPECIALIDADES.length} especialidades + índice + estudios + precios + turnos + contacto. Sitemap: ${urls.length} URLs.`);

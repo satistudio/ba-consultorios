@@ -1423,6 +1423,7 @@ export default function App() {
           <div className="bg-[#F8F6F4] rounded-2xl p-3 md:p-4 border border-[#E8D5C4]/40 shadow-sm">
             <iframe
               src={BRAND_INFO.agendaProIframeSrc}
+              loading="lazy"
               title="Reserva de turnos online - BA Consultorios Médicos"
               className="w-full h-[650px] md:h-[780px] rounded-xl bg-white"
               style={{ border: "0" }}
