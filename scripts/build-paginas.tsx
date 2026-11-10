@@ -16,7 +16,7 @@ const DIST = "dist";
 const base = readFileSync(`${DIST}/index.html`, "utf8");
 
 // Mismos eventos y parámetros que la home (ver MEDICIÓN en App.tsx).
-const TRACKING = `<script>document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-track]");if(!a)return;var d=a.dataset,p={event:d.track,origin:d.origin||""};if(d.track==="whatsapp_click"){p.service_name=d.service||"";p.service_type=d.stype||""}else if(d.track==="agendapro_direct_click"){p.service_name=d.service||""}else if(d.track==="social_click"){p.destination=d.destination||""}window.dataLayer=window.dataLayer||[];window.dataLayer.push(p)});</script>`;
+const TRACKING = `<script>document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-track]");if(!a)return;var d=a.dataset,p={event:d.track,origin:d.origin||""};if(d.track==="whatsapp_click"){p.service_name=d.service||"";p.service_type=d.stype||"";try{navigator.sendBeacon&&navigator.sendBeacon("/api/wa-click",p.origin)}catch(x){}}else if(d.track==="agendapro_direct_click"){p.service_name=d.service||""}else if(d.track==="social_click"){p.destination=d.destination||""}window.dataLayer=window.dataLayer||[];window.dataLayer.push(p)});</script>`;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 const jsonLd = (data: unknown) =>
