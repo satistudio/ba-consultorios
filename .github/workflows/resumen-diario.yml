@@ -1,0 +1,26 @@
+name: Resumen diario por Telegram
+
+# Todos los días a las 21:00 hora argentina (00:00 UTC) manda a Rocío y
+# Tatiana el resumen de reservas online y toques a WhatsApp del día.
+# Necesita el secreto AVISOS_SECRET en GitHub (Settings > Secrets and
+# variables > Actions), el mismo valor que en Cloudflare.
+# GitHub puede atrasar los cron unos minutos; el resumen igual toma el día
+# argentino que termina, porque la hora AR sigue siendo 21 h.
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  resumen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pedir el resumen a la web
+        env:
+          AVISOS_SECRET: ${{ secrets.AVISOS_SECRET }}
+        run: |
+          if [ -z "$AVISOS_SECRET" ]; then echo "Falta el secreto AVISOS_SECRET"; exit 1; fi
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer $AVISOS_SECRET" \
+            https://baconsultoriosmedicos.com.ar/api/resumen-whatsapp

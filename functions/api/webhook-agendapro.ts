@@ -38,8 +38,15 @@
 // - Solo notificamos cuando el evento lo generó el paciente (user === null).
 //   Si "user" tiene un email, fue staff quien tocó la reserva (la creó,
 //   la confirmó, la editó) — ya lo sabe, no hace falta avisarle por mail.
+// - Aviso por Telegram a las socias (ver functions/_lib/avisos.ts): solo con
+//   trigger "create" de una reserva del paciente (toda reserva online cuenta
+//   como "viene de Sati", decisión de Dani 10/11/2026). Los "update" (cambios
+//   de estado) no avisan, así cada reserva avisa una sola vez. Lleva solo
+//   iniciales y día/hora, nunca nombre completo ni especialidad.
 
-interface Env {
+import { AvisosEnv, avisarATodas, fechaAR, formatearTurno, iniciales, sumar } from "../_lib/avisos";
+
+interface Env extends AvisosEnv {
   RESEND_API_KEY: string;
   ORDER_DESTINATION_EMAIL?: string;
 }
@@ -80,8 +87,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     headers: { "content-type": "application/json" }
   });
 
-  if (!apiKey) return okResponse;
-
   let payload: Record<string, unknown> = {};
   try {
     payload = (await context.request.json()) as Record<string, unknown>;
@@ -110,6 +115,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const provider = pick(inner, ["service_provider"]);
   const status = pick(inner, ["status"]);
   const startTime = pick(inner, ["start"]);
+
+  if (trigger === "create") {
+    const ini = iniciales(String(client.first_name ?? ""), String(client.last_name ?? ""));
+    const texto = `Nueva reserva online: ${ini} viene de Sati Studio\nTurno: ${formatearTurno(startTime)}\nBuscala en AgendaPro por ese día y horario.`;
+    context.waitUntil(Promise.all([avisarATodas(context.env, texto), sumar(context.env, `res:${fechaAR()}`, "total")]));
+  }
+
+  if (!apiKey) return okResponse;
 
   const html = `
     <div style="font-family: Arial, sans-serif; font-size: 14px; color: #2C2C2C;">

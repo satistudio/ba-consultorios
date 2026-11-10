@@ -127,6 +127,9 @@ export default function App() {
 
   // CONVERSIÓN. origin identifica QUÉ botón se tocó (para saber qué convierte).
   const trackWhatsApp = (origin: string, serviceName?: string, serviceType?: string) => {
+    // Contador propio para el resumen diario por Telegram (no depende de GA4
+    // ni de bloqueadores). Ver functions/api/wa-click.ts.
+    try { navigator.sendBeacon?.("/api/wa-click", origin); } catch { /* sin contador */ }
     pushEvent({
       event: "whatsapp_click",
       origin,
