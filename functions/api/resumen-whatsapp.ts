@@ -31,12 +31,15 @@ export const onRequestPost: PagesFunction<AvisosEnv> = async ({ request, env }) 
     .map(([k, n]) => `${NOMBRES[k] ?? k} ${n}`)
     .join(", ");
   const [, m, d] = hoy.split("-");
+  const reservas = totalRes === 1 ? "1 reserva online" : `${totalRes} reservas online`;
+  const chats = totalWa === 1 ? "1 persona abrió el WhatsApp" : `${totalWa} personas abrieron el WhatsApp`;
   const texto = [
-    `Resumen de hoy ${d}/${m} (Sati Studio)`,
-    `• Reservas online: ${totalRes}`,
-    `• Personas que abrieron WhatsApp desde links de Sati: ${totalWa}${detalle ? ` (${detalle})` : ""}`,
+    `🌙 ¡Hola! Así cerró hoy ${d}/${m}:`,
     "",
-    "Los de WhatsApp son toques al botón: algunos no llegan a mandar el mensaje. Los que vienen de un link de Sati traen un código entre paréntesis al final del mensaje."
+    `📅 ${reservas}`,
+    `💬 ${chats}${detalle ? ` (${detalle})` : ""}`,
+    "",
+    "¡Mañana seguimos! 💜 Sati Studio"
   ].join("\n");
 
   await avisarATodas(env, texto);
