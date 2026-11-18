@@ -1,15 +1,16 @@
 name: Resumen diario por Telegram
 
-# Todos los días a las 21:00 hora argentina (00:00 UTC) manda a Rocío y
-# Tatiana el resumen de reservas online y toques a WhatsApp del día.
+# Todos los días a las 23:13 hora argentina (02:13 UTC) manda a Rocío y
+# Tatiana el resumen de reservas online, confirmaciones y toques a WhatsApp.
 # Necesita el secreto AVISOS_SECRET en GitHub (Settings > Secrets and
 # variables > Actions), el mismo valor que en Cloudflare.
-# GitHub puede atrasar los cron unos minutos; el resumen igual toma el día
-# argentino que termina, porque la hora AR sigue siendo 21 h.
+# GitHub atrasa los cron (llegó a correr 3-4 h tarde). No importa: la web
+# resume siempre el día argentino que terminó (diaACerrar en _lib/avisos.ts).
+# Se sacó de las 00:00 UTC porque es la hora en que GitHub más se atrasa.
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "13 2 * * *"
   workflow_dispatch:
 
 jobs:

@@ -3,7 +3,8 @@
 // Qué se guarda (KV "AVISOS", binding del proyecto de Cloudflare Pages):
 //   tg:chats          → lista de chats de Telegram dados de alta en el bot
 //   wa:AAAA-MM-DD     → toques a WhatsApp del día, por origen
-//   res:AAAA-MM-DD    → reservas online del día (solo el número)
+//   res:AAAA-MM-DD    → reservas del día, solo números: total (online nuevas),
+//                       confirmadas, cambios y canceladas (hechas por el paciente)
 // Nunca se guardan datos de pacientes. El aviso de reserva lleva solo
 // iniciales y día/hora: nombre + turno es dato de salud (Ley 25.326).
 
@@ -22,6 +23,31 @@ export interface ChatAlta {
 // Argentina no tiene horario de verano: UTC-3 fijo.
 export function fechaAR(d = new Date()): string {
   return new Date(d.getTime() - 3 * 3600_000).toISOString().slice(0, 10);
+}
+
+// Día que tiene que cerrar el resumen nocturno. El cron de GitHub se atrasa
+// (llegó a correr 3-4 h tarde, ya pasada la medianoche argentina): si en
+// Argentina todavía no son las 12 h, el día a cerrar es el de ayer.
+export function diaACerrar(d = new Date()): string {
+  const ar = new Date(d.getTime() - 3 * 3600_000);
+  if (ar.getUTCHours() < 12) ar.setUTCDate(ar.getUTCDate() - 1);
+  return ar.toISOString().slice(0, 10);
+}
+
+// Qué contador suma un "update" de AgendaPro hecho por el paciente, según el
+// estado nuevo de la reserva.
+export function campoDeUpdate(status: string): "confirmadas" | "canceladas" | "cambios" {
+  const s = status.trim().toLowerCase();
+  if (s.startsWith("confirmad")) return "confirmadas";
+  if (s.startsWith("cancelad") || s.startsWith("anulad")) return "canceladas";
+  return "cambios";
+}
+
+// "2026-11-16" → "lun 16/11"
+export function etiquetaDia(fecha: string): string {
+  const [anio, mes, dia] = fecha.split("-").map(Number);
+  const diaSemana = DIAS[new Date(Date.UTC(anio, mes - 1, dia)).getUTCDay()];
+  return `${diaSemana} ${String(dia).padStart(2, "0")}/${String(mes).padStart(2, "0")}`;
 }
 
 export async function leerChats(env: AvisosEnv): Promise<ChatAlta[]> {

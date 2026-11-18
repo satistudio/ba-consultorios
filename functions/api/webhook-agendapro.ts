@@ -1,5 +1,6 @@
 // Cloudflare Pages Function — recibe webhooks de AgendaPro (reservas creadas,
-// actualizadas, canceladas) y reenvía un aviso por mail vía Resend.
+// actualizadas, canceladas). Con cada reserva online nueva avisa por mail
+// (Resend) y por Telegram; las confirmaciones y cambios solo se cuentan.
 //
 // Para qué sirve: registro automático de cada reserva con su origen, sin
 // depender de que nadie lo anote a mano. Base para cruzar contra sprints de Meta.
@@ -11,40 +12,45 @@
 //    (confirmado activo al 14/09/2026)
 //
 // Estructura real del payload (confirmada con capturas de webhook.site,
-// 14/09/2026 — reemplaza los nombres "tentativos" de la versión anterior,
-// que buscaba en payload.data / payload.booking y nunca miraba acá):
+// 14/09/2026, y con los mails reales de noviembre 2026):
 // {
 //   trigger: "create" | "update" | ...,
 //   resource_type: "Booking" | "Client" | ...,
 //   created_at: string,
-//   user: string | null,   // null = generado por el paciente (widget online);
-//                           // string (email) = generado por alguien logueado
-//                           // en el panel de AgendaPro (staff)
+//   user: string | null,   // null = lo hizo el paciente (widget online o el
+//                           // link de confirmar/editar del recordatorio);
+//                           // string (email) = alguien logueado en el panel
+//                           // de AgendaPro (staff)
 //   resource: {
 //     service: string,             // nombre de la especialidad
 //     service_provider: string,    // profesional + especialidad
 //     status: string,              // "Reservado" | "Confirmado" | ...
-//     start: string,
+//     start: string,               // en UTC ("2026-11-19T17:00:00.000Z" = 14 h AR)
 //     end: string,
-//     client: { first_name, last_name, email, identification_number, ... },
+//     client: { first_name, last_name, email, identification, ... },
 //     company_name, location_address, links: { confirm, cancel, edit }
-//   }
+//   },
+//   changes?: { status_id: [antes, después] }   // en los "update"
 // }
 //
 // Reglas de negocio de este archivo:
 // - Solo procesamos resource_type === "Booking" (ignoramos eventos de alta
-//   de Cliente, que llegan aparte y no aportan nada útil a este mail — y
-//   antes generaban un segundo mail vacío por cada reserva online).
-// - Solo notificamos cuando el evento lo generó el paciente (user === null).
-//   Si "user" tiene un email, fue staff quien tocó la reserva (la creó,
-//   la confirmó, la editó) — ya lo sabe, no hace falta avisarle por mail.
-// - Aviso por Telegram a las socias (ver functions/_lib/avisos.ts): solo con
-//   trigger "create" de una reserva del paciente (toda reserva online cuenta
-//   como "viene de Sati", decisión de Dani 10/11/2026). Los "update" (cambios
-//   de estado) no avisan, así cada reserva avisa una sola vez. Lleva solo
-//   iniciales y día/hora, nunca nombre completo ni especialidad.
+//   de Cliente, que llegan aparte y no aportan nada útil).
+// - Solo procesamos lo que hizo el paciente (user === null). Si "user" tiene
+//   un email, fue staff quien tocó la reserva: ya lo sabe.
+// - trigger "create" = reserva online nueva. Es lo único que avisa: un mail a
+//   BA y un Telegram a las socias (toda reserva online cuenta como "viene de
+//   Sati", decisión de Dani 10/11/2026). El Telegram lleva solo iniciales y
+//   día/hora, nunca nombre completo ni especialidad.
+// - trigger "update" del paciente = confirmó el turno con el link del
+//   recordatorio, lo cambió o lo canceló. Muchas veces es un turno que cargó
+//   recepción por teléfono o WhatsApp. NO es una reserva nueva: no manda mail
+//   ni Telegram (antes mandaba un mail "Nueva reserva online" por cada
+//   confirmación, ~2 de cada 3 mails). Solo suma al contador del día para el
+//   resumen nocturno: confirmadas / canceladas / cambios.
+// - El mail no lleva DNI, email del paciente ni el payload completo.
 
-import { AvisosEnv, avisarATodas, fechaAR, formatearTurno, iniciales, sumar } from "../_lib/avisos";
+import { AvisosEnv, avisarATodas, campoDeUpdate, fechaAR, formatearTurno, iniciales, sumar } from "../_lib/avisos";
 
 interface Env extends AvisosEnv {
   RESEND_API_KEY: string;
@@ -64,7 +70,7 @@ function escapeHtml(input: string): string {
 function pick(obj: Record<string, unknown>, keys: string[]): string {
   for (const k of keys) {
     const v = obj?.[k];
-    if (typeof v === "string" && v.trim()) return v;
+    if (typeof v === "string" && v.trim()) return v.trim();
     if (typeof v === "number") return String(v);
   }
   return "—";
@@ -106,6 +112,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const inner = (payload.resource ?? {}) as Record<string, unknown>;
   const client = (inner.client ?? {}) as Record<string, unknown>;
+  const status = pick(inner, ["status"]);
+  const hoy = `res:${fechaAR()}`;
+
+  // Confirmación, cambio o cancelación del paciente: solo se cuenta.
+  if (trigger === "update") {
+    context.waitUntil(sumar(context.env, hoy, campoDeUpdate(status)));
+    return okResponse;
+  }
+
+  // Cualquier otro trigger que no sea una reserva nueva se ignora.
+  if (trigger !== "create") return okResponse;
+
+  const turno = formatearTurno(pick(inner, ["start"]));
+  const ini = iniciales(String(client.first_name ?? ""), String(client.last_name ?? ""));
+  const texto = `Nueva reserva online: ${ini} viene de Sati Studio\nTurno: ${turno}\nBuscala en AgendaPro por ese día y horario.`;
+  context.waitUntil(Promise.all([avisarATodas(context.env, texto), sumar(context.env, hoy, "total")]));
+
+  if (!apiKey) return okResponse;
 
   const clientName =
     [pick(client, ["first_name"]), pick(client, ["last_name"])]
@@ -113,30 +137,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .join(" ") || "—";
   const serviceName = pick(inner, ["service"]);
   const provider = pick(inner, ["service_provider"]);
-  const status = pick(inner, ["status"]);
-  const startTime = pick(inner, ["start"]);
 
-  if (trigger === "create") {
-    const ini = iniciales(String(client.first_name ?? ""), String(client.last_name ?? ""));
-    const texto = `Nueva reserva online: ${ini} viene de Sati Studio\nTurno: ${formatearTurno(startTime)}\nBuscala en AgendaPro por ese día y horario.`;
-    context.waitUntil(Promise.all([avisarATodas(context.env, texto), sumar(context.env, `res:${fechaAR()}`, "total")]));
-  }
-
-  if (!apiKey) return okResponse;
+  const fila = (etiqueta: string, valor: string) =>
+    `<tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">${etiqueta}</td><td>${escapeHtml(valor)}</td></tr>`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; font-size: 14px; color: #2C2C2C;">
-      <h2 style="color: #5C1A3D;">Nueva reserva online — AgendaPro</h2>
+      <h2 style="color: #5C1A3D;">Nueva reserva online</h2>
+      <p style="margin: 0 0 8px;">La sacó el paciente desde la reserva online de AgendaPro.</p>
       <table style="border-collapse: collapse; margin-top: 12px;">
-        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Evento:</td><td>${escapeHtml(trigger)} / ${escapeHtml(resourceType)}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Paciente:</td><td>${escapeHtml(clientName)}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Servicio:</td><td>${escapeHtml(serviceName)}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Profesional:</td><td>${escapeHtml(provider)}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Estado:</td><td>${escapeHtml(status)}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Fecha/hora:</td><td>${escapeHtml(startTime)}</td></tr>
+        ${fila("Turno:", turno)}
+        ${fila("Paciente:", clientName)}
+        ${fila("Servicio:", serviceName)}
+        ${fila("Profesional:", provider)}
+        ${fila("Estado:", status)}
       </table>
-      <p style="margin-top: 16px; color: #888; font-size: 11px;">Payload completo (respaldo técnico):</p>
-      <pre style="background: #F8F6F4; padding: 10px; border-radius: 6px; font-size: 10px; overflow-x: auto;">${escapeHtml(JSON.stringify(payload, null, 2)).slice(0, 4000)}</pre>
+      <p style="margin-top: 16px; color: #888; font-size: 11px;">Hora argentina. Los datos completos del paciente están en AgendaPro.</p>
     </div>
   `;
 
@@ -150,14 +166,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       body: JSON.stringify({
         from: "BA Consultorios Médicos <onboarding@resend.dev>",
         to: [context.env.ORDER_DESTINATION_EMAIL || DEFAULT_DESTINATION],
-        subject: `AgendaPro: reserva ${status !== "—" ? status.toLowerCase() : "nueva"} — ${serviceName}`,
+        subject: `Nueva reserva online — ${serviceName} — ${turno}`,
         html
       })
     });
     if (!res.ok) {
-      // Antes esto se tragaba en silencio. Cloudflare Pages muestra esto en
-      // Functions > Real-time Logs — es la única forma de enterarse si Resend
-      // empieza a fallar, en vez de descubrirlo dos meses después.
+      // Cloudflare Pages muestra esto en Functions > Real-time Logs — es la
+      // única forma de enterarse si Resend empieza a fallar.
       console.error("Resend respondió con error:", res.status, await res.text());
     }
   } catch (err) {
