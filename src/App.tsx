@@ -117,6 +117,8 @@ export default function App() {
   //   agendapro_direct_click → link directo a AgendaPro .......... CONVERSIÓN
   //   lead_form_submit       → formulario propio enviado ......... CONVERSIÓN
   //   social_click           → redes o mapa ..................... NO conversión
+  //   orden_form_open        → abre la ventana "Tengo una orden" .. NO conversión
+  //   turnos_search / turnos_otros_dias → uso del buscador ....... NO conversión
   // ==========================================================================
 
   const pushEvent = (payload: Record<string, unknown>) => {
@@ -314,7 +316,12 @@ export default function App() {
   const [ordenEstado, setOrdenEstado] = useState<"idle" | "sending" | "sent">("idle");
   const [ordenError, setOrdenError] = useState("");
   const [ordenArchivo, setOrdenArchivo] = useState("");
-  const abrirOrden = () => { setOrdenError(""); if (ordenEstado !== "sent") setOrdenEstado("idle"); setOrdenAbierta(true); };
+  const abrirOrden = () => {
+    pushEvent({ event: "orden_form_open", origin: "home" });
+    setOrdenError("");
+    if (ordenEstado !== "sent") setOrdenEstado("idle");
+    setOrdenAbierta(true);
+  };
   const enviarOrden = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = e.currentTarget;
